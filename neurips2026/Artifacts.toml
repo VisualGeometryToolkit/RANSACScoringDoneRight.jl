@@ -1,0 +1,39 @@
+[eth3d_splg_csponds]
+git-tree-sha1 = "e622fb709682d75a9924638e47a9f4d329b1fbd4"
+lazy = true
+
+    [[eth3d_splg_csponds.download]]
+    sha256 = "15bb2a631ee8492570a59d9e04af5e23bd0b4e73f5532ef96f27fef91616bc6e"
+    url = "https://zenodo.org/records/23240469/files/eth3d_splg_csponds.tar.gz?download=1"
+
+[heb_raw]
+git-tree-sha1 = "44bb27faffe65496ae13ec3d550c34a5817e1aee"
+lazy = true
+
+    [[heb_raw.download]]
+    sha256 = "71c49ef118ed2a111970a4d7e3fefc2cbd9f9391204d5945a1198ac726d30962"
+    url = "https://zenodo.org/records/23240467/files/heb_raw.tar.gz?download=1"
+
+[neurips2026_paper_runs]
+git-tree-sha1 = "e2209e4016af4c4ece0af908d4e8d050dbdef21b"
+lazy = true
+
+    [[neurips2026_paper_runs.download]]
+    sha256 = "99b9d02c1542f11f159fd574f527311af2ce9faec7e2716604cf686982193569"
+    url = "https://zenodo.org/records/ZENODO_RECORD_NEURIPS2026/files/neurips2026_paper_runs.tar.gz?download=1"
+
+[pt_raw_test]
+git-tree-sha1 = "eae5de3e20f195eb53d5cef69ad0c070c72250a9"
+lazy = true
+
+    [[pt_raw_test.download]]
+    sha256 = "0cf49bed6b1b1abd0682e9bcd129551c366ec5e473a1ff1bd81fa6c1785fe8b7"
+    url = "https://zenodo.org/records/23240462/files/pt_raw_test.tar.gz?download=1"
+
+[pt_raw_validation]
+git-tree-sha1 = "130b0afdd536a95857d9f2c07ef1893d14f6efe8"
+lazy = true
+
+    [[pt_raw_validation.download]]
+    sha256 = "9e87c54b1ca8ba6abe3fb5fdac7edaf0be5e944b4c20050dd6de8df778b68705"
+    url = "https://zenodo.org/records/23240462/files/pt_raw_validation.tar.gz?download=1"

@@ -1,0 +1,60 @@
+# =============================================================================
+# neurips2026 — the NeurIPS 2026 research project of RansacScoringDoneRight
+# ("RANSAC Scoring Done Right"): drivers (scripts/), configs of record
+# (configs/), data bindings (data/), the paper (paper/) and its asset index
+# (REPRODUCE.md). A DrWatson project (VisualGeometryEval PaperProjects
+# conventions), not a package: it devs the repository's package by relative
+# path and carries every dependency the drivers need; the package's own
+# Project.toml stays a library and never depends on this project.
+#
+# RansacScoringDoneRight has no pool IO (pools are read with
+# VisualGeometryEval.Pools) and no concrete problem types (they are
+# RobustVisualGeometry's); the studies here need both, so they live in this
+# environment rather than widening the package's [deps].
+#
+# [sources] also devs the sibling feat/kplus checkouts of the stack
+# (VisualGeometryCore, RobustVisualGeometry, VisualGeometryEval) and
+# VisualGeometryIo's feat/lens-families checkout (the lens base K+ sits on):
+# the package on this branch implements their unreleased scoring contract.
+#
+#   cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.instantiate()'
+#   julia --project=. scripts/<driver>.jl --plan
+#   julia --project=. test/runtests.jl          # the project's tests
+# =============================================================================
+name = "NeurIPS2026"
+
+[deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+RansacScoringDoneRight = "e23d4225-f201-4c3a-a297-7efae5f2deeb"
+RobustVisualGeometry = "48970fad-9a21-401c-bf6c-679fa4f2bd7f"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+VisualGeometryCore = "297d53b8-c8d7-4cd7-a9af-68e656508a81"
+VisualGeometryEval = "3a96b074-0aeb-4323-98af-032cad4f5882"
+VisualGeometryIo = "d0441031-17df-4f07-bc88-8d8f5a818e7b"
+
+[sources]
+RansacScoringDoneRight = {path = ".."}
+
+[compat]
+DataFrames = "1.8"
+Dates = "1"
+DrWatson = "2.19"
+JLD2 = "0.6"
+Printf = "1"
+RansacScoringDoneRight = "0.1"
+RobustVisualGeometry = "0.1"
+SpecialFunctions = "2"
+Statistics = "1"
+TOML = "1"
+Test = "1"
+VisualGeometryCore = "0.1"
+VisualGeometryEval = "0.1"
+VisualGeometryIo = "0.1"
+julia = "1.12"

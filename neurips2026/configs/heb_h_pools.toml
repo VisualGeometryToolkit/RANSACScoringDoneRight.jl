@@ -1,0 +1,37 @@
+# =============================================================================
+# heb_h_pools — the HEB HOMOGRAPHY scoring pools the paper's HEB cells were
+# evaluated on (1 000 accepted minimal samples per pair, 10 scenes, 21 999
+# pairs), as a config of record.
+#
+# PRODUCER NOT PORTED. Generated on 2026-05-02 by RobustVisualGeometry
+# eval/generate_heb_scoring_data.jl (the pool generator's default keywords) into [experiment]
+# pool_dir (since migrated; REPRODUCE.md, "Not ported"). Load-bearing today:
+# [source], from which configs/data_artifacts.toml derives the file list of
+# the published `heb_raw` artifact (shared with accv2026). The paper's HEB
+# protocol is hierarchical (two validation scenes per trial: the stored runs'
+# protocol_spec); the registered split only keys the file list.
+# =============================================================================
+
+[experiment]
+dataset = "heb"
+matcher = "sift"                 # the HEB release's own SIFT matches
+problem = "H"
+pool_dir = "datasets/heb/derived/sift/scoring_data_H"   # RELATIVE to data_root()
+
+[source]
+raw_dir = "accv2026/data/heb_raw"
+splits = ["heb:validation", "heb:test"]
+image_unit = "px"
+
+[pool]
+sampler = "gaussian"
+gaussian_sigma = 0.125
+target = 1000
+max_attempts = 100000
+snn_threshold = 0.7
+min_csponds = 20
+max_pairs_per_scene = 2200
+subsample_seed = 42
+kappa = 100.0                    # HEB-homography sample checks
+check_sample = true
+check_cheirality = true

@@ -1,0 +1,11 @@
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+/docs/build/
+Manifest.toml
+src/.cache/
+
+# Personal Claude Code state (never shared)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/worktrees/

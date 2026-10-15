@@ -1,0 +1,50 @@
+# =============================================================================
+# pt_e_pools — the PhotoTourism ESSENTIAL-matrix scoring pools the paper's
+# PT cells were evaluated on (1 000 accepted minimal samples per pair, 21
+# scenes, 44 211 pairs: Sec. 4.1-4.2, Tab. 3), as a config of record.
+#
+# PRODUCER NOT PORTED. The pools were generated on 2026-05-05 by
+# RobustVisualGeometry eval/generate_pt_scoring_data.jl (67d76e2; the pool
+# generator's default keywords + snn_threshold 0.9) into the tree [experiment] pool_dir names;
+# that tree was migrated to later pool formats since (REPRODUCE.md, "Not
+# ported"). What this config is load-bearing for today is [source]: the raw
+# inputs, from which configs/data_artifacts.toml derives the file lists of
+# the published `pt_raw_validation` / `pt_raw_test` artifacts (shared with
+# LocalOptimizationDoneRight's accv2026, the same trees and the same hashes).
+#
+# The paper's own validation/test partition of these 21 scenes is the
+# Shekhovtsov-aligned one its stored runs record (configs/fig_*.toml runs,
+# config.toml protocol_spec); the registered split below names the same 21
+# scenes and is only the file-list key.
+# =============================================================================
+
+[experiment]
+dataset = "phototourism"
+matcher = "sift"                 # the IMC release's RootSIFT matches
+problem = "E"
+pool_dir = "datasets/phototourism/derived/sift/scoring_data_E"   # RELATIVE to data_root()
+
+[source]
+splits = ["phototourism:validation", "phototourism:test"]
+image_unit = "px"
+matches_tutorial_val_dir   = "accv2026/data/ransac_tutorial/RANSAC-Tutorial-Data/val"
+matches_tutorial_train_dir = "accv2026/data/ransac_tutorial/RANSAC-Tutorial-Data/train"
+matches_ef_test_dir        = "datasets/phototourism/raw_test/RANSAC-Tutorial-Data-Test"
+recon_tutorial_dir         = "datasets/phototourism/raw_train/_track_verified_recons"
+recon_ef_test_dir          = "datasets/phototourism/raw_test/imw2020_testdata/_track_verified_recons"
+
+[source.recon_special]
+reichstag               = "datasets/phototourism/raw_train/_inspect/reichstag/dense/sparse"
+florence_cathedral_side = "datasets/phototourism/raw_test/florence_cathedral_side/dense/sparse"
+
+[pool]
+# The generation constants of record (the default keywords of RobustVisualGeometry
+# eval/pool_generator.jl at 67d76e2, with the PT override snn_threshold = 0.9).
+sampler = "gaussian"
+gaussian_sigma = 0.125
+target = 1000                    # accepted minimal samples per pair
+max_attempts = 100000
+snn_threshold = 0.9
+min_csponds = 20
+max_pairs_per_scene = 2200
+subsample_seed = 42

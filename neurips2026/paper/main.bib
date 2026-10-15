@@ -1,0 +1,458 @@
+% Short form of conference & journal abbreviations
+@String(PAMI   = {IEEE TPAMI})
+@String(IJCV   = {IJCV})
+@String(CVPR   = {CVPR})
+@String(ICCV   = {ICCV})
+@String(ECCV   = {ECCV})
+@String(ACCV   = {ACCV})
+@String(BMVC   = {BMVC})
+@String(CVPRW  = {CVPRW})
+@String(CVIU   = {Comput. Vis. Image Underst.})
+
+% =====================================================================
+% Core RANSAC
+% =====================================================================
+
+@article{Fischler1981,
+  author  = {Fischler, Martin A. and Bolles, Robert C.},
+  title   = {Random Sample Consensus: A Paradigm for Model Fitting
+             with Applications to Image Analysis and Automated
+             Cartography},
+  journal = {Communications of the ACM},
+  volume  = {24},
+  number  = {6},
+  pages   = {381--395},
+  year    = {1981},
+}
+
+% =====================================================================
+% Probabilistic / likelihood-based scoring
+% =====================================================================
+
+@inproceedings{Torr1998,
+  author    = {Torr, Philip and Zisserman, Andrew},
+  title     = {Robust Computation and Parametrization of Multiple
+               View Relations},
+  booktitle = ICCV,
+  pages     = {727--732},
+  year      = {1998},
+}
+
+@article{Torr2002,
+  author  = {Torr, Philip H. S.},
+  title   = {Bayesian Model Estimation and Selection for Epipolar
+             Geometry and Generic Manifold Fitting},
+  journal = IJCV,
+  volume  = {50},
+  number  = {1},
+  pages   = {35--61},
+  year    = {2002},
+}
+
+@article{Torr2000,
+  author  = {Torr, Philip H. and Zisserman, Andrew},
+  title   = {{MLESAC}: A New Robust Estimator with Application to
+             Estimating Image Geometry},
+  journal = CVIU,
+  volume  = {78},
+  number  = {1},
+  pages   = {138--156},
+  year    = {2000},
+}
+
+@inproceedings{Barath2019,
+  author    = {Barath, Daniel and Noskova, Jana and Matas, Ji{\v{r}}{\'\i}},
+  title     = {{MAGSAC}: Marginalizing Sample Consensus},
+  booktitle = CVPR,
+  year      = {2019},
+}
+
+@article{Barath2021,
+  author  = {Barath, Daniel and Noskova, Jana and Matas, Ji{\v{r}}{\'\i}},
+  title   = {Marginalizing Sample Consensus},
+  journal = PAMI,
+  volume  = {44},
+  number  = {10},
+  pages   = {6032--6044},
+  year    = {2021},
+}
+
+@inproceedings{Barath2020,
+  author    = {Barath, Daniel and Noskova, Jana and Ivashechkin, Maksym
+               and Matas, Ji{\v{r}}{\'\i}},
+  title     = {{MAGSAC++}, a Fast, Reliable and Accurate Robust Estimator},
+  booktitle = CVPR,
+  year      = {2020},
+}
+
+@article{Shekhovtsov2025,
+  author  = {Shekhovtsov, Alexander},
+  title   = {{RANSAC} Scoring Functions: Analysis and Reality Check},
+  journal = {Preprint, submitted to IJCV},
+  year    = {2025},
+}
+
+% =====================================================================
+% Uncertainty in RANSAC
+% =====================================================================
+
+@inproceedings{Raguram2009,
+  author    = {Raguram, Rahul and Frahm, Jan-Michael and Pollefeys, Marc},
+  title     = {Exploiting Uncertainty in Random Sample Consensus},
+  booktitle = ICCV,
+  pages     = {2074--2081},
+  year      = {2009},
+}
+
+@inproceedings{TordoffCipolla2005,
+  author    = {Tordoff, Ben and Cipolla, Roberto},
+  title     = {Uncertain {RanSaC}},
+  booktitle = {MVA},
+  year      = {2005},
+}
+
+@inproceedings{OchoaBelongie2006,
+  author    = {Ochoa, Benjamin and Belongie, Serge},
+  title     = {Covariance Propagation for Guided Matching},
+  booktitle = {Workshop on Statistical Methods in Video Processing (SMVP)},
+  year      = {2006},
+}
+
+% =====================================================================
+% Geometry / error models
+% =====================================================================
+
+@book{Hartley2003,
+  author    = {Hartley, Richard and Zisserman, Andrew},
+  title     = {Multiple View Geometry in Computer Vision},
+  publisher = {Cambridge University Press},
+  edition   = {2nd},
+  year      = {2003},
+}
+
+@article{Chojnacki2000,
+  author  = {Chojnacki, Wojciech and Brooks, Michael J. and
+             van den Hengel, Anton and Gawley, Darren},
+  title   = {On the Fitting of Surfaces to Data with Covariances},
+  journal = PAMI,
+  volume  = {22},
+  number  = {11},
+  pages   = {1294--1303},
+  year    = {2000},
+  doi     = {10.1109/34.888714},
+}
+
+@article{Chum2005,
+  author    = {Chum, Ond{\v{r}}ej and Pajdla, Tom{\'a}{\v{s}} and Sturm, Peter},
+  title     = {The Geometric Error for Homographies},
+  journal   = CVIU,
+  volume    = {97},
+  number    = {1},
+  pages     = {86--102},
+  year      = {2005},
+}
+
+% =====================================================================
+% Local optimization in RANSAC
+% =====================================================================
+
+@inproceedings{Chum2003,
+  author    = {Chum, Ond{\v{r}}ej and Matas, Ji{\v{r}}{\'\i} and
+               Kittler, Josef},
+  title     = {Locally Optimized {RANSAC}},
+  booktitle = {DAGM},
+  pages     = {236--243},
+  year      = {2003},
+}
+
+@inproceedings{Lebeda2012,
+  author    = {Lebeda, Karel and Matas, Ji{\v{r}}{\'\i} and
+               Chum, Ond{\v{r}}ej},
+  title     = {Fixing the Locally Optimized {RANSAC}},
+  booktitle = BMVC,
+  year      = {2012},
+}
+
+% =====================================================================
+% Alternative scoring / robust methods
+% =====================================================================
+
+@article{Stewart1995,
+  author  = {Stewart, Charles V.},
+  title   = {{MINPRAN}: A New Robust Estimator for Computer Vision},
+  journal = PAMI,
+  volume  = {17},
+  number  = {10},
+  pages   = {925--938},
+  year    = {1995},
+}
+
+@article{Heinrich2013,
+  author  = {Heinrich, Stuart B.},
+  title   = {Efficient and Robust Model Fitting with Unknown Noise Scale},
+  journal = {Image and Vision Computing},
+  volume  = {31},
+  number  = {10},
+  year    = {2013},
+  doi     = {10.1016/j.imavis.2013.07.003},
+}
+
+@inproceedings{Moulon2012,
+  author    = {Moulon, Pierre and Monasse, Pascal and Marlet, Renaud},
+  title     = {Adaptive Structure from Motion with a Contrario Model
+               Estimation},
+  booktitle = ACCV,
+  year      = {2012},
+}
+
+% =====================================================================
+% Evaluation / benchmarks
+% =====================================================================
+
+@inproceedings{Ivashechkin2021,
+  author    = {Ivashechkin, Maksym and Barath, Daniel and Matas, Ji{\v{r}}{\'\i}},
+  title     = {{VSAC}: Efficient and Accurate Estimator for {H} and {F}},
+  booktitle = ICCV,
+  year      = {2021},
+}
+
+@inproceedings{Barath2023,
+  author    = {Barath, Daniel and Mishkin, Dmytro and Polic, Michal and
+               F{\"o}rstner, Wolfgang and Matas, Ji{\v{r}}{\'\i}},
+  title     = {A Large-Scale Homography Benchmark},
+  booktitle = CVPR,
+  pages     = {21360--21370},
+  year      = {2023},
+}
+
+@article{Jin2021,
+  author  = {Jin, Yuhe and Mishkin, Dmytro and Mishchuk, Anastasiia and
+             Matas, Ji{\v{r}}{\'\i} and Fua, Pascal and Yi, Kwang Moo
+             and Trulls, Eduard},
+  title   = {Image Matching across Wide Baselines: From Paper to Practice},
+  journal = IJCV,
+  volume  = {129},
+  number  = {2},
+  year    = {2021},
+}
+
+% =====================================================================
+% Robust statistics
+% =====================================================================
+
+@book{Maronna2019,
+  author    = {Maronna, Ricardo A. and Martin, R. Douglas and
+               Yohai, V{\'\i}ctor J. and Salib{\'i}an-Barrera, Mat{\'\i}as},
+  title     = {Robust Statistics: Theory and Methods (with {R})},
+  publisher = {Wiley},
+  series    = {Wiley Series in Probability and Statistics},
+  year      = {2019},
+}
+
+% =====================================================================
+% Learned scoring
+% =====================================================================
+
+@inproceedings{Barath2022,
+  author    = {Barath, Daniel and Cavalli, Luca and Pollefeys, Marc},
+  title     = {Learning to Find Good Models in {RANSAC}},
+  booktitle = CVPR,
+  year      = {2022},
+}
+
+@inproceedings{BarrosoLaguna2023,
+  author    = {Barroso-Laguna, Axel and Brachmann, Eric and
+               Prisacariu, Victor Adrian and Brostow, Gabriel J. and
+               Turmukhambetov, Daniyar},
+  title     = {Two-View Geometry Scoring Without Correspondences},
+  booktitle = CVPR,
+  year      = {2023},
+}
+
+% =====================================================================
+% Sampson error
+% =====================================================================
+
+@inproceedings{Rydell2024,
+  author    = {Rydell, Felix and Torres, Ang{\'e}lica and
+               Larsson, Viktor},
+  title     = {Revisiting {Sampson} Approximations for Geometric
+               Estimation Problems},
+  booktitle = ICCV,
+  year      = {2024},
+}
+
+@inproceedings{Terekhov2023,
+  author    = {Terekhov, Mikhail and Larsson, Viktor},
+  title     = {Tangent {Sampson} Error: Fast Approximate Two-View
+               Reprojection Error for Central Camera Models},
+  booktitle = ICCV,
+  pages     = {3370--3378},
+  year      = {2023},
+}
+
+% =====================================================================
+% Scale estimation
+% =====================================================================
+
+@inproceedings{Edstedt2025,
+  author    = {Edstedt, Johan},
+  title     = {Less Biased Noise Scale Estimation for
+               Threshold-Robust {RANSAC}},
+  booktitle = CVPR,
+  pages     = {2836--2845},
+  year      = {2025},
+}
+
+% =====================================================================
+% Dense matching with uncertainty
+% =====================================================================
+
+@inproceedings{Edstedt2024roma,
+  author    = {Edstedt, Johan and Sun, Qiyu and B{\"o}kman, Georg
+               and Wadenb{\"a}ck, M{\aa}rten and Felsberg, Michael},
+  title     = {{RoMa}: Robust Dense Feature Matching},
+  booktitle = CVPR,
+  year      = {2024},
+}
+
+@inproceedings{Edstedt2023dkm,
+  author    = {Edstedt, Johan and Athanasiadis, Ioannis and
+               Wadenb{\"a}ck, M{\aa}rten and Felsberg, Michael},
+  title     = {{DKM}: Dense Kernelized Feature Matching for Geometry
+               Estimation},
+  booktitle = CVPR,
+  year      = {2023},
+}
+
+@article{Edstedt2025romav2,
+  author  = {Edstedt, Johan and Athanasiadis, Ioannis and B{\"o}kman, Georg
+             and Melekhov, Iaroslav and Sun, Qiyu and Kahl, Fredrik and
+             Wadenb{\"a}ck, M{\aa}rten and Bursell, Otto and
+             Felsberg, Michael and Larsson, Viktor},
+  title   = {{RoMa} v2: Harder Better Faster Denser Feature Matching},
+  journal = {arXiv preprint arXiv:2511.15706},
+  year    = {2025},
+}
+
+@inproceedings{Truong2021pdcnet,
+  author    = {Truong, Prune and Danelljan, Martin and Timofte, Radu},
+  title     = {Learning Accurate Dense Correspondences and When to
+               Trust Them},
+  booktitle = CVPR,
+  year      = {2021},
+}
+
+@article{Truong2023pdcnetplus,
+  author  = {Truong, Prune and Danelljan, Martin and Timofte, Radu and
+             Van~Gool, Luc},
+  title   = {{PDC-Net+}: Enhanced Probabilistic Dense Correspondence
+             Network},
+  journal = PAMI,
+  volume  = {45},
+  number  = {8},
+  pages   = {10247--10266},
+  year    = {2023},
+}
+
+@Article{Dempster1977,
+  author  = {Dempster, Arthur P. and Laird, Nan M. and Rubin, Donald B.},
+  title   = {Maximum Likelihood from Incomplete Data via the {EM} Algorithm},
+  journal = {J. Royal Stat. Soc. B},
+  volume  = {39},
+  number  = {1},
+  pages   = {1--38},
+  year    = {1977},
+}
+
+@article{Lowe2004,
+  title   = {Distinctive image features from scale-invariant keypoints},
+  author  = {Lowe, David G.},
+  journal = IJCV,
+  volume  = {60},
+  number  = {2},
+  pages   = {91--110},
+  year    = {2004},
+}
+
+@inproceedings{Arandjelovic2012,
+  title     = {Three things everyone should know to improve object retrieval},
+  author    = {Arandjelovi{\'c}, Relja and Zisserman, Andrew},
+  booktitle = CVPR,
+  pages     = {2911--2918},
+  year      = {2012},
+}
+
+@inproceedings{DeTone2018,
+  title     = {{SuperPoint}: Self-supervised interest point detection and description},
+  author    = {DeTone, Daniel and Malisiewicz, Tomasz and Rabinovich, Andrew},
+  booktitle = CVPRW,
+  year      = {2018},
+}
+
+@inproceedings{Lindenberger2023,
+  title     = {{LightGlue}: Local feature matching at light speed},
+  author    = {Lindenberger, Philipp and Sarlin, Paul-Edouard and Pollefeys, Marc},
+  booktitle = ICCV,
+  year      = {2023},
+}
+
+@inproceedings{Schoeps2017,
+  title     = {A multi-view stereo benchmark with high-resolution images and multi-camera videos},
+  author    = {Sch{\"o}ps, Thomas and Sch{\"o}nberger, Johannes L. and Galliani, Silvano and Sattler, Torsten and Schindler, Konrad and Pollefeys, Marc and Geiger, Andreas},
+  booktitle = CVPR,
+  year      = {2017},
+}
+
+@inproceedings{ChumMatas2005,
+  author    = {Chum, Ond{\v{r}}ej and Matas, Ji{\v{r}}{\'\i}},
+  title     = {Matching with {PROSAC}---Progressive Sample Consensus},
+  booktitle = CVPR,
+  pages     = {220--226},
+  year      = {2005},
+}
+
+@inproceedings{Myatt2002napsac,
+  author    = {Myatt, D.~R. and Torr, P.~H.~S. and Nasuto, S.~J. and Bishop, J.~M. and Craddock, R.},
+  title     = {{NAPSAC}: High Noise, High Dimensional Robust Estimation},
+  booktitle = BMVC,
+  pages     = {458--467},
+  year      = {2002},
+}
+
+@inproceedings{Chum2005degensac,
+  author    = {Chum, Ond{\v{r}}ej and Werner, Tom{\'a}{\v{s}} and Matas, Ji{\v{r}}{\'\i}},
+  title     = {Two-view geometry estimation unaffected by a dominant plane},
+  booktitle = CVPR,
+  pages     = {772--779},
+  year      = {2005},
+}
+
+@inproceedings{FrahmPollefeys2006qdegsac,
+  author    = {Frahm, Jan-Michael and Pollefeys, Marc},
+  title     = {{RANSAC} for (quasi-)degenerate data ({QDEGSAC})},
+  booktitle = CVPR,
+  pages     = {453--460},
+  year      = {2006},
+}
+
+@article{Schoenberger2025stopping,
+  author  = {Sch{\"o}nberger, Johannes L. and Larsson, Viktor and Pollefeys, Marc},
+  title   = {Fixing the {RANSAC} Stopping Criterion},
+  journal = {arXiv:2503.07829},
+  year    = {2025},
+}
+
+@article{Barath2019pnapsac,
+  author  = {Barath, Daniel and Ivashechkin, Maksym and Matas, Ji{\v{r}}{\'\i}},
+  title   = {Progressive {NAPSAC}: Sampling from Gradually Growing Neighborhoods},
+  journal = {arXiv:1906.02295},
+  year    = {2019},
+}
+
+@misc{RansacTutorial2020,
+  title  = {Starter Kit and Benchmark Data},
+  key    = {{CVPR 2020} {RANSAC} Tutorial},
+  year   = {2020},
+  note   = {\url{https://github.com/ducha-aiki/ransac-tutorial-2020-data}},
+}

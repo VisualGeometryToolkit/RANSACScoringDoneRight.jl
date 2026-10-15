@@ -1,0 +1,34 @@
+% paper_styles_shared.tex — colour palette + Sensitivity per-method
+% named styles.  Identical across cells/experiments; \input once
+% into your paper preamble (or copy verbatim).  Override per-method
+% via `\pgfplotsset{ours_<m>/.style={...}}` in your preamble.
+
+% --- Colour palette (\providecolor: paper-side override wins) ---
+\providecolor{ColorGaU}{HTML}{42D4F4}
+\providecolor{ColorIGMLE}{HTML}{4363D8}
+\providecolor{ColorIGRobust}{HTML}{3CB44B}
+\providecolor{ColorJeffreys}{HTML}{E6194B}
+\providecolor{ColorMAGSAC}{HTML}{F58231}
+\providecolor{ColorMSAC}{HTML}{FFE119}
+\providecolor{ColorOracle}{HTML}{808080}
+\providecolor{ColorRANSAC}{HTML}{FFB6C1}
+\providecolor{ColorgauPerPairBest}{HTML}{42D4F4}
+\providecolor{ColormagsacPerPairBest}{HTML}{F58231}
+\providecolor{ColormsacPerPairBest}{HTML}{FFE119}
+\providecolor{ColorransacPerPairBest}{HTML}{FFB6C1}
+
+% --- Per-method addplot styles ---
+\pgfplotsset{ours_ransac/.style={color=ColorRANSAC, line width=0.8pt}}
+\pgfplotsset{ours_ransac_marker/.style={ours_ransac, mark=x, mark size=2pt, mark options={solid}}}
+\pgfplotsset{ours_msac/.style={color=ColorMSAC, line width=0.8pt}}
+\pgfplotsset{ours_msac_marker/.style={ours_msac, mark=diamond*, mark size=2pt, mark options={solid}}}
+\pgfplotsset{ours_gau/.style={color=ColorGaU, line width=0.8pt}}
+\pgfplotsset{ours_gau_marker/.style={ours_gau, mark=triangle*, mark size=2pt, mark options={solid}}}
+\pgfplotsset{ours_magsac/.style={color=ColorMAGSAC, line width=0.8pt}}
+\pgfplotsset{ours_magsac_marker/.style={ours_magsac, mark=star, mark size=2pt, mark options={solid}}}
+\pgfplotsset{ours_jeffreys/.style={color=ColorJeffreys, line width=0.8pt}}
+\pgfplotsset{ours_jeffreys_marker/.style={ours_jeffreys, mark=pentagon, mark size=2pt, mark options={solid}}}
+\pgfplotsset{ours_ig_robust/.style={color=ColorIGRobust, line width=0.8pt}}
+\pgfplotsset{ours_ig_robust_marker/.style={ours_ig_robust, mark=o, mark size=2pt, mark options={solid}}}
+\pgfplotsset{ours_ig_mle/.style={color=ColorIGMLE, line width=0.8pt}}
+\pgfplotsset{ours_ig_mle_marker/.style={ours_ig_mle, mark=square, mark size=2pt, mark options={solid}}}

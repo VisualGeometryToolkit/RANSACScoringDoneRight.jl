@@ -1,0 +1,58 @@
+# =============================================================================
+# fig_sensitivity — configuration of record of Fig. 2
+# (\label{fig:sensitivity-grid}, "Sensitivity"): scripts/fig_sensitivity.jl
+# draws the six Sensitivity panels (expected test error and its std over the
+# validation-set size, three cells) and the two Sensitivity style sheets from
+# the STORED runs of record.
+#
+# The runs: each cell's evaluated Sensitivity table (`source.jld2`: `summary`,
+# per method, tuning criterion and validation size n the mean / std of the
+# 1 000 cross-validation trials' median test error with their 95 % BCa
+# intervals; `trials`, the trials themselves), as the 2026-05-06 production
+# runs wrote them (RobustVisualGeometry eval/neurips2026 evaluate_val,
+# 67d76e2-dirty; Slurm jobs 842, 844, 854). [stored] dir is RELATIVE to
+# results_root() (PROVENANCE.toml and SHA256SUMS beside the runs; published
+# as the `neurips2026_paper_runs` artifact). The computation that produced the
+# tables is NOT ported (REPRODUCE.md, "Not ported").
+# =============================================================================
+
+[stored]
+dir = "stored/paper-runs-2026-05-06"
+
+[sensitivity]
+tune = "median"                  # the tuning criterion of the drawn trials
+panels = ["eR_mean", "eR_std"]   # src/panels.jl SENSITIVITY_PANELS ids
+# The cell whose method set and validation sizes the style sheets are written
+# from (the submitted sheets came from the HEB run: its sizes reach 2048).
+styles_from = "heb"
+
+[[sensitivity.cells]]
+key = "pt"
+run = "phototourism/sift/E/Sensitivity/2026-05-06T102716"
+title = 'PhotoTourism / RootSIFT / \(\bE\)'
+assets = { eR_mean = "PT-E-SIFT-Sensitivity-eRmean.tex", eR_std = "PT-E-SIFT-Sensitivity-eRstd.tex" }
+
+[[sensitivity.cells]]
+key = "eth3d"
+run = "eth3d/splg/F/Sensitivity/2026-05-06T140300"
+title = 'ETH3D / SuperPoint+LightGlue / \(\bF\)'
+assets = { eR_mean = "ETH3D-F-SPLG-Sensitivity-eRmean.tex", eR_std = "ETH3D-F-SPLG-Sensitivity-eRstd.tex" }
+
+[[sensitivity.cells]]
+key = "heb"
+run = "heb/sift/H/Sensitivity/2026-05-06T084659"
+# HEB ships plain SIFT matches (Sec. 4.2, Tab. 3); the submitted "RootSIFT"
+# was corrected on the author's sign-off, 2026-10-09.
+title = 'HEB / SIFT / \(\bH\)'
+assets = { eR_mean = "HEB-H-SIFT-Sensitivity-eRmean.tex", eR_std = "HEB-H-SIFT-Sensitivity-eRstd.tex" }
+
+# Excluded from the run key: where the paper reads the drawn files.
+[render]
+styles = "sensitivity_styles.tex"
+styles_shared = "sensitivity_styles_shared.tex"
+
+# A regenerated asset that differs from the submitted one is NOT written over
+# it unless this is true (the author's sign-off on the difference). Signed off
+# 2026-10-09: the HEB title (REPRODUCE.md).
+[deploy]
+replace_submitted = true

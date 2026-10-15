@@ -1,0 +1,63 @@
+# =============================================================================
+# fig_profile — configuration of record of Fig. 1 (\label{fig:profile-grid},
+# "Profile"): scripts/fig_profile.jl draws the three Profile cells and the two
+# Profile style sheets from the STORED runs of record.
+#
+# The runs: each cell's evaluated Profile table (`source.jld2`: `profile`, the
+# bootstrap mean/std of the median rotation error at every grid point of every
+# method's two-decade window, and `profile_oracle`, the GT-Oracle line and the
+# per-pair-best envelopes), as the 2026-05-06 production runs wrote them
+# (RobustVisualGeometry eval/neurips2026 evaluate_val, 67d76e2-dirty; Slurm
+# jobs 843, 845, 855). [stored] dir is RELATIVE to results_root(); the
+# directory's PROVENANCE.toml and SHA256SUMS describe it, and the published
+# copy is the `neurips2026_paper_runs` artifact (configs/data_artifacts.toml).
+# The computation that produced the tables is NOT ported (REPRODUCE.md,
+# "Not ported").
+# =============================================================================
+
+[stored]
+dir = "stored/paper-runs-2026-05-06"
+
+[profile]
+criterion = "median"
+# The cell whose method set the style sheets are written from (all three carry
+# the same seven methods; the submitted sheets came from the HEB run).
+styles_from = "heb"
+
+[[profile.cells]]
+key = "pt"
+run = "phototourism/sift/E/Profile/2026-05-06T130222"
+title = 'PhotoTourism / RootSIFT / \(\bE\)'
+asset = "PT-E-SIFT-Profile.tex"
+bands = true
+
+[[profile.cells]]
+key = "eth3d"
+run = "eth3d/splg/F/Profile/2026-05-06T140718"
+title = 'ETH3D / SuperPoint+LightGlue / \(\bF\)'
+asset = "ETH3D-F-SPLG-Profile.tex"
+# Drawn with its confidence band, like the other cells and as the caption
+# states (its table holds the bootstrap std). The submitted fragment had
+# none; regenerated with the band on the author's sign-off, 2026-10-09.
+bands = true
+
+[[profile.cells]]
+key = "heb"
+run = "heb/sift/H/Profile/2026-05-06T130202"
+# HEB ships plain SIFT matches (Sec. 4.2, Tab. 3). The submitted title read
+# "RootSIFT" (the old renderer's label for the `sift` slug); corrected on the
+# author's sign-off, 2026-10-09.
+title = 'HEB / SIFT / \(\bH\)'
+asset = "HEB-H-SIFT-Profile.tex"
+bands = true
+
+# Excluded from the run key: where the paper reads the drawn files.
+[render]
+styles = "profile_styles.tex"
+styles_shared = "profile_styles_shared.tex"
+
+# A regenerated asset that differs from the submitted one is NOT written over
+# it unless this is true (the author's sign-off on the difference). Signed off
+# 2026-10-09: the ETH3D band and the HEB title (REPRODUCE.md).
+[deploy]
+replace_submitted = true

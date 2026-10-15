@@ -1,0 +1,288 @@
+# =============================================================================
+# paper_numbers — configuration of record of scripts/paper_numbers.jl: the
+# numbers the prose of Sec. 4 (Experiments) states about Fig. 1 and Fig. 2,
+# recomputed from the same stored runs the figures are drawn from, rounded
+# as stated, and checked against the value the paper states.
+#
+# The prose states its numbers as literals (no generated macro): this check is
+# how they stay tied to their data. Each [[numbers]] entry: `id`; `text`, the
+# phrase of main.tex; `source`, a stored run of [runs]; `kind`, the statistic
+# (below); `methods`; the table column (`column`) and validation size (`n`)
+# where it applies; `digits`, the rounding the prose uses; `stated`, the
+# value(s) the prose states (a [lo, hi] pair for a range); `relation`, "eq"
+# (rounded value equals stated) or "lt" (value below stated); `macros`, when
+# the manuscript reads the number from the generated macro file ([render]
+# macros, paper/figures) rather than stating it as a literal: one macro name
+# per value.
+#
+# kinds (Sensitivity `summary`, tuning criterion [check] tune; Profile `profile`):
+#   value        the one method's `column` at `n` (n = 0: the largest n)
+#   min / max    the min / max over `methods` of `column` at `n`
+#   range        [min, max] over `methods` of `column` at `n`
+#   max_gap      the max over `methods` of column(n) - column(largest n)
+#   span_max     Profile: the max over `methods` of (max - min) of the curve
+#   span_range   Profile: [min, max] over `methods` of the curve's (max - min)
+#   min_ratio    per run, min over `methods` of `column` at `n` divided by the
+#                max over `against` (the factor by which every method of the
+#                first group exceeds every method of the second); [min, max]
+#                over the runs
+#   convergence_ratio  one run: a method's convergence size is the smallest
+#                validation size n at which `column` is within the relative
+#                `tolerance` of its own asymptote (its value at the largest n);
+#                the value is the smallest convergence size of `methods` over
+#                the largest of `against` (how many times more validation data
+#                every method of the first group needs than every one of the
+#                second)
+# A `sources` list in place of `source` pools the methods of several runs.
+# =============================================================================
+
+[stored]
+dir = "stored/paper-runs-2026-05-06"
+
+# Excluded from the run key: where the paper reads the generated macros.
+[render]
+macros = "paper_numbers.tex"
+
+# The macro file is generated (no submitted copy). Replacing the deployed
+# copy is signed off: 2026-10-09, the std-gap macros join it.
+[deploy]
+replace_submitted = true
+
+[check]
+tune = "median"
+criterion = "median"
+
+[runs]
+pt_profile = "phototourism/sift/E/Profile/2026-05-06T130222"
+pt_sensitivity = "phototourism/sift/E/Sensitivity/2026-05-06T102716"
+eth3d_sensitivity = "eth3d/splg/F/Sensitivity/2026-05-06T140300"
+heb_sensitivity = "heb/sift/H/Sensitivity/2026-05-06T084659"
+
+[[numbers]]
+id = "pt_profile_ours_flat"
+text = 'varying by ${<}0.02^\circ$ on PhotoTourism'
+source = "pt_profile"
+kind = "span_max"
+methods = ["jeffreys", "ig_robust", "ig_mle"]
+digits = 3
+stated = 0.02
+relation = "lt"
+
+[[numbers]]
+id = "pt_profile_baselines_span"
+text = 'the baselines span ${\sim}0.8^\circ$--$2.9^\circ$ over the window'
+source = "pt_profile"
+kind = "span_range"
+methods = ["ransac", "msac", "gau", "magsac"]
+digits = 1
+stated = [0.8, 2.9]
+relation = "eq"
+
+[[numbers]]
+id = "pt_ours_within_asymptote"
+text = 'sit within $0.006^\circ$ of their large-$|\mathcal{V}|$ asymptote'
+source = "pt_sensitivity"
+kind = "max_gap"
+methods = ["Jeffreys", "IG-Robust", "IG-MLE"]
+column = "mean_med"
+n = 2
+digits = 3
+stated = 0.006
+relation = "eq"
+
+[[numbers]]
+id = "pt_ours_asymptote"
+text = 'asymptote of $0.77^\circ$'
+source = "pt_sensitivity"
+kind = "range"
+methods = ["Jeffreys", "IG-Robust", "IG-MLE"]
+column = "mean_med"
+n = 0
+digits = 2
+stated = [0.77, 0.77]
+relation = "eq"
+
+[[numbers]]
+id = "pt_baselines_start"
+text = 'MSAC, GaU, and MAGSAC++ start at ${\sim}0.90^\circ$'
+source = "pt_sensitivity"
+kind = "range"
+methods = ["MSAC (median)", "GaU (median)", "MAGSAC (median)"]
+column = "mean_med"
+n = 2
+digits = 2
+stated = [0.90, 0.90]
+relation = "eq"
+
+[[numbers]]
+id = "pt_ransac_start"
+text = 'vanilla RANSAC starts higher ($1.08^\circ$)'
+source = "pt_sensitivity"
+kind = "value"
+methods = ["RANSAC (median)"]
+column = "mean_med"
+n = 2
+digits = 2
+stated = 1.08
+relation = "eq"
+
+[[numbers]]
+id = "pt_ransac_plateau"
+text = 'plateauing near $0.87^\circ$'
+source = "pt_sensitivity"
+kind = "value"
+methods = ["RANSAC (median)"]
+column = "mean_med"
+n = 0
+digits = 2
+stated = 0.87
+relation = "eq"
+
+[[numbers]]
+id = "ours_std_v2"
+text = '$\mathrm{std}[e_{\mathbf{R}}]$ sits at $0.002^\circ$--$0.019^\circ$ at $|\mathcal{V}| = 2$ (PT and ETH3D)'
+sources = ["pt_sensitivity", "eth3d_sensitivity"]
+kind = "range"
+methods = ["Jeffreys", "IG-Robust", "IG-MLE"]
+column = "std_med"
+n = 2
+digits = 3
+stated = [0.002, 0.019]
+relation = "eq"
+
+[[numbers]]
+id = "baselines_std_v2"
+# GENERATED into the manuscript (macros): the submitted text stated
+# 0.05°–0.35°, which the data do not give (0.040° ETH3D GaU – 0.376° PT
+# RANSAC); corrected with the author's sign-off on 2026-10-09.
+text = 'threshold-based baselines disperse over $\BaselinesStdVtwoLo^\circ$--$\BaselinesStdVtwoHi^\circ$ at the same budget (PT and ETH3D)'
+sources = ["pt_sensitivity", "eth3d_sensitivity"]
+kind = "range"
+methods = ["RANSAC (median)", "MSAC (median)", "GaU (median)", "MAGSAC (median)"]
+column = "std_med"
+n = 2
+digits = 2
+stated = [0.04, 0.38]
+relation = "eq"
+macros = ["BaselinesStdVtwoLo", "BaselinesStdVtwoHi"]
+
+[[numbers]]
+id = "heb_jeffreys_v2"
+text = 'Jeffreys ... ($9.58^\circ$ at $|\mathcal{V}| = 2$'
+source = "heb_sensitivity"
+kind = "value"
+methods = ["Jeffreys"]
+column = "mean_med"
+n = 2
+digits = 2
+stated = 9.58
+relation = "eq"
+
+[[numbers]]
+id = "heb_igrobust_v2"
+text = 'vs.\ $8.18^\circ$ for IG-Robust)'
+source = "heb_sensitivity"
+kind = "value"
+methods = ["IG-Robust"]
+column = "mean_med"
+n = 2
+digits = 2
+stated = 8.18
+relation = "eq"
+
+[[numbers]]
+id = "heb_jeffreys_std"
+text = 'its trial-to-trial $\mathrm{std}$ is the largest of any method ($2.84^\circ$)'
+source = "heb_sensitivity"
+kind = "max"
+methods = ["RANSAC (median)", "MSAC (median)", "GaU (median)", "MAGSAC (median)", "Jeffreys", "IG-Robust", "IG-MLE"]
+column = "std_med"
+n = 2
+digits = 2
+stated = 2.84
+relation = "eq"
+
+[[numbers]]
+id = "heb_igrobust_asymptote"
+text = '($7.65^\circ$ asymptote'
+source = "heb_sensitivity"
+kind = "value"
+methods = ["IG-Robust"]
+column = "mean_med"
+n = 0
+digits = 2
+stated = 7.65
+relation = "eq"
+
+[[numbers]]
+id = "heb_best_baseline_asymptote"
+text = 'vs.\ $7.85^\circ$ for the best threshold-based baseline'
+source = "heb_sensitivity"
+kind = "min"
+methods = ["RANSAC (median)", "MSAC (median)", "GaU (median)", "MAGSAC (median)"]
+column = "mean_med"
+n = 0
+digits = 2
+stated = 7.85
+relation = "eq"
+
+[[numbers]]
+id = "std_gap_v2"
+# GENERATED into the manuscript (macros), approved 2026-10-09 to replace the
+# unsupported literal "a 30--100x gap". The sentence contrasts the two std
+# ranges at |V| = 2 (ours 0.002-0.019 deg, the baselines 0.04-0.38 deg), so the
+# honest gap is their SEPARATION per dataset: the least-dispersed baseline's
+# std over the most-dispersed proposed variant's std, in the same run. It is
+# the factor by which every baseline exceeds every proposed variant: PT 29.0x
+# (0.1377 MAGSAC++ / 0.0047 IG-MLE), ETH3D 2.1x (0.0398 GaU / 0.0187 Jeffreys).
+# Same runs and methods as ours_std_v2 / baselines_std_v2; rounded to whole
+# factors as the paper writes them.
+text = 'a $\StdGapVtwoLo$--$\StdGapVtwoHi\times$ gap (proposed wording; main.tex not yet changed)'
+sources = ["pt_sensitivity", "eth3d_sensitivity"]
+kind = "min_ratio"
+methods = ["RANSAC (median)", "MSAC (median)", "GaU (median)", "MAGSAC (median)"]
+against = ["Jeffreys", "IG-Robust", "IG-MLE"]
+column = "std_med"
+n = 2
+digits = 0
+stated = [2.0, 29.0]
+relation = "eq"
+macros = ["StdGapVtwoLo", "StdGapVtwoHi"]
+
+[[numbers]]
+id = "pt_convergence_ratio"
+# GENERATED (approved 2026-10-09; replaces the literal "~100x more" of the
+# abstract, introduction, Fig. 2 caption, Sec. 4.4 and conclusion, now stated
+# as a PhotoTourism result). Tolerance 1 %: the paper's own "near-optimal"
+# (the IG variants within 0.006 deg of 0.77 deg, 0.8 %). Convergence sizes:
+# Jeffreys, IG-Robust, IG-MLE 2; MSAC, GaU, MAGSAC++ 256; RANSAC 512.
+text = 'baselines need $\ConvRatioPT\times$ more on PhotoTourism'
+source = "pt_sensitivity"
+kind = "convergence_ratio"
+methods = ["RANSAC (median)", "MSAC (median)", "GaU (median)", "MAGSAC (median)"]
+against = ["Jeffreys", "IG-Robust", "IG-MLE"]
+column = "mean_med"
+tolerance = 0.01
+digits = 0
+stated = 128.0
+relation = "eq"
+macros = ["ConvRatioPT"]
+
+[[numbers]]
+id = "eth3d_convergence_ratio"
+# GENERATED (approved 2026-10-09), ETH3D's honest counterpart. At the 1 %
+# tolerance there is no advantage on ETH3D (every method converges at 128-512,
+# ratio 1): the proposed methods start 4-5 % above their asymptote at |V| = 2.
+# At 5 % — which the text states — the proposed converge at 2 and the
+# baselines at 16 (GaU, MAGSAC++) to 32 (RANSAC, MSAC): ratio 8.
+text = '$\ConvRatioETH\times$ on ETH3D at a 5\% tolerance'
+source = "eth3d_sensitivity"
+kind = "convergence_ratio"
+methods = ["RANSAC (median)", "MSAC (median)", "GaU (median)", "MAGSAC (median)"]
+against = ["Jeffreys", "IG-Robust", "IG-MLE"]
+column = "mean_med"
+tolerance = 0.05
+digits = 0
+stated = 8.0
+relation = "eq"
+macros = ["ConvRatioETH"]

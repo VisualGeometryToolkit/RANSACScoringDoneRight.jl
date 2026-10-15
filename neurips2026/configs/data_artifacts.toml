@@ -1,0 +1,98 @@
+# =============================================================================
+# data_artifacts — THE catalog of the paper's published data (VisualGeometryEval
+# DataArtifacts): what each Julia artifact in ../Artifacts.toml (lazy,
+# sha256- and tree-hash-pinned, hosted on Zenodo) holds, where it mounts
+# (data = data_root(), results = results_root()), which Zenodo record carries
+# it, and from which config of record its file list derives. The suite checks
+# the catalog against the bindings (paper_project_violations :catalog).
+#
+#   fetch: julia --project=. -e 'include("src/data_artifacts.jl"); fetch_artifacts!(artifact_catalog())'
+#   pack:  DataArtifacts.pack_artifacts(artifact_catalog(), [names]; stage = <scratch dir>)
+#
+# Two groups:
+#   * neurips2026_paper_runs — the stored runs every figure and prose number of
+#     the paper is drawn from (configs/fig_profile.toml, fig_sensitivity.toml,
+#     paper_numbers.toml [stored] dir). REQUIRED: with it, every generated
+#     asset regenerates. Its record is not deposited yet (placeholder).
+#   * the raw inputs of the paper's pools, SHARED with LocalOptimizationDoneRight's
+#     accv2026 (the same artifacts, records and hashes: the two papers read
+#     the same PhotoTourism, HEB and ETH3D data). Not required: they feed the
+#     pool generation and evaluation, which are not ported (REPRODUCE.md).
+#     Their file lists derive from the pool configs' [source] tables.
+# =============================================================================
+
+[catalog]
+artifacts_toml = "../Artifacts.toml"
+artifacts_toml_env = "NEURIPS2026_ARTIFACTS_TOML"
+
+[records.neurips2026]
+title = "RANSAC Scoring Done Right (NeurIPS 2026): the evaluated Profile and Sensitivity runs behind the paper's figures"
+license = "CC-BY-4.0"
+placeholder = "ZENODO_RECORD_NEURIPS2026"
+
+[records.pt]
+title = "Two-view robust estimation benchmark inputs: PhotoTourism (RootSIFT matches, COLMAP models)"
+license = "CC-BY-4.0"
+id = "23240462"
+placeholder = "ZENODO_RECORD_PT"
+
+[records.heb]
+title = "Two-view robust estimation benchmark inputs: HEB homographies and stored SupeRANSAC baseline results"
+license = "CC-BY-4.0"
+id = "23240467"
+placeholder = "ZENODO_RECORD_HEB"
+
+[records.eth3d]
+title = "Two-view robust estimation benchmark inputs: ETH3D SuperPoint+LightGlue correspondences and F hypothesis pools"
+license = "CC-BY-NC-SA-4.0"
+id = "23240469"
+placeholder = "ZENODO_RECORD_ETH3D"
+
+[artifacts.neurips2026_paper_runs]
+kind = "tree"
+dir = "stored/paper-runs-2026-05-06"
+mount = "results"
+record = "neurips2026"
+required = true
+what = "the six evaluated runs (PT/E, ETH3D/F, HEB/H x Profile, Sensitivity) the paper's Fig. 1, Fig. 2 and Sec. 4 numbers are drawn from: per run source.jld2 (the evaluated table), config.toml and the original renders, with PROVENANCE.toml and SHA256SUMS"
+provenance = "RobustVisualGeometry eval/neurips2026 run_pipeline.jl / evaluate_val.jl (67d76e2-dirty, committed as 6bc825d), one 8-GPU node, 2026-05-06, Slurm jobs 842-845, 854, 855"
+
+[artifacts.pt_raw_validation]
+kind = "pool_sources"
+config = "pt_e_pools"
+splits = ["phototourism:validation"]
+mount = "data"
+record = "pt"
+required = false
+what = "PhotoTourism validation scenes: RootSIFT matches + match confidences (matches.h5, match_conf.h5) and the COLMAP models (cameras/images/points3D.bin) the PT-E pools are generated from"
+provenance = "CVPR 2020 RANSAC tutorial data (IMC 2020 PhotoTourism train/val) and the IMC-PT 2020 TestData; COLMAP models of the IMC-PT release"
+
+[artifacts.pt_raw_test]
+kind = "pool_sources"
+config = "pt_e_pools"
+splits = ["phototourism:test"]
+mount = "data"
+record = "pt"
+required = false
+what = "PhotoTourism test scenes: RootSIFT matches + match confidences and COLMAP models (as pt_raw_validation)"
+provenance = "as pt_raw_validation"
+
+[artifacts.heb_raw]
+kind = "pool_sources"
+config = "heb_h_pools"
+splits = ["heb:validation", "heb:test"]
+mount = "data"
+record = "heb"
+required = false
+what = "HEB <scene>_homographies.h5 files (SIFT matches, GT homographies, per-match GT inlier flags) of the 10 scenes of the registered heb split"
+provenance = "Homography Estimation Benchmark (Barath et al., CVPR 2023), unchanged"
+
+[artifacts.eth3d_splg_csponds]
+kind = "pool_sources"
+config = "eth_f_pools"
+splits = ["eth3d:validation", "eth3d:test"]
+mount = "data"
+record = "eth3d"
+required = false
+what = "ETH3D SuperPoint+LightGlue consolidated correspondences (per-scene JLD2, depth-warp GT inlier labels, calibrations, GT poses) and the extraction manifest"
+provenance = "densematch-tools extract_splg_batch.py over the ETH3D high-res multi-view training images"

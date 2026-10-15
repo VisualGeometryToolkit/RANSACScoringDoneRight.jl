@@ -1,0 +1,25 @@
+% paper_styles.tex — cell-specific defaults: \Panel* macros + axis cosmetics.
+% Standalone preview: \input{paper_styles_shared}\input{paper_styles}
+% BEFORE the panel \input.  In main.tex, \input{paper_styles_shared}
+% globally, omit this file, and \renewcommand the \Panel* macros
+% per panel-input as needed (use `{}` to suppress a label).
+
+\providecommand{\PanelXLabel}{Validation set size}
+\providecommand{\PanelYLabeleRmean}{$\mathbb{E}[e_{\mathbf{R}}]$ (deg)}
+\providecommand{\PanelYLabeleRstd}{$\mathrm{std}[e_{\mathbf{R}}]$ (deg)}
+\providecommand{\PanelYLabelmAAmean}{$\mathbb{E}[\mathrm{mAA}]$}
+\providecommand{\PanelYLabelmAAstd}{$\mathrm{std}[\mathrm{mAA}]$}
+\providecommand{\PanelXTicks}{2,4,8,16,32,64,128,256,512,1024,2048}
+
+% Named axis style — panels opt-in via `panel_axis` in their
+% axis options.  Legends/insets/color-bars stay clean.
+% NOTE: visual properties only — NO width/height.  Layout (size,
+% subfigure dimensions, groupplot geometry) is the paper's call;
+% baking width/height here would silently override paper-side
+% sizing via `every axis/.append style{}` last-wins.  Standalone
+% preview supplies the default size in `preview.tex`.
+\pgfplotsset{panel_axis/.style={
+    grid style={gray!20},
+    label style={font=\footnotesize},
+    tick label style={font=\scriptsize},
+}}
