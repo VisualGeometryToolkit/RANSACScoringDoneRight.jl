@@ -10,8 +10,8 @@ makedocs(;
     format=Documenter.HTML(;
         assets=["assets/landing_tagline.css", "assets/landing_tagline.js", "assets/pseudocode_render.js"],
         prettyurls=get(ENV, "CI", "false") == "true" || get(ENV, "RSDR_DOCS_DEPLOY", "0") == "1",
-        canonical="https://ransacscoringdoneright.github.io",
-        edit_link="master",
+        canonical="https://visualgeometrytoolkit.github.io/RansacScoringDoneRight.jl/",
+        edit_link="main",
     ),
     plugins=[LandingPage(), CodeBlocks()],
     warnonly=[:missing_docs, :cross_references, :docs_block],
@@ -31,14 +31,14 @@ makedocs(;
     ],
 )
 
-# The site is the RansacScoringDoneRight organization page
-# (https://ransacscoringdoneright.github.io): unversioned, at the root of
-# that repository's `main` branch. CI deploys it (.github/workflows/docs.yml)
-# with DOCUMENTER_KEY, the private half of a deploy key that has write access
-# to ransacscoringdoneright/ransacscoringdoneright.github.io.
+# The site is this repository's project page
+# (https://visualgeometrytoolkit.github.io/RansacScoringDoneRight.jl/):
+# unversioned, at the root of the `gh-pages` branch. CI deploys it
+# (.github/workflows/docs.yml) with DOCUMENTER_KEY, the private half of a
+# write-enabled deploy key of this repository.
 deploydocs(;
-    repo="github.com/ransacscoringdoneright/ransacscoringdoneright.github.io.git",
-    branch="main",
-    devbranch="master",
+    repo="github.com/VisualGeometryToolkit/RansacScoringDoneRight.jl.git",
+    branch="gh-pages",
+    devbranch="main",
     versions=nothing,
 )
