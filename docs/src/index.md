@@ -24,8 +24,8 @@ hero:
       text: Paper
       link: https://arxiv.org/pdf/2606.27385
     - theme: alt
-      text: Code (coming soon)
-      link: "#Install"
+      text: Code
+      link: https://github.com/VisualGeometryToolkit/RansacScoringDoneRight.jl
 features:
   - icon: 🎯
     title: Score a hypothesis
@@ -216,6 +216,13 @@ carries that prior).
   per pair, the median-anchored IG-Robust prior regularizes the per-partition
   scale and gives the lowest error at every validation budget, while Jeffreys,
   which gives that regularization up, is the least stable.
+
+## Related projects
+
+Part of the [Visual Geometry Toolkit](https://visualgeometrytoolkit.github.io), Julia packages for robust visual geometry from Kiel University:
+
+- [BlobBoards](https://blobboards.github.io): robust markers for accurate pose (BMVC 2026)
+- [Robust Local Optimization Done Right](https://localoptimizationdoneright.github.io): score sharp, refine soft (ACCV 2026)
 
 ## Citation
 

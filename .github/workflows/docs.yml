@@ -1,8 +1,8 @@
 name: Docs
 
-# Builds the documentation and deploys it to this repository's gh-pages
-# branch, served at https://visualgeometrytoolkit.github.io/RansacScoringDoneRight.jl/ . DOCUMENTER_KEY is the
-# private half of a write-enabled deploy key of this repository.
+# Builds the documentation and deploys it to the ransacscoringdoneright organization page,
+# https://ransacscoringdoneright.github.io (the `main` branch of ransacscoringdoneright/ransacscoringdoneright.github.io).
+# DOCUMENTER_KEY is the private half of a write-enabled deploy key of that repository.
 on:
   push:
     branches:

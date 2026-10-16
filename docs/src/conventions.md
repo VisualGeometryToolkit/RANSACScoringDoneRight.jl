@@ -3,7 +3,7 @@
 The stack's shared conventions — naming, signatures, data arguments, frames and
 normalization, pixel origins, derivatives — are one canonical page in
 VisualGeometryCore's documentation,
-[Conventions](https://visualgeometrytoolkit.github.io/VisualGeometryCore.jl/dev/guide/conventions/).
+[Conventions](https://visualgeometrytoolkit.github.io/VisualGeometryCore/stable/guide/conventions/).
 This page does not restate them. It states the three things that are true of
 RansacScoringDoneRight and of nowhere else in the stack.
 
@@ -95,6 +95,6 @@ The option stays for that reason.
 
 ## See also
 
-* [Conventions](https://visualgeometrytoolkit.github.io/VisualGeometryCore.jl/dev/guide/conventions/)
+* [Conventions](https://visualgeometrytoolkit.github.io/VisualGeometryCore/stable/guide/conventions/)
   — the shared text this page links to rather than restates
 * [API Reference](api/pools.md) — the functions named above

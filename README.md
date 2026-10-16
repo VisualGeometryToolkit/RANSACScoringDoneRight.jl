@@ -9,7 +9,7 @@ research project `neurips2026/` that holds the paper and produces its figures.
 Both pin their environment in a tracked `Manifest.toml` (the package's own is
 not committed; the project's is).
 
-Documentation and project page: <https://visualgeometrytoolkit.github.io/RansacScoringDoneRight.jl/>.
+Documentation and project page: <https://ransacscoringdoneright.github.io>.
 
 ## Installation
 

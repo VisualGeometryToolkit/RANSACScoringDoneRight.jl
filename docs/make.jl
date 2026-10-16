@@ -10,7 +10,7 @@ makedocs(;
     format=Documenter.HTML(;
         assets=["assets/landing_tagline.css", "assets/landing_tagline.js", "assets/pseudocode_render.js"],
         prettyurls=get(ENV, "CI", "false") == "true" || get(ENV, "RSDR_DOCS_DEPLOY", "0") == "1",
-        canonical="https://visualgeometrytoolkit.github.io/RansacScoringDoneRight.jl/",
+        canonical="https://ransacscoringdoneright.github.io/",
         edit_link="main",
     ),
     plugins=[LandingPage(), CodeBlocks()],
@@ -31,14 +31,17 @@ makedocs(;
     ],
 )
 
-# The site is this repository's project page
-# (https://visualgeometrytoolkit.github.io/RansacScoringDoneRight.jl/):
-# unversioned, at the root of the `gh-pages` branch. CI deploys it
+# The site is the ransacscoringdoneright organization page (https://ransacscoringdoneright.github.io):
+# unversioned, at the root of that repository's `main` branch. CI deploys it
 # (.github/workflows/docs.yml) with DOCUMENTER_KEY, the private half of a
-# write-enabled deploy key of this repository.
+# write-enabled deploy key of that repository. Documenter deploys only when the
+# building repository's name occurs in the target URL; the site is another
+# repository, so the deploy config names it as the target.
+const SITE_REPO = "ransacscoringdoneright/ransacscoringdoneright.github.io"
 deploydocs(;
-    repo="github.com/VisualGeometryToolkit/RansacScoringDoneRight.jl.git",
-    branch="gh-pages",
+    repo="github.com/$(SITE_REPO).git",
+    branch="main",
     devbranch="main",
     versions=nothing,
+    deploy_config=Documenter.GitHubActions(SITE_REPO, get(ENV, "GITHUB_EVENT_NAME", ""), get(ENV, "GITHUB_REF", "")),
 )
