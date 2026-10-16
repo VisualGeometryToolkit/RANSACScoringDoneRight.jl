@@ -3,6 +3,7 @@
 *.jl.mem
 /docs/build/
 Manifest.toml
+Manifest-v*.toml
 src/.cache/
 
 # Personal Claude Code state (never shared)

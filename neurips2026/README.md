@@ -30,7 +30,7 @@ make -C paper                                         # the PDF
 | `Artifacts.toml`, `configs/data_artifacts.toml` | the published data (Zenodo) and their catalog |
 | `notes/` | write-ups of the scoring studies (not paper assets) |
 
-`Project.toml` devs the package (`..`) and, through `[sources]`, the sibling
-feat/kplus checkouts of VisualGeometryCore, RobustVisualGeometry and
-VisualGeometryEval and VisualGeometryIo's lens-families checkout; the tracked
-`Manifest.toml` is the environment of record.
+`Project.toml` devs the package (`..`) and takes the rest of the stack from
+the registry. It is a member of the repository's workspace: the package, its
+tests, its docs and this project resolve together in one untracked Manifest at
+the repository root.

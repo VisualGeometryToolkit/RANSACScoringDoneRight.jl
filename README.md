@@ -6,8 +6,8 @@ scoring (`StudentTUniformScoring`), its CPU/GPU grid evaluators and the
 paper's baseline scorers, an implementation of VisualGeometryCore's scoring and
 pool-selection contracts that depends only on VisualGeometryCore — and the
 research project `neurips2026/` that holds the paper and produces its figures.
-Both pin their environment in a tracked `Manifest.toml` (the package's own is
-not committed; the project's is).
+Both, with the package's tests and docs, are one Pkg workspace: they resolve
+together, in one `Manifest.toml` at the repository root that is not committed.
 
 Documentation and project page: <https://ransacscoringdoneright.github.io>.
 
@@ -206,8 +206,8 @@ documented there but not yet ported to the current stack.
 ## Development
 
 The repository ships git hooks in `.githooks/` that keep your local
-`Manifest.toml` resolvable: after a pull, checkout or rebase that changes
-`Project.toml`, they re-resolve the environment (resolve only; precompilation
+`Manifest.toml` resolvable: after a pull, checkout or rebase that changes any
+workspace member's `Project.toml`, they re-resolve the workspace (resolve only; precompilation
 waits for the next `using`). They are opt-in, once per clone:
 
 ```bash

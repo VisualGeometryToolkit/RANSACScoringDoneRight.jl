@@ -5,17 +5,14 @@
 # (REPRODUCE.md). A DrWatson project (VisualGeometryEval PaperProjects
 # conventions), not a package: it devs the repository's package by relative
 # path and carries every dependency the drivers need; the package's own
-# Project.toml stays a library and never depends on this project.
+# Project.toml stays a library and never depends on this project. A member of
+# the repository's workspace (../Project.toml): the package, its tests, its docs
+# and this project resolve together, in the one untracked root Manifest.
 #
 # RansacScoringDoneRight has no pool IO (pools are read with
 # VisualGeometryEval.Pools) and no concrete problem types (they are
 # RobustVisualGeometry's); the studies here need both, so they live in this
 # environment rather than widening the package's [deps].
-#
-# [sources] also devs the sibling feat/kplus checkouts of the stack
-# (VisualGeometryCore, RobustVisualGeometry, VisualGeometryEval) and
-# VisualGeometryIo's feat/lens-families checkout (the lens base K+ sits on):
-# the package on this branch implements their unreleased scoring contract.
 #
 #   cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.instantiate()'
 #   julia --project=. scripts/<driver>.jl --plan
