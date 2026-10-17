@@ -3,6 +3,9 @@ uuid = "e23d4225-f201-4c3a-a297-7efae5f2deeb"
 version = "0.1.0"
 authors = ["James Pritts"]
 
+[workspace]
+projects = ["test", "docs", "neurips2026"]
+
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 GPUArrays = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
@@ -19,7 +22,7 @@ VisualGeometryCore = "297d53b8-c8d7-4cd7-a9af-68e656508a81"
 [compat]
 Distributions = "0.25.131"
 GPUArrays = "11.5"
-KernelAbstractions = "0.9.45"
+KernelAbstractions = "0.9.45, 0.10"
 LinearAlgebra = "1"
 LogExpFunctions = "1"
 QuadGK = "2.11"
@@ -29,6 +32,3 @@ StaticArrays = "1.9"
 Statistics = "1"
 VisualGeometryCore = "0.1"
 julia = "1.12"
-
-[workspace]
-projects = ["test", "docs", "neurips2026"]
