@@ -2,9 +2,9 @@
 
 neurips2026: the paper project of RansacScoringDoneRight ("RANSAC Scoring Done
 Right", NeurIPS 2026). It follows the stack's paper-project conventions —
-VisualGeometryEval README, "Paper project conventions"; LocalOptimizationDoneRight's
+VisualGeometryToolkitEval README, "Paper project conventions"; LocalOptimizationDoneRight's
 accv2026 is the worked example — and `test/runtests.jl` enforces them
-(`VisualGeometryEval.PaperProjects.paper_project_violations`). In short:
+(`VisualGeometryToolkitEval.PaperProjects.paper_project_violations`). In short:
 
 - every result and paper asset comes from a driver under `scripts/`
   (`run_stages`: `--plan`, `--stage=NAME`, `--force`) reading a TOML config of

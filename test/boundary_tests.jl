@@ -3,17 +3,17 @@
 # read it, and the loss-width families' per-residual quality.
 #
 # `decision_threshold` and its inverse `decision_width(::GauInlier, ·)` — the ONE
-# place the Eq. (2) MAP rule lives — are VisualGeometryCore's and pinned there.
+# place the Eq. (2) MAP rule lives — are VisualGeometryToolkitCore's and pinned there.
 # =============================================================================
 
 @testitem "boundary" begin
     using Test
-    # VisualGeometryCore's since K+ (width_axes.jl); pinned here too, where the
+    # VisualGeometryToolkitCore's since K+ (width_axes.jl); pinned here too, where the
     # Student-t marginal and the loss-width families they convert between live.
-    using VisualGeometryCore: outlier_halfwidth_to_loss_width, loss_width_to_outlier_halfwidth
-    using VisualGeometryCore: GauInlier, decision_width
+    using VisualGeometryToolkitCore: outlier_halfwidth_to_loss_width, loss_width_to_outlier_halfwidth
+    using VisualGeometryToolkitCore: GauInlier, decision_width
 
-    # (GauInlier's own two directions are VisualGeometryCore's:
+    # (GauInlier's own two directions are VisualGeometryToolkitCore's:
     # gau_inlier_boundary_tests.jl there.)
     @testset "the loss width <-> outlier half-width maps ride the GauInlier boundary" begin
         @testset "outlier half-width <-> loss width round trip at the protocol scale multiple" begin
@@ -47,15 +47,15 @@
 
     # =============================================================================
     # The loss-width families' per-residual quality (`residual_quality`, the ONE scalar both the
-    # Exact and the LogBinned aggregation evaluate) comes from VisualGeometryCore's
+    # Exact and the LogBinned aggregation evaluate) comes from VisualGeometryToolkitCore's
     # rho instead of hand-written closed forms. Pin BOTH the agreement and the
     # assumption it rests on.
     # =============================================================================
     using RansacScoringDoneRight: WelschCostScoring, SmoothTLSScoring, GemanScoring,
         MlesacScoring, MagsacScoring
-    using VisualGeometryCore: MsacScoring, RansacScoring, residual_quality
-    import VisualGeometryCore as VGC
-    using VisualGeometryCore: loss_shape      # the owner's accessor, which RSDR extends
+    using VisualGeometryToolkitCore: MsacScoring, RansacScoring, residual_quality
+    import VisualGeometryToolkitCore as VGC
+    using VisualGeometryToolkitCore: loss_shape      # the owner's accessor, which RSDR extends
 
     @testset "loss bin weights: a quality in [0, 1], 1 at d = 0, scale-free" begin
         # The shapes' closed forms are VGC's (its tests own them); what the
@@ -153,7 +153,7 @@
 
     # VGC's own shape-math invariants — totality, ψ = r·w, w = dρ/ds, and the lift's
     # refusal — used to be pinned here. They are gone: all four now live in
-    # VisualGeometryCore's test/lo_schedules_tests.jl, which is where a VGC
+    # VisualGeometryToolkitCore's test/lo_schedules_tests.jl, which is where a VGC
     # regression should be reported. `irls_weight` in particular no longer exists to
     # assert about (it was an exact alias of `weight` and VGC deleted it), and ψ is
     # now DEFINED as `r * weight(...)`, so pinning that relation here would restate a

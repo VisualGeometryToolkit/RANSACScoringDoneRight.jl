@@ -4,7 +4,7 @@ The paper project of RansacScoringDoneRight: the manuscript, the drivers that
 produce its figures, their configs of record, and the asset index that ties
 every figure the paper reads to its generator and data. A
 [DrWatson](https://juliadynamics.github.io/DrWatson.jl/) project laid out by
-the stack's paper-project conventions (VisualGeometryEval `PaperProjects`;
+the stack's paper-project conventions (VisualGeometryToolkitEval `PaperProjects`;
 LocalOptimizationDoneRight's `accv2026/` is the sibling project), not a
 package: the package in `..` never depends on it.
 

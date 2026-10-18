@@ -13,7 +13,7 @@ posterior-weight state and its expectation–conditional-maximization (ECM)
 updates (`PosteriorWeightState`, `update_scale!`, `update_nu!`,
 `update_inlier_prior!`, `mixture_ecm!`) and their update policies
 (`Estimated`, `FixedS2`, `FixedPrior`, `FixedNu`, `ConsensusDof`) — is
-VisualGeometryCore's, documented there.
+VisualGeometryToolkitCore's, documented there.
 
 A scored partition seeds it through the scoring contract: after `score!` on a
 [`StudentTUniformScoring`](@ref), the first `inlier_count` entries of

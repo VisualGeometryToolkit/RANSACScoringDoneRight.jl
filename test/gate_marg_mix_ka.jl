@@ -18,7 +18,7 @@
 # NOTE: `--startup-file=no` matters for the --cuda form — the local startup.jl
 # auto-activates the cwd's project, which silently overrides `--project` and
 # drops CUDA off the load path (RSDR itself does not depend on CUDA; run the
-# GPU run from an environment that does, e.g. RobustVisualGeometry's).
+# GPU run from an environment that does, e.g. VisualGeometryToolkitEstimation's).
 #
 # Exit 0 when every check succeeds, 1 on FAIL.  Synthetic data only — no dataset needed, so this
 # runs anywhere (CI, laptop, cluster).  On a CUDA machine, `--cuda` adds a
@@ -34,13 +34,13 @@ using RansacScoringDoneRight: IGSharedData, LossSpec,
     grid_evaluate,
     WelschMarginal, SmoothTLSMarginal
 using KernelAbstractions
-import VisualGeometryCore as VGC
-using VisualGeometryCore: WelschShape, GemanMcclureShape, SmoothTLSShape, IGPrior
+import VisualGeometryToolkitCore as VGC
+using VisualGeometryToolkitCore: WelschShape, GemanMcclureShape, SmoothTLSShape, IGPrior
 using Random, Printf
 using LogExpFunctions: logsumexp
 
 # Conditional CUDA load must happen at top level (run with an environment that
-# provides CUDA, e.g. RobustVisualGeometry's).
+# provides CUDA, e.g. VisualGeometryToolkitEstimation's).
 const USE_CUDA = "--cuda" in ARGS
 USE_CUDA && @eval using CUDA
 
@@ -99,7 +99,7 @@ end
 # Host oracle for the Track-B mixture (grid_evaluate on a LossSpec). Its host
 # evaluation (`inlier_evidence!` + the outlier-half-width profile) is deleted — the KA kernels
 # are the one evaluation, on CPU() as on a GPU — so the oracle is a PLAIN host
-# loop, written from VisualGeometryCore's ρ and the spec's quadrature tables:
+# loop, written from VisualGeometryToolkitCore's ρ and the spec's quadrature tables:
 # per (pair, model) the incremental data term D_j = Σ_{i≤k} Δ·ρ(shape, x_i/w²_j, 1),
 # the trapezoid logsumexp (`LogExpFunctions.logsumexp`) over nodes j, the
 # outlier-half-width profile max over k and the model argmax — strict `>` and ascending order, as the device kernels.
@@ -148,7 +148,7 @@ end
 # -----------------------------------------------------------------------------
 # Host oracle for the FULL-DATA scale marginal (grid_evaluate on a ScaleMarginal). The KA
 # kernel is the one evaluation, on CPU() as on a GPU, so the oracle is a PLAIN
-# host loop, written from VisualGeometryCore's ρ and the spec's quadrature
+# host loop, written from VisualGeometryToolkitCore's ρ and the spec's quadrature
 # tables (`loss_spec(::ScaleMarginal)`): per (pair, model, grid point) the
 # data term D_j = Σ_i Δ·ρ(shape, x_i/w²_j, 1) over ALL K residuals, the
 # trapezoid logsumexp (`LogExpFunctions.logsumexp`) with K·logZ̃_j, and the

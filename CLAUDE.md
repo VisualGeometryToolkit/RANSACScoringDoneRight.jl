@@ -3,15 +3,15 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 RansacScoringDoneRight: scale-free marginal RANSAC scoring, as an
-implementation of VisualGeometryCore's contracts — the scoring contract
+implementation of VisualGeometryToolkitCore's contracts — the scoring contract
 (`StudentTUniformScoring`, the sort-and-sweep marginal score) and the
 pool-selection contract (`select_on_grid!` over its CPU/GPU grid families:
 the marginal, the loss-width baselines, `LossSpec`, `ScaleMarginal`,
-SIMFIT++). It depends only on VisualGeometryCore (never on
-RobustVisualGeometry, LocalOptimizationDoneRight or VisualGeometryEval).
-Problem-agnostic: problems implement VisualGeometryCore's
+SIMFIT++). It depends only on VisualGeometryToolkitCore (never on
+VisualGeometryToolkitEstimation, LocalOptimizationDoneRight or VisualGeometryToolkitEval).
+Problem-agnostic: problems implement VisualGeometryToolkitCore's
 `AbstractConstraintProblem`, and the Student-t posterior-weighting toolkit,
-the width axes and the MSAC/RANSAC baseline scorers are VisualGeometryCore's.
+the width axes and the MSAC/RANSAC baseline scorers are VisualGeometryToolkitCore's.
 The repository has two halves, like LocalOptimizationDoneRight's: the
 registered package (`src/`, `test/`, `docs/`) and the research project
 `neurips2026/` — the NeurIPS 2026 paper, its figure drivers, configs of record,
@@ -38,16 +38,16 @@ total: 0 tests means nothing matched. The research project's suite is separate:
 The conventions every stack package follows — naming and the estimator verbs,
 signatures, data arguments, coordinate frames and normalization ("frame in =
 frame out"), pixel origins, bearings, Jacobians, units and the stack
-contracts — live ONCE, in VisualGeometryCore's `conventions/` folder
+contracts — live ONCE, in VisualGeometryToolkitCore's `conventions/` folder
 (`conventions/README.md` indexes it). Read them before changing code here.
 This file carries no copy of them, only how they land in this package. Where
 the folder is:
 
-- in a checkout of the stack's monorepo: `../VisualGeometryCore/conventions/`
+- in a checkout of the stack's monorepo: `../VisualGeometryToolkitCore/conventions/`
   (the root CLAUDE.md imports it);
-- in VisualGeometryCore's own repository: `conventions/`;
-- from Julia, the installed copy: `VisualGeometryCore.conventions_dir()`, i.e.
-  `joinpath(pkgdir(VisualGeometryCore), "conventions")`.
+- in VisualGeometryToolkitCore's own repository: `conventions/`;
+- from Julia, the installed copy: `VisualGeometryToolkitCore.conventions_dir()`, i.e.
+  `joinpath(pkgdir(VisualGeometryToolkitCore), "conventions")`.
 
 The agent-docs test checks that this file points there and holds no copy.
 
@@ -57,7 +57,7 @@ The rule is the stack's (`conventions/frames.md`); how it lands here:
 
 ### The pool frame here
 
-The pool record is VisualGeometryCore's `PoolPair` (`VisualGeometryCore.Pools`):
+The pool record is VisualGeometryToolkitCore's `PoolPair` (`VisualGeometryToolkitCore.Pools`):
 csponds and models in `NormalizedImageFrame`, the maps its `source_map`/
 `target_map`, the two sides of `pool_normalization(pair)` (VGC also builds the
 pool frame of two image sizes there). The residual matrix is NOT in the record:

@@ -22,14 +22,14 @@ drivers are `neurips2026/scripts/fig_profile.jl` and `fig_sensitivity.jl`
 ## Environment
 
 `neurips2026/` is its own Julia project, not a dependency of the package: the
-drivers need pool IO (VisualGeometryEval) and the concrete problem types
-(RobustVisualGeometry), which the package deliberately does not depend on.
+drivers need pool IO (VisualGeometryToolkitEval) and the concrete problem types
+(VisualGeometryToolkitEstimation), which the package deliberately does not depend on.
 
 ```bash
 cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
-The pools are read with VisualGeometryEval's `load_pool` and
+The pools are read with VisualGeometryToolkitEval's `load_pool` and
 `load_pool_residuals`. The data root is `ENV["CAU_DATA_ROOT"]` (no default: set
 it, or give the drivers `--pool` and `--out`); pools are read from
 `<root>/accv2026/data/PT-E-SIFT-4K/` and heavy outputs land under

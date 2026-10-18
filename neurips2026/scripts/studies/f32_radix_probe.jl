@@ -21,10 +21,10 @@ using RansacScoringDoneRight
 const RSDR = RansacScoringDoneRight
 import JLD2
 using Printf
-using VisualGeometryCore.Pools: num_points
-using VisualGeometryEval.Pools: load_pool, load_pool_residuals, residuals_path, residual_matrix
+using VisualGeometryToolkitCore.Pools: num_points
+using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residuals_path, residual_matrix
 
-# The data root: ENV["CAU_DATA_ROOT"] (VisualGeometryEval's data-root variable).
+# The data root: ENV["CAU_DATA_ROOT"] (VisualGeometryToolkitEval's data-root variable).
 const DATA_ROOT = get(ENV, "CAU_DATA_ROOT") do
     error("set CAU_DATA_ROOT to the data root holding accv2026/data/PT-E-SIFT-4K")
 end

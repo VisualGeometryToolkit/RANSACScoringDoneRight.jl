@@ -1,12 +1,12 @@
-# The grid families on VisualGeometryCore's pool-selection contract
+# The grid families on VisualGeometryToolkitCore's pool-selection contract
 # (src/selection.jl): every family stages through the one `:rsdr` staging, and
 # `select_on_grid!` is THE grid verb's selection (`grid_evaluate(…;
 # return_idxs = true)`) on that staging — bit-identical to the evaluation
 # engine's former per-scoring dispatch. SIMFIT++ is its host loop over the
 # pairs' pixel residuals with the caller's per-(pair, column) generator. And
-# VisualGeometryCore's generic CPU fallback (per column `with_width` then the
+# VisualGeometryToolkitCore's generic CPU fallback (per column `with_width` then the
 # generic `best_pool_model`) on its `:pool` staging selects exactly what the
-# Exact grid of the width-free family selects — the path of VisualGeometryCore's
+# Exact grid of the width-free family selects — the path of VisualGeometryToolkitCore's
 # threshold scorers (MSAC/RANSAC at a threshold are no grid family).
 
 @testitem "select_on_grid" setup = [PoolFixtures] begin
@@ -16,10 +16,10 @@
     using RansacScoringDoneRight
     using RansacScoringDoneRight: stage_ig_shared_from_pairs, loss_spec, Exact, LossSpec, pair_chunk_budget,
         simfitpp_select, pixel_residuals, residual_unit_scale
-    using VisualGeometryCore: AbstractConstraintProblem, RansacScoring, MsacScoring, IGPrior, WelschShape,
+    using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, IGPrior, WelschShape,
         FundMat, sampson_distance, select_on_grid!, selection_staging, stage_selection
-    using VisualGeometryCore.Pools: PoolPair
-    import VisualGeometryCore as VGC
+    using VisualGeometryToolkitCore.Pools: PoolPair
+    import VisualGeometryToolkitCore as VGC
 
     struct _SGProblem <: AbstractConstraintProblem end
     VGC.codimension(::Type{_SGProblem}) = 1
@@ -73,7 +73,7 @@
                    WelschCostScoring(), SmoothTLSScoring(), GemanScoring())
             @test _select(sc, lw, pairs, Rs) == last(grid_evaluate(sc, sh, lw; return_idxs = true))
         end
-        # a threshold scorer is VisualGeometryCore's, not a grid family: it
+        # a threshold scorer is VisualGeometryToolkitCore's, not a grid family: it
         # stages `:pool` and selects through the generic fallback (below)
         for sc in (MsacScoring(1; threshold = 0.7), RansacScoring(2; threshold = 0.7))
             @test selection_staging(sc) === :pool
@@ -132,7 +132,7 @@
         @test _select(cfg, grid, spairs, sRs; rng_of) == got
     end
 
-    @testset "VisualGeometryCore's generic fallback ≡ the Exact grid of the width-free family" begin
+    @testset "VisualGeometryToolkitCore's generic fallback ≡ the Exact grid of the width-free family" begin
         # The generic method on the `:pool` staging: the threshold scorers'
         # own path; the marginal's through `invoke` (it is a grid family).
         generic!(idxs, sc, grid, st) =

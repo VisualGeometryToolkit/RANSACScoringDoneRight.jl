@@ -5,10 +5,10 @@
 
 @testitem "predictive_provider" begin
     using Test, StaticArrays
-    import VisualGeometryCore as VGC
+    import VisualGeometryToolkitCore as VGC
     using RansacScoringDoneRight
     using RansacScoringDoneRight: Predictive, alloc_scoring_workspace, score_sq_residuals!, penalties, sort_key
-    using VisualGeometryCore: AbstractConstraintProblem, JeffreysPrior, scored_model, solver_covariance,
+    using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, scored_model, solver_covariance,
         provides_solver_covariance
     const _PV = VGC
 

@@ -48,10 +48,10 @@ ZETAS=${ZETAS:-1,32}
 CRITERION=${CRITERION:-median}
 
 # The scenes: the TEST side of a registered split of the stack's one scene-split
-# registry (VisualGeometryEval configs/splits.toml) — the validation side
+# registry (VisualGeometryToolkitEval configs/splits.toml) — the validation side
 # tuned the natives being consumed, so reading the budget curves off it would be
 # tuning on the test set. No scene list lives here.
-SPLITS=${SPLITS:-${VGEVAL_DIR:?set VGEVAL_DIR to a VisualGeometryEval.jl checkout (or SPLITS)}/configs/splits.toml}
+SPLITS=${SPLITS:-${VGEVAL_DIR:?set VGEVAL_DIR to a VisualGeometryToolkitEval.jl checkout (or SPLITS)}/configs/splits.toml}
 SPLIT=${SPLIT:-phototourism}
 
 echo "[$(date +%T)] pool=$POOL"

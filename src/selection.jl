@@ -1,5 +1,5 @@
 # =============================================================================
-# selection.jl — this package's grid families on VisualGeometryCore's pool
+# selection.jl — this package's grid families on VisualGeometryToolkitCore's pool
 # selection contract (`selection_staging`, `stage_selection`,
 # `select_on_grid!`): one staged batch of pairs (`stage_ig_shared_from_pairs`)
 # shared by every grid family, then THE grid verb `grid_evaluate` (or
@@ -8,7 +8,7 @@
 # =============================================================================
 
 # Every grid family of this package reads the one staging: the WIDTH-FREE
-# loss-width families (RANSAC/MSAC at a threshold are VisualGeometryCore's
+# loss-width families (RANSAC/MSAC at a threshold are VisualGeometryToolkitCore's
 # scorers and select through its generic fallback), the marginals, SIMFIT++.
 const _WidthFreeLossWidth = Union{RansacScoring{<:Any, Nothing}, MsacScoring{<:Any, Nothing}, MlesacScoring,
                                   MagsacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring}

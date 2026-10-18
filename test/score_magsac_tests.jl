@@ -11,7 +11,7 @@
     using SpecialFunctions: gamma, gamma_inc
     using RansacScoringDoneRight
     using RansacScoringDoneRight: MagsacScoring, _MAGSAC_DOF, _MAGSAC_SCALE_MULTIPLE
-    using VisualGeometryCore: best_pool_model   # the 4-argument method is this package's
+    using VisualGeometryToolkitCore: best_pool_model   # the 4-argument method is this package's
 
     # MAGSAC++'s quality of a residual r at loss_width: ρ(κ·σ_max) − ρ(r), with
     # κ = _MAGSAC_SCALE_MULTIPLE, σ_max = loss_width/κ, R = r²/(2σ_max²), n = dof = 4, and C(n) = (2^{n/2}·Γ(n/2)·0.99)⁻¹

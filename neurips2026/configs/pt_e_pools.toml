@@ -38,7 +38,7 @@ reichstag               = "datasets/phototourism/raw_train/_inspect/reichstag/de
 florence_cathedral_side = "datasets/phototourism/raw_test/florence_cathedral_side/dense/sparse"
 
 [pool]
-# The generation constants of record (the default keywords of RobustVisualGeometry
+# The generation constants of record (the default keywords of VisualGeometryToolkitEstimation
 # eval/pool_generator.jl at 67d76e2, with the PT override snn_threshold = 0.9).
 sampler = "gaussian"
 gaussian_sigma = 0.125

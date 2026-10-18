@@ -2,7 +2,7 @@
 # neurips2026 — the NeurIPS 2026 research project of RansacScoringDoneRight
 # ("RANSAC Scoring Done Right"): drivers (scripts/), configs of record
 # (configs/), data bindings (data/), the paper (paper/) and its asset index
-# (REPRODUCE.md). A DrWatson project (VisualGeometryEval PaperProjects
+# (REPRODUCE.md). A DrWatson project (VisualGeometryToolkitEval PaperProjects
 # conventions), not a package: it devs the repository's package by relative
 # path and carries every dependency the drivers need; the package's own
 # Project.toml stays a library and never depends on this project. A member of
@@ -10,8 +10,8 @@
 # and this project resolve together, in the one untracked root Manifest.
 #
 # RansacScoringDoneRight has no pool IO (pools are read with
-# VisualGeometryEval.Pools) and no concrete problem types (they are
-# RobustVisualGeometry's); the studies here need both, so they live in this
+# VisualGeometryToolkitEval.Pools) and no concrete problem types (they are
+# VisualGeometryToolkitEstimation's); the studies here need both, so they live in this
 # environment rather than widening the package's [deps].
 #
 #   cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.instantiate()'
@@ -27,14 +27,14 @@ DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 RansacScoringDoneRight = "e23d4225-f201-4c3a-a297-7efae5f2deeb"
-RobustVisualGeometry = "48970fad-9a21-401c-bf6c-679fa4f2bd7f"
+VisualGeometryToolkitEstimation = "9a478df9-9a37-4dc7-9070-58617efe7573"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-VisualGeometryCore = "297d53b8-c8d7-4cd7-a9af-68e656508a81"
-VisualGeometryEval = "3a96b074-0aeb-4323-98af-032cad4f5882"
-VisualGeometryIo = "d0441031-17df-4f07-bc88-8d8f5a818e7b"
+VisualGeometryToolkitCore = "96820d6b-1dad-4e77-ad4a-8276f2ec1ce7"
+VisualGeometryToolkitEval = "86c88899-11c8-4b8e-8d7a-f01a8ab99b28"
+VisualGeometryToolkitIo = "2c312ccb-3050-452c-9523-414c480ba3da"
 
 [sources]
 RansacScoringDoneRight = {path = ".."}
@@ -46,12 +46,12 @@ DrWatson = "2.19"
 JLD2 = "0.6"
 Printf = "1"
 RansacScoringDoneRight = "0.1"
-RobustVisualGeometry = "0.1"
+VisualGeometryToolkitEstimation = "0.1"
 SpecialFunctions = "2"
 Statistics = "1"
 TOML = "1"
 Test = "1"
-VisualGeometryCore = "0.1"
-VisualGeometryEval = "0.1"
-VisualGeometryIo = "0.1"
+VisualGeometryToolkitCore = "0.1"
+VisualGeometryToolkitEval = "0.1"
+VisualGeometryToolkitIo = "0.1"
 julia = "1.12"

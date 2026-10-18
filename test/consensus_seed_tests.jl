@@ -1,15 +1,15 @@
 # The Student-t + uniform scorer's consensus set as a seed: `score!` sweeps,
 # `consensus_order`'s first `inlier_count` entries ARE the swept partition, and
-# VisualGeometryCore's toolkit seeds from it — `PosteriorWeightState(…; order,
+# VisualGeometryToolkitCore's toolkit seeds from it — `PosteriorWeightState(…; order,
 # prior)`, `posterior_weights!`/`posterior_inlier_probs!`, `consensus_s2` — under
 # the scorer's OWN scale prior (the one the sweep scored the partition under).
-# The seeds themselves are pinned in VisualGeometryCore (fit_scale_tests.jl).
+# The seeds themselves are pinned in VisualGeometryToolkitCore (fit_scale_tests.jl).
 
 @testitem "consensus_seed" begin
     using Test
     using Random: MersenneTwister
-    import VisualGeometryCore as VGC
-    using VisualGeometryCore: IGPrior, score!, inlier_count, consensus_order, consensus_s2, scale_prior,
+    import VisualGeometryToolkitCore as VGC
+    using VisualGeometryToolkitCore: IGPrior, score!, inlier_count, consensus_order, consensus_s2, scale_prior,
         partition_student_t, partition_rss, PosteriorWeightState, s_hat_sq, student_t_dof, sq_residuals,
         inlier_prior, posterior_weights!, posterior_inlier_probs!, inlier_threshold, ScoreBuffers,
         GauInlier, decision_threshold, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth

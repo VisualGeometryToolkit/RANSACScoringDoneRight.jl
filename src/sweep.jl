@@ -7,7 +7,7 @@
 #
 # =============================================================================
 
-# The scale prior `IGPrior` (and `JeffreysPrior()`) is VisualGeometryCore's.
+# The scale prior `IGPrior` (and `JeffreysPrior()`) is VisualGeometryToolkitCore's.
 
 # =============================================================================
 # Loggamma Table
@@ -293,7 +293,7 @@ ScoringWorkspace(perm::Vector{Int}, scratch::Vector{Int}, lg_table::Vector{Float
 
 # -----------------------------------------------------------------------------
 # Accessors — downstream reaches the workspace through these, never by field
-# name (RobustVisualGeometry's RANSAC glue read seven of its fields directly).
+# name (VisualGeometryToolkitEstimation's RANSAC glue read seven of its fields directly).
 # Each returns the buffer itself, so the glue's elementwise writes into
 # `penalties`/`sort_key` go through them unchanged.
 # -----------------------------------------------------------------------------
@@ -358,7 +358,7 @@ the codimension it was built for — so `n > length(lg_table(sws))` throws;
 build a larger workspace instead. (Growing the other buffers past it used to
 leave `sweep!` reading beyond the table under `@inbounds`.)
 
-Replaces RobustVisualGeometry's `_set_n!(::ScoringWorkspace, n)`, which reached
+Replaces VisualGeometryToolkitEstimation's `_set_n!(::ScoringWorkspace, n)`, which reached
 into seven of these fields by name and truncated the `prior_table`.
 """
 function Base.resize!(sws::ScoringWorkspace, n::Integer)

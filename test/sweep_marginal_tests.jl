@@ -12,7 +12,7 @@
     using Test
     using RansacScoringDoneRight
     using RansacScoringDoneRight: alloc_scoring_workspace, _sweep_score
-    using VisualGeometryCore: IGPrior
+    using VisualGeometryToolkitCore: IGPrior
 
     function _brute_Sk(r, model_dof, dg, halfwidth, prior, sws, profile_prior)
         n = length(r)

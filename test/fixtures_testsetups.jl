@@ -8,7 +8,7 @@
 @testsetup module PoolFixtures
     using Random
     using StaticArrays, LinearAlgebra
-    using VisualGeometryCore.Pools: PoolPair
+    using VisualGeometryToolkitCore.Pools: PoolPair
     export I3, identity_pool, mixture_residuals
 
     const I3 = SMatrix{3,3,Float64,9}(I)

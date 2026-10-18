@@ -19,7 +19,7 @@
 #                                                              (neg-log integrand)
 #   evidence  log Z = log ∫ exp(−ψ(t)) dt over t0 ± _MARG_L
 #
-# `sq_loss_width` — never a bare `s` — because VisualGeometryCore spells the
+# `sq_loss_width` — never a bare `s` — because VisualGeometryToolkitCore spells the
 # squared RESIDUAL `s` in `ρ(shape, s, sq_loss_width)`; see the name note in
 # inlier_potentials.jl.
 #
@@ -33,7 +33,7 @@
 # ONE parametric spec for every scale-marginal family: the loss shape is the
 # type parameter, so `WelschMarginal`/`SmoothTLSMarginal` are aliases, and the
 # only per-family code is the keyword constructors. The shape math is
-# VisualGeometryCore's.
+# VisualGeometryToolkitCore's.
 # `alpha0`/`beta0`, exactly as `IGPrior` spells the SAME two IG hyperparameters.
 # They were `α`/`β` here and `alpha0`/`beta0` there — one pair of quantities
 # under two spellings, one struct apart, with the constructors already taking
@@ -94,7 +94,7 @@ WelschMarginal(; alpha0::Real = 1.0, prior_loss_width::Real, outlier_halfwidth::
 
 # (`welsch_sq_scale_mle` — the per-pair Welsch squared-scale MLE, the argmax of
 #  the Hermite-interpolated integrand — is deleted with its `_hermite_peak`: no
-#  caller in RSDR, RVG, VisualGeometryEval or LODR.)
+#  caller in RSDR, RVG, VisualGeometryToolkitEval or LODR.)
 
 # The scale domain of every full-data scale marginal: t = log sq_loss_width ∈
 # t0 ± _MARG_L around the prior centre (e^{±7} ≈ 1000× the centre scale),
@@ -107,7 +107,7 @@ const _MARG_NG = 129
 # The outlier support of ALL redescending marginals (Welsch / smooth-TLS /
 # Geman-McClure): the domain `[0, r_max]` their density normalizer Z̃ is
 # integrated over, in the pool frame's unit (`NormalizedImageFrame`, half the
-# image diagonal; see VisualGeometryCore's `PoolPair`). It is a DECLARED constant — not a
+# image diagonal; see VisualGeometryToolkitCore's `PoolPair`). It is a DECLARED constant — not a
 # geometric bound, not a per-scene data max: every constant tuned for these
 # marginals (the cross-validated prior centres and outlier half-widths, and the
 # paper tables built on them) was cross-validated with r_max = 1, so the value is
@@ -136,8 +136,8 @@ const POOL_FRAME_R_MAX = 1.0
 
 # (`outlier_halfwidth_to_loss_width` / `loss_width_to_outlier_halfwidth`, the
 #  conversion of the two native axes at an operating scale multiple, moved to
-#  VisualGeometryCore's width_axes.jl with `to_native`.)
+#  VisualGeometryToolkitCore's width_axes.jl with `to_native`.)
 
 # (A Welsch outlier-half-width grid — the reference scale times `_unit_halfwidth` over a grid of
-#  scale multiples — is deleted: no caller; the tuning layer (VisualGeometryEval)
+#  scale multiples — is deleted: no caller; the tuning layer (VisualGeometryToolkitEval)
 #  builds its own grid.)

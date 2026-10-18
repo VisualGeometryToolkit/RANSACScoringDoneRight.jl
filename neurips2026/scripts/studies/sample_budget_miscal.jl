@@ -18,7 +18,7 @@
 #   scoring half of the miscalibration claim.
 #
 # MISCALIBRATION
-#   `corrupt_native(nat, ζ) = ζ·nat` (VisualGeometryEval.Tuning's, the one
+#   `corrupt_native(nat, ζ) = ζ·nat` (VisualGeometryToolkitEval.Tuning's, the one
 #   miscalibration map of the stack). It is principled for BOTH scorer families because both
 #   natives are linear in the noise scale ŝ:
 #       loss-width family       : loss_width = scale_multiple·ŝ
@@ -39,7 +39,7 @@
 #   gives the selection at every B simultaneously. B is in MINIMAL SAMPLES —
 #   the unit a RANSAC trial draws and its termination criterion counts. One
 #   sample yields several solver solutions occupying contiguous columns, and a
-#   repeated draw repeats them, so the boundaries are VisualGeometryEval's
+#   repeated draw repeats them, so the boundaries are VisualGeometryToolkitEval's
 #   `sample_starts` (the one reconstruction, certified against the pool's
 #   `total_samples` stamp); a pool the record cannot certify (PT-E-SIFT-4K_pf3:
 #   duplicated E roots) reads the replay-derived starts of `--pool-samples`
@@ -51,16 +51,16 @@
 #       --ranges=$CAU_DATA_ROOT/accv2026/data/PT-E-SIFT-4K_pf3/coarse_ranges_hierarchical.jld2 \
 #       [--pool-samples=<dir of <scene>.samples.jld2>] \
 #       --out=$CAU_DATA_ROOT/accv2026/results/sample_budget_miscal \
-#       --splits=<VisualGeometryEval>/configs/splits.toml --split=phototourism \
+#       --splits=<VisualGeometryToolkitEval>/configs/splits.toml --split=phototourism \
 #       [--zetas=1,32] [--criterion=median] \
 #       [--budgets=100,500,1000,...,4000]   # MINIMAL SAMPLES
 #       [--max-pairs=N]                     # smoke: first N pairs per scene
 #
 #   Each scene is the light pool `<scene>.jld2` plus its residuals
-#   `<scene>.residuals.jld2`, read with VisualGeometryEval.Pools.
+#   `<scene>.residuals.jld2`, read with VisualGeometryToolkitEval.Pools.
 #
 #   The scenes are the TEST side of the registered split `--split` of the
-#   stack's one scene-split registry (`--splits`, VisualGeometryEval
+#   stack's one scene-split registry (`--splits`, VisualGeometryToolkitEval
 #   configs/splits.toml): the validation side tuned the natives consumed here,
 #   so reading budget curves off it would be tuning on the test set.
 # =============================================================================
@@ -68,21 +68,21 @@
 using JLD2, Printf, Statistics, TOML
 using RansacScoringDoneRight
 using RansacScoringDoneRight: alloc_scoring_workspace
-# `best_pool_model`: VisualGeometryCore's generic (a scorer at its width) plus this
+# `best_pool_model`: VisualGeometryToolkitCore's generic (a scorer at its width) plus this
 # package's 4-argument method (a width-free loss-width family at a loss width).
-using VisualGeometryCore: width_axis, JeffreysPrior, codimension, best_pool_model
-using VisualGeometryCore.Pools: PoolPair, num_points, num_models, pool_imc
-using VisualGeometryCore.Synthetic: mean_average_accuracy
-using VisualGeometryEval: cli_option
-using VisualGeometryEval.Stats: maa_threshold
-using VisualGeometryEval.Pools: scene_loaders, residual_matrix, sample_starts, sample_ids
-using VisualGeometryEval.Tuning: corrupt_native
-using RobustVisualGeometry: EssentialProblem
+using VisualGeometryToolkitCore: width_axis, JeffreysPrior, codimension, best_pool_model
+using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_imc
+using VisualGeometryToolkitCore.Synthetic: mean_average_accuracy
+using VisualGeometryToolkitEval: cli_option
+using VisualGeometryToolkitEval.Stats: maa_threshold
+using VisualGeometryToolkitEval.Pools: scene_loaders, residual_matrix, sample_starts, sample_ids
+using VisualGeometryToolkitEval.Tuning: corrupt_native
+using VisualGeometryToolkitEstimation: EssentialProblem
 
 # -----------------------------------------------------------------------------
 # Scorer roster — the CV sidecar's method keys (without the `_<criterion>`
 # suffix). Each key's scoring and native axis are RSDR's: `scoring_for` builds
-# the scoring, VisualGeometryCore's `width_axis` says which native the sidecar must have tuned
+# the scoring, VisualGeometryToolkitCore's `width_axis` says which native the sidecar must have tuned
 # (asserted against the sidecar's `param_name` at load time).
 # -----------------------------------------------------------------------------
 const ROSTER = (:ransac, :msac, :gau, :magsac, :jeffreys)
@@ -271,7 +271,7 @@ function main(args = ARGS)
     # record does not certify its own boundaries; empty = from the record.
     samples_dir = cli_option(args, "pool-samples", "")
 
-    splits     = cli_option(args, "splits")   # VisualGeometryEval configs/splits.toml
+    splits     = cli_option(args, "splits")   # VisualGeometryToolkitEval configs/splits.toml
     split_name = cli_option(args, "split")    # a [splits.<name>] of --splits
     scenes = let reg = get(TOML.parsefile(splits), "splits", Dict{String,Any}())
         haskey(reg, split_name) || error("$splits has no [splits.$split_name] (has: $(sort(collect(keys(reg)))))")

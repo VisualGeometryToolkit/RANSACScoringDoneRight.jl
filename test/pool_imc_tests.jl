@@ -4,10 +4,10 @@
 
 @testitem "pool_imc" setup = [PoolFixtures] begin
     using Test, Random, StaticArrays
-    using VisualGeometryCore: HomographyMat, EssentialMat, FundMat
+    using VisualGeometryToolkitCore: HomographyMat, EssentialMat, FundMat
     using RansacScoringDoneRight
     using RansacScoringDoneRight: precompute_pair
-    using VisualGeometryCore.Pools: pool_imc
+    using VisualGeometryToolkitCore.Pools: pool_imc
 
     rng = MersenneTwister(5)
     n, M = 20, 4

@@ -4,7 +4,7 @@
 #
 #   julia --project=. test/runtests.jl
 #
-#   * the paper-project conventions (VisualGeometryEval PaperProjects): the
+#   * the paper-project conventions (VisualGeometryToolkitEval PaperProjects): the
 #     layout, the data policy, the REPRODUCE.md asset index against what
 #     paper/main.tex reads, configs of record, provenance and the data catalog;
 #   * the panel renderers reproduce every submitted figure fragment byte for
@@ -14,7 +14,7 @@
 using Test
 using DrWatson
 @quickactivate "NeurIPS2026"
-using VisualGeometryEval.PaperProjects: paper_project_violations
+using VisualGeometryToolkitEval.PaperProjects: paper_project_violations
 
 include(joinpath(@__DIR__, "test_paper_project.jl"))
 include(joinpath(@__DIR__, "test_figures.jl"))

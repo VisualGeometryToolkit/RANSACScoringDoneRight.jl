@@ -15,11 +15,11 @@
 
 @testitem "sample_point_rule" setup = [PoolFixtures] begin
     using Test, Random, StaticArrays
-    import VisualGeometryCore as VGC
+    import VisualGeometryToolkitCore as VGC
     using RansacScoringDoneRight
     using RansacScoringDoneRight: alloc_scoring_workspace,
         score_residuals!, score_sq_residuals!
-    using VisualGeometryCore: AbstractConstraintProblem, JeffreysPrior, IGPrior, RansacScoring, MsacScoring,
+    using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, IGPrior, RansacScoring, MsacScoring,
         residual_quality, best_pool_model
     const _SP = VGC
 

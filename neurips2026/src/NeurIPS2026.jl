@@ -1,7 +1,7 @@
 # =============================================================================
 # src/NeurIPS2026.jl — the shared prelude every driver includes after
 # `@quickactivate "NeurIPS2026"`: `include(srcdir("NeurIPS2026.jl"))`. It binds
-# the project's data trees (VisualGeometryEval Experiments: data_root() for the
+# the project's data trees (VisualGeometryToolkitEval Experiments: data_root() for the
 # read-only inputs, results_root() for the results), brings in the stage
 # runner, the run key and the provenance writer, and includes the project code
 # the drivers share: the panel renderers (panels.jl) and the asset stages that
@@ -15,7 +15,7 @@ using DrWatson
 using TOML: TOML
 using JLD2: JLD2
 using DataFrames: DataFrames, DataFrame
-using VisualGeometryEval.Experiments: Stage, run_stages, require_input, fresher, run_key,
+using VisualGeometryToolkitEval.Experiments: Stage, run_stages, require_input, fresher, run_key,
     set_project_root!, data_root, results_root, write_run_records, write_provenance, run_complete
 
 # data/exp_raw (inputs) and data/exp_pro (results) under this project, unless

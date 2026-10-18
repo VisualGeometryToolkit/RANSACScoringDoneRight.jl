@@ -29,7 +29,7 @@ hero:
 features:
   - icon: 🎯
     title: Score a hypothesis
-    details: "`StudentTUniformScoring` with `score!` (VisualGeometryCore's scoring contract) sorts a model's residuals and sweeps every partition: the score and the selected inlier count, with no threshold and no inlier scale."
+    details: "`StudentTUniformScoring` with `score!` (VisualGeometryToolkitCore's scoring contract) sorts a model's residuals and sweeps every partition: the score and the selected inlier count, with no threshold and no inlier scale."
     link: /api/scoring/
   - icon: 🗂️
     title: Select from a hypothesis pool
@@ -41,7 +41,7 @@ features:
     link: /api/pools/
   - icon: ⚖️
     title: Weight points for refinement
-    details: "`consensus_s2` and `PosteriorWeightState` (VisualGeometryCore's toolkit) turn the selected partition into a scale estimate and Student-t posterior weights for local optimization."
+    details: "`consensus_s2` and `PosteriorWeightState` (VisualGeometryToolkitCore's toolkit) turn the selected partition into a scale estimate and Student-t posterior weights for local optimization."
     link: /api/posterior/
 ---
 ```
@@ -160,7 +160,7 @@ in closed form:
 
 ```julia
 using RansacScoringDoneRight
-using VisualGeometryCore: scoring_workspace, score!, inlier_count, consensus_order, consensus_s2
+using VisualGeometryToolkitCore: scoring_workspace, score!, inlier_count, consensus_order, consensus_s2
 
 # `r`: the n residuals of one model hypothesis (codimension 1), e.g. a line
 # fit's signed point-to-line distances. A line has 2 parameters.

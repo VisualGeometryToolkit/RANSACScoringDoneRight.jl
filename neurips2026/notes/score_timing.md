@@ -39,7 +39,7 @@ twenty densest pairs (n̄ = 1580, 335 213 hypotheses).
 
 Workspaces are sized **per problem**. This matters: our sweep takes an O(n)
 radix sort only when the permutation buffer matches n exactly, and otherwise
-falls back to a comparison `sortperm!`. `RobustVisualGeometry`'s RANSAC resizes
+falls back to a comparison `sortperm!`. `VisualGeometryToolkitEstimation`'s RANSAC resizes
 every sortable buffer to n for precisely this reason, so per-problem sizing is
 what a deployment pays.
 

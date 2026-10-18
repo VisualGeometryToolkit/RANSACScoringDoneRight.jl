@@ -80,7 +80,7 @@ _free_local!(xs::AbstractArray...) = (foreach(_unsafe_free_one!, xs); nothing)
 @inline function _accumulate_data!(Dscratch, wid, x::T, Δ::T, shape, sq_loss_width_nodes,
                                    ng::Int) where {T}
     @inbounds for j in 1:ng
-        Dscratch[j, wid] += Δ * VisualGeometryCore.ρ(shape, x / sq_loss_width_nodes[j], one(T))
+        Dscratch[j, wid] += Δ * VgtkCore.ρ(shape, x / sq_loss_width_nodes[j], one(T))
     end
     return nothing
 end
@@ -272,7 +272,7 @@ end
 
 # (The multi-GPU drivers `grid_evaluate_marg_ka_mgpu`/`delta_sweep_mix_ka_mgpu`
 #  and their `_mgpu_staged_vcat`/`_marg_cuda_device!`/`_marg_ndev` helpers are
-#  deleted: no caller in RSDR, RVG, VisualGeometryEval or LODR, and the device helpers
+#  deleted: no caller in RSDR, RVG, VisualGeometryToolkitEval or LODR, and the device helpers
 #  reached into `Main.CUDA` — CUDA code in the core package, behind a comment
 #  claiming an extension that does not exist. A multi-GPU driver belongs in the
 #  experiment that needs it, where `using CUDA` is real.)

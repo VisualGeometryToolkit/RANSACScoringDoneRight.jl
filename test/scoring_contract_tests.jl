@@ -1,4 +1,4 @@
-# VisualGeometryCore's scoring contract on this package's scorer and on the
+# VisualGeometryToolkitCore's scoring contract on this package's scorer and on the
 # baseline scorers it adds grid methods for: `test_scoring_contract` (score!
 # type-stable, allocation-free and deterministic; inlier_count in 0:n;
 # consensus_order a permutation; the derived consensus set and scale inferred;
@@ -8,8 +8,8 @@
 
 @testitem "scoring_contract" setup = [PoolFixtures] begin
     using Test, Random
-    import VisualGeometryCore as VGC
-    using VisualGeometryCore: test_scoring_contract, scoring_workspace, score!, inlier_count,
+    import VisualGeometryToolkitCore as VGC
+    using VisualGeometryToolkitCore: test_scoring_contract, scoring_workspace, score!, inlier_count,
         consensus_order, MsacScoring, RansacScoring
     using RansacScoringDoneRight
     using RansacScoringDoneRight: pool_model_score

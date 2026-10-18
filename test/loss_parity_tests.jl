@@ -1,4 +1,4 @@
-# The loss potentials ARE VisualGeometryCore's.
+# The loss potentials ARE VisualGeometryToolkitCore's.
 #
 # VGC owns the shape math (`ρ(shape, s, sq_loss_width)`, `s` the squared
 # residual; `weight = ∂ρ/∂s`). RSDR's Track-B mixture and full-data scale
@@ -25,11 +25,11 @@
 
 @testitem "loss_parity" begin
     using Test
-    import VisualGeometryCore as VGC
+    import VisualGeometryToolkitCore as VGC
     using RansacScoringDoneRight
-    using VisualGeometryCore: WelschShape, GemanMcclureShape, SmoothTLSShape
+    using VisualGeometryToolkitCore: WelschShape, GemanMcclureShape, SmoothTLSShape
     using RansacScoringDoneRight: WelschMarginal, SmoothTLSMarginal, _default_depth
-    using VisualGeometryCore: IGPrior
+    using VisualGeometryToolkitCore: IGPrior
     using LogExpFunctions: logsumexp
     const _R = RansacScoringDoneRight
 

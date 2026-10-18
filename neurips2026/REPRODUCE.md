@@ -114,7 +114,7 @@ The PT titles keep "RootSIFT" (PT ships RootSIFT matches, Sec. 4.2).
 
 ## Not ported
 
-The tables the figures are drawn from came out of RobustVisualGeometry's
+The tables the figures are drawn from came out of VisualGeometryToolkitEstimation's
 `eval/` tree at **67d76e2** with uncommitted changes, committed as **6bc825d**
 on 2026-05-09 ("Pending neurips2026 eval work"); the tree was later moved to
 a since-retired evaluation package (`eval/neurips2026/`, deleted there on
@@ -147,10 +147,10 @@ A rerun replaces the stored runs only through a new keyed run and the
 `verify` → sign-off → `deploy` path above. Two routes:
 
 - **Port, then rerun (the route that fits the conventions).** Port steps 1–3
-  onto the current stack — the pool producer of VisualGeometryEval (as
+  onto the current stack — the pool producer of VisualGeometryToolkitEval (as
   accv2026's `scripts/scoring_pools.jl` does) with the `*_pools.toml` configs
   here, the grid evaluators of this package (`grid_evaluate`,
-  `select_on_grid!`) and VisualGeometryEval's `Tuning` for the
+  `select_on_grid!`) and VisualGeometryToolkitEval's `Tuning` for the
   cross-validation — as `scripts/profile.jl` and `scripts/sensitivity.jl`
   writing keyed runs with the same `source.jld2` schema, so `fig_*.jl` reads
   them through a changed `[stored]`/run entry. Expected runtime once ported,

@@ -1,18 +1,19 @@
 # The scorer fact a grid reads — the width axis its grid is native on
-# (VisualGeometryCore's `width_axis(scoring)`, with this package's methods for
+# (VisualGeometryToolkitCore's `width_axis(scoring)`, with this package's methods for
 # its grid families) — the scale multiple → native maps every grid of these
-# families is cut with (`to_native`, `native_map`: VisualGeometryCore's since
+# families is cut with (`to_native`, `native_map`: VisualGeometryToolkitCore's since
 # K+, pinned here on the Student-t marginal's crossover they serve), and the
 # marginal's method of the one grid verb against the per-pair selection.
 
 @testitem "native_widths" setup = [PoolFixtures] begin
+    import VisualGeometryToolkitCore as VgtkCore
     using Test, Random
     using KernelAbstractions
-    using VisualGeometryCore: LossWidth, OutlierHalfwidth, ScaleMultiple, to_native, native_map, decision_width,
+    using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth, ScaleMultiple, to_native, native_map, decision_width,
         WelschShape, GauInlier, decision_threshold, IGPrior, RansacScoring, MsacScoring, width_axis,
         best_pool_model
     using RansacScoringDoneRight
-    import VisualGeometryCore
+    import VisualGeometryToolkitCore
     using RansacScoringDoneRight: LossSpec, loss_spec, stage_ig_shared_from_pairs
 
     @testset "to_native(::OutlierHalfwidth): the mixture's crossover" begin
@@ -26,7 +27,7 @@
         @test to_native(OutlierHalfwidth(), 6.0, 1.0; d_g = 1) ≈ 8.2293e7 rtol = 1e-4
         @test to_native(OutlierHalfwidth(), 6.0, 1.0; d_g = 2) ≈ 1.0156e4 rtol = 1e-4
         @test_throws UndefKeywordError to_native(OutlierHalfwidth(), 2.0, 1.0)
-        # the loss-width axis is VisualGeometryCore's: the truncation flips at its width
+        # the loss-width axis is VisualGeometryToolkitCore's: the truncation flips at its width
         @test to_native(LossWidth(), 2.5, 0.4; d_g = 1) == 2.5 * 0.4
     end
 
@@ -50,7 +51,7 @@
         @test width_axis(WelschMarginal(; prior_loss_width = 0.1, outlier_halfwidth = 1.0)) === LossWidth()
         @test width_axis(SimFitPP()) === LossWidth()
         # the axis is the one `with_width` rebuilds the marginal on
-        @test VisualGeometryCore.with_width(m, OutlierHalfwidth(0.7)) == StudentTUniformScoring(5, 0.7; codimension = 1)
+        @test VgtkCore.with_width(m, OutlierHalfwidth(0.7)) == StudentTUniformScoring(5, 0.7; codimension = 1)
         # the retired per-type trait is gone, not aliased
         @test !isdefined(RansacScoringDoneRight, Symbol("native", "_axis"))   # in fragments: a retired name
     end

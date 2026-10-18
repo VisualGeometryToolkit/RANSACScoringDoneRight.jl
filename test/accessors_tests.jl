@@ -1,5 +1,5 @@
 # Accessors for the structs downstream code used to read by field name, and
-# `resize!(::ScoringWorkspace, n)`, which replaced RobustVisualGeometry's
+# `resize!(::ScoringWorkspace, n)`, which replaced VisualGeometryToolkitEstimation's
 # `_set_n!` reaching into seven workspace fields.
 
 @testitem "accessors" begin
@@ -7,7 +7,7 @@
     using RansacScoringDoneRight
     using RansacScoringDoneRight: sweep_order, penalties, sort_key, lg_table,
         alloc_scoring_workspace, default_scoring_workspace, _build_prior_table
-    using VisualGeometryCore: IGPrior, outlier_halfwidth, scale_prior, minimal_sample_size, codimension,
+    using VisualGeometryToolkitCore: IGPrior, outlier_halfwidth, scale_prior, minimal_sample_size, codimension,
         score!, inlier_count, consensus_order, partition_rss
 
     @testset "accessors" begin
@@ -78,7 +78,7 @@
         sws = alloc_scoring_workspace(n, 1, s)
         _, k = score_residuals!(sws, zeros(n), s, r, n)
         @test m < k < n
-        # the loop RobustVisualGeometry's seed partition hand-rolled, verbatim
+        # the loop VisualGeometryToolkitEstimation's seed partition hand-rolled, verbatim
         RSS = 0.0
         for j in 1:k
             RSS += Float64(r[sweep_order(sws)[j]])^2

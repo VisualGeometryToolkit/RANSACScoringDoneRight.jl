@@ -123,7 +123,7 @@ function loss_scale_bounds(sq_residuals::AbstractVector{Float64}, n::Int; pad::F
     return (tlo, log(max_sq_loss_width) + pad)
 end
 
-# (Deleted, with no caller in RSDR, RVG, VisualGeometryEval or LODR: the fixed-depth
+# (Deleted, with no caller in RSDR, RVG, VisualGeometryToolkitEval or LODR: the fixed-depth
 #  Stage 1–4 layer — the batch `_inlier_logev`, the trait-parameterised
 #  quadrature `sweep!` pair, and the marginalised-scale responsibilities with
 #  their `_scale_post_logweights!` and the Gaussian-shape `posterior_*!`

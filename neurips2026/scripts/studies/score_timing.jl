@@ -5,7 +5,7 @@
 #
 # THIS FILE CONTAINS NO SCORING CODE. Every form ships in
 # src/scoring_eval_common.jl (`best_pool_model` at a loss width) and, for a
-# scorer at its width, VisualGeometryCore's generic `best_pool_model` over
+# scorer at its width, VisualGeometryToolkitCore's generic `best_pool_model` over
 # `score!`; this driver only calls them.
 #
 #   EXACT (closed form, evaluated per residual)
@@ -32,13 +32,13 @@
 
 using JLD2, Printf
 using RansacScoringDoneRight
-using VisualGeometryCore.Pools: num_points, num_models
-using VisualGeometryEval: cli_option
-using VisualGeometryEval.Pools: load_pool, load_pool_residuals, residuals_path, residual_matrix
-import VisualGeometryCore as VGC
+using VisualGeometryToolkitCore.Pools: num_points, num_models
+using VisualGeometryToolkitEval: cli_option
+using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residuals_path, residual_matrix
+import VisualGeometryToolkitCore as VGC
 const RSDR = RansacScoringDoneRight
 
-# The data root: ENV["CAU_DATA_ROOT"] (VisualGeometryEval's data-root variable).
+# The data root: ENV["CAU_DATA_ROOT"] (VisualGeometryToolkitEval's data-root variable).
 # Needed only for the --pool/--out defaults; give both to run without it.
 data_root() = get(ENV, "CAU_DATA_ROOT") do
     error("set CAU_DATA_ROOT to the data root, or give --pool and --out")

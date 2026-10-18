@@ -80,7 +80,7 @@ loss width.
 **It returns σ², not σ** — which is why the name no longer says "scale". It was
 `unbiased_median_scale`, sitting in the same package as a partition-scale
 verb that returned a LINEAR σ̂. Two exported `*_scale` names, one squared and one
-not, is the ambiguity VisualGeometryCore's `s2` convention exists to remove.
+not, is the ambiguity VisualGeometryToolkitCore's `s2` convention exists to remove.
 """
 function unbiased_median_variance(residuals_sq::AbstractVector{<:Real}, sq_loss_width::Real; dg::Integer = 1)
     dist = Chisq(dg)

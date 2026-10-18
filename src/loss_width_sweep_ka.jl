@@ -246,12 +246,12 @@ end
 # so the loss-width branch silently ran at one codimension while the marginal
 # branch tracked the problem's.
 #
-# DG DEFAULTS TO 1 for a bare `T()`, as VisualGeometryCore's
+# DG DEFAULTS TO 1 for a bare `T()`, as VisualGeometryToolkitCore's
 # `deploy(shape, s2; codim)` defaults; a problem-aware constructor states it.
 # (The outlier-half-width <-> loss-width crossing,
 # `outlier_halfwidth_to_loss_width`/`loss_width_to_outlier_halfwidth`, takes its
 # `d_g` explicitly.)
-# RANSAC and MSAC are VisualGeometryCore's baseline scorers (`RansacScoring`,
+# RANSAC and MSAC are VisualGeometryToolkitCore's baseline scorers (`RansacScoring`,
 # `MsacScoring`, with their `residual_quality`); this package adds their grid
 # methods and the paper baselines below.
 
@@ -277,7 +277,7 @@ struct MagsacScoring{DG}     <: GauScoring end
     WelschCostScoring{DG}()
 
 The Welsch cost as a loss-width score at codimension `DG`: `1 − ρ/w²` with
-VisualGeometryCore's Welsch `ρ`, no mixture underneath. Symbol name `:welsch_cost`.
+VisualGeometryToolkitCore's Welsch `ρ`, no mixture underneath. Symbol name `:welsch_cost`.
 """
 struct WelschCostScoring{DG} <: LossCostScoring end
 
@@ -285,7 +285,7 @@ struct WelschCostScoring{DG} <: LossCostScoring end
     SmoothTLSScoring{DG}()
 
 The smooth truncated-least-squares cost as a loss-width score at codimension
-`DG`: `1 − ρ/w²` with VisualGeometryCore's smooth-TLS `ρ`. Symbol name
+`DG`: `1 − ρ/w²` with VisualGeometryToolkitCore's smooth-TLS `ρ`. Symbol name
 `:smooth_tls`.
 """
 struct SmoothTLSScoring{DG}  <: LossCostScoring end
@@ -294,7 +294,7 @@ struct SmoothTLSScoring{DG}  <: LossCostScoring end
     GemanScoring{DG}()
 
 The Geman–McClure cost as a loss-width score at codimension `DG`: `1 − ρ/w²`
-with VisualGeometryCore's Geman–McClure `ρ`. Symbol name `:geman`.
+with VisualGeometryToolkitCore's Geman–McClure `ρ`. Symbol name `:geman`.
 """
 struct GemanScoring{DG}      <: LossCostScoring end
 
@@ -314,7 +314,7 @@ fail several frames down inside GPU staging instead of at the call site.
 const LossWidthScoring{DG} = Union{RansacScoring{DG}, MsacScoring{DG}, MlesacScoring{DG},
                              MagsacScoring{DG}, WelschCostScoring{DG},
                              SmoothTLSScoring{DG}, GemanScoring{DG}}
-# The paper baselines this package owns (RANSAC/MSAC's are VisualGeometryCore's).
+# The paper baselines this package owns (RANSAC/MSAC's are VisualGeometryToolkitCore's).
 const _OwnLossWidthScoring{DG} = Union{MlesacScoring{DG}, MagsacScoring{DG}, WelschCostScoring{DG},
                                        SmoothTLSScoring{DG}, GemanScoring{DG}}
 
@@ -328,7 +328,7 @@ const _SCORING_FAMILIES = ((:ransac, RansacScoring), (:msac, MsacScoring),
                            (:welsch_cost, WelschCostScoring), (:smooth_tls, SmoothTLSScoring),
                            (:geman, GemanScoring))
 # The constructors of the families this package owns (RANSAC's and MSAC's are
-# VisualGeometryCore's, with the same forms).
+# VisualGeometryToolkitCore's, with the same forms).
 const _OWN_SCORING_FAMILIES = _SCORING_FAMILIES[3:end]
 
 # Bare `T()` is codim 1 (see above); `T(problem)` takes it from the problem,
@@ -351,14 +351,14 @@ end
 # the inlier RSS term dropped, keeping only the count, which is why it is the one
 # baseline measurably worse.
 
-# The cost branch scores by a VisualGeometryCore shape. All three carry a
+# The cost branch scores by a VisualGeometryToolkitCore shape. All three carry a
 # 95%-efficiency constant in VGC (`efficiency_constant(shape, codim)`), so each
 # has its own loss width `scale_multiple·ŝ`. `SmoothTLSShape` is not an `AbstractMEstimator` (a
 # truncation has no influence function), but VGC tabulates its constant anyway,
 # so membership of that supertype is not what decides whether a loss width exists.
-loss_shape(::WelschCostScoring) = VisualGeometryCore.WelschShape()
-loss_shape(::GemanScoring)      = VisualGeometryCore.GemanMcclureShape()
-loss_shape(::SmoothTLSScoring)  = VisualGeometryCore.SmoothTLSShape()
+loss_shape(::WelschCostScoring) = VgtkCore.WelschShape()
+loss_shape(::GemanScoring)      = VgtkCore.GemanMcclureShape()
+loss_shape(::SmoothTLSScoring)  = VgtkCore.SmoothTLSShape()
 
 # ...AND MSAC, which is not a coincidence: profiling the labels is a max over
 # z in {0,1}, i.e. a min of the two NLLs, and a min of a quadratic against a
@@ -378,7 +378,7 @@ loss_shape(::SmoothTLSScoring)  = VisualGeometryCore.SmoothTLSShape()
 # rest of the interface by accident, including a `bounded` default that is wrong
 # for it. No `loss_shape(::RansacScoring)`: RANSAC's quality is TLS's
 # `weight` directly (`residual_quality` below), so nothing would consume one.
-# (`loss_shape(::MsacScoring) === TLSShape()` is VisualGeometryCore's, beside the type.)
+# (`loss_shape(::MsacScoring) === TLSShape()` is VisualGeometryToolkitCore's, beside the type.)
 
 # (A loss scoring's efficiency loss width, `efficiency_constant(shape, codim)·ŝ`,
 #  has no accessor here: nothing consumes one, and accessors are added only where
@@ -423,10 +423,10 @@ loss_width_scoring(s::Symbol, problem::AbstractConstraintProblem) =
 # kernel (MAGSAC++'s incomplete gammas included).
 # =============================================================================
 
-# The per-residual QUALITY is VisualGeometryCore's `residual_quality` (its
+# The per-residual QUALITY is VisualGeometryToolkitCore's `residual_quality` (its
 # RANSAC and MSAC methods beside those types); the paper baselines add theirs.
 
-# The losses: 1 − ρ/sq_loss_width, VisualGeometryCore's ρ normalised by its
+# The losses: 1 − ρ/sq_loss_width, VisualGeometryToolkitCore's ρ normalised by its
 # depth sq_loss_width = loss_width². IT IS THE QUALITY, NOT THE IRLS WEIGHT:
 # scoring sums a per-point contribution, while VGC's `weight` is dρ/ds. They
 # coincide for Welsch only — Geman-McClure's weight is the SQUARE of its
@@ -434,7 +434,7 @@ loss_width_scoring(s::Symbol, problem::AbstractConstraintProblem) =
 # ρ(sh, Inf, sq_loss_width), which is NaN for Geman-McClure.
 @inline function residual_quality(sc::LossCostScoring, d2::Float64, loss_width::Float64)
     sq_loss_width = loss_width * loss_width
-    return 1.0 - VisualGeometryCore.ρ(loss_shape(sc), d2, sq_loss_width) / sq_loss_width
+    return 1.0 - VgtkCore.ρ(loss_shape(sc), d2, sq_loss_width) / sq_loss_width
 end
 
 # MLESAC: the Gaussian-uniform log-density, normalised by its value at d = 0.

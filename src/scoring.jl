@@ -1,5 +1,5 @@
 # =============================================================================
-# Scoring — the Student-t + uniform marginal score on VisualGeometryCore's
+# Scoring — the Student-t + uniform marginal score on VisualGeometryToolkitCore's
 # scoring contract
 # =============================================================================
 #
@@ -29,7 +29,7 @@
 #                  RANSAC and MSAC are not outside the family: they profile the
 #                  labels where MLESAC marginalises them.
 #
-#   LossCostScoring a robust loss rho from VisualGeometryCore, with NO mixture.
+#   LossCostScoring a robust loss rho from VisualGeometryToolkitCore, with NO mixture.
 #                  The half-quadratic lift does give rho(s) = min_z[z*s + psi(z)],
 #                  but psi is a PENALTY, not a normalised log-prior: z is not a
 #                  posterior, there is no gamma and no f_in. These cannot answer
@@ -45,7 +45,7 @@ abstract type LossCostScoring <: AbstractScoring end
 
 # The Gaussian-uniform mixture's boundary, both ways — `decision_threshold`
 # (the residual at which the MAP rule flips) and `decision_width(::GauInlier, …)`
-# (the outlier half-width that puts it there) — is VisualGeometryCore's, with
+# (the outlier half-width that puts it there) — is VisualGeometryToolkitCore's, with
 # `GauInlier`. `outlier_halfwidth_to_loss_width`/`loss_width_to_outlier_halfwidth`
 # (welsch_marginal.jl) are a DIFFERENT question — what one family's parameter is
 # worth in the other's units at a fixed operating scale multiple.
@@ -71,15 +71,15 @@ abstract type LossCostScoring <: AbstractScoring end
 #
 # This was briefly a `LabelRule`/`ScaleRule` trait family with an
 # `is_threshold_based` predicate over it. Deleted: nothing dispatched on any of
-# it, in this package or in VisualGeometryCore, RobustVisualGeometry,
-# VisualGeometryEval or BlobBoards — and traits are added only when a
+# it, in this package or in VisualGeometryToolkitCore, VisualGeometryToolkitEstimation,
+# VisualGeometryToolkitEval or BlobBoards — and traits are added only when a
 # dispatch site consumes them. Its `FixedScale` also shadowed VGC's exported
 # `FixedScale` (a `ScaleInterface` that RVG really does dispatch on), so one
 # name meant two unrelated things across a single dependency chain. The claim
 # the traits encoded is the table above, which costs nothing and cannot drift
 # out of step with a dispatch that does not exist.
 
-# `loss_shape(::LossCostScoring)` -> the VisualGeometryCore shape it scores by.
+# `loss_shape(::LossCostScoring)` -> the VisualGeometryToolkitCore shape it scores by.
 # Methods go on VGC's OWN exported `loss_shape` (imported in the entry point)
 # rather than on a fresh generic: VGC already asks this exact question of a
 # `DeployedLoss`/`AnnealedLoss`/`AbstractLossShape`, and a scoring is just one
@@ -87,7 +87,7 @@ abstract type LossCostScoring <: AbstractScoring end
 # exporting it — put two unrelated bindings of one name in a single dependency
 # chain, which becomes an ambiguity for any module that `using`s both.
 
-# AbstractScoring now lives in VisualGeometryCore (src/robust/estimation.jl) —
+# AbstractScoring now lives in VisualGeometryToolkitCore (src/robust/estimation.jl) —
 # imported in RansacScoringDoneRight.jl and re-exported. Scoring functions
 # determine how candidate models are scored. The scale-free marginal score
 # (Eq. 12) eliminates σ by marginalizing under the Jeffreys prior π(σ²) ∝ 1/σ²,
@@ -103,11 +103,11 @@ _alpha0(p::IGPrior) = p.alpha0
 
 # NOTE: the local-optimization strategy types (AbstractLocalOptimization,
 # NoLocalOptimization, PosteriorIrls, PoseLibLm) and `default_local_optimization`
-# live in RobustVisualGeometry — they are RANSAC-loop concerns, not scoring.
+# live in VisualGeometryToolkitEstimation — they are RANSAC-loop concerns, not scoring.
 # Scoring only produces (S, k) from residuals; the loop decides how to refine.
 
 # The Student-t + uniform mixture's toolkit (StudentTMixture, the posterior
-# weights of a partition, PosteriorWeightState) is VisualGeometryCore's.
+# weights of a partition, PosteriorWeightState) is VisualGeometryToolkitCore's.
 
 # -----------------------------------------------------------------------------
 # Uncertain{M} Dispatch (Section 3.3: Specializations)
@@ -234,7 +234,7 @@ scale_prior(s::StudentTUniformScoring) = s.scale_prior
 Model-uncertain scoring that incorporates estimation uncertainty Σ̃_θ (Section
 4, Eq. 20). An OPTION, not a default: measured against model-certain scoring
 it ties or loses on pooled ΔAUC@10° and costs 13–565× per hypothesis
-(RobustVisualGeometry's docs/src/guide/scoring.md has the tables).
+(VisualGeometryToolkitEstimation's docs/src/guide/scoring.md has the tables).
 """
 const _PredictiveStudentTUniform = StudentTUniformScoring{Predictive}
 
@@ -303,8 +303,8 @@ _check_provider(::Type, ::Type) = nothing
 _check_provider(::Type{Predictive}, ::Type{P}) where {P} =
     provides_solver_covariance(P) ? nothing : throw(ArgumentError(
     "predictive scoring needs a solver covariance, and $(nameof(P)) provides none: define " *
-    "`VisualGeometryCore.solver_covariance(::$(nameof(P)), model, sample_indices)` and declare " *
-    "`VisualGeometryCore.provides_solver_covariance(::Type{<:$(nameof(P))}) = true`, or score $(nameof(P)) model-certain"))
+    "`VisualGeometryToolkitCore.solver_covariance(::$(nameof(P)), model, sample_indices)` and declare " *
+    "`VisualGeometryToolkitCore.provides_solver_covariance(::Type{<:$(nameof(P))}) = true`, or score $(nameof(P)) model-certain"))
 
 # =============================================================================
 # alloc_scoring_workspace — build ScoringWorkspace from problem + scoring
@@ -490,7 +490,7 @@ sweep!(sws::ScoringWorkspace, s::StudentTUniformScoring{Predictive, DG},
 
 # (`sweep_marginal!` and `score_residuals_marginal!` — the logsumexp over
 #  nested partitions instead of their max — are deleted with the `:marginal_soft`
-#  grid they served: no caller in RSDR, RVG, VisualGeometryEval or BlobBoards.)
+#  grid they served: no caller in RSDR, RVG, VisualGeometryToolkitEval or BlobBoards.)
 
 # =============================================================================
 # Model Covariance Wrapping — Uncertain{M} construction
@@ -549,20 +549,20 @@ end
 
 # =============================================================================
 # Per-point scoring helpers used by both score_sq_residuals! (here) and the
-# RansacWorkspace-typed score!/mask! glue (which lives in RobustVisualGeometry,
+# RansacWorkspace-typed score!/mask! glue (which lives in VisualGeometryToolkitEstimation,
 # since it reads/writes the RANSAC workspace buffers).
 # =============================================================================
 
 _zero_penalties!(::ScoringWorkspace, ::StudentTUniformScoring{Nothing}) = nothing
 _zero_penalties!(sws::ScoringWorkspace, ::StudentTUniformScoring{Predictive}) = fill!(sws.penalties, 0.0)
 
-# RobustVisualGeometry's RANSAC loop scores through `score_residuals!` (a plain
+# VisualGeometryToolkitEstimation's RANSAC loop scores through `score_residuals!` (a plain
 # model) and the covariance-given `score_sq_residuals!` (an Uncertain{M}),
 # naming its workspace buffers; it computes no score of its own.
 
 
 # =============================================================================
-# The scoring contract (VisualGeometryCore src/robust/scoring_contract.jl)
+# The scoring contract (VisualGeometryToolkitCore src/robust/scoring_contract.jl)
 # =============================================================================
 #
 # The sort-and-sweep IS the contract's fused path: one `score!` produces the

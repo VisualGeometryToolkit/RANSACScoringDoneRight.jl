@@ -2,8 +2,8 @@
 
 The stack's shared conventions — naming, signatures, data arguments, frames and
 normalization, pixel origins, derivatives — are one canonical page in
-VisualGeometryCore's documentation,
-[Conventions](https://visualgeometrytoolkit.github.io/VisualGeometryCore/stable/guide/conventions/).
+VisualGeometryToolkitCore's documentation,
+[Conventions](https://visualgeometrytoolkit.github.io/VisualGeometryToolkitCore/stable/guide/conventions/).
 This page does not restate them. It states the three things that are true of
 RansacScoringDoneRight and of nowhere else in the stack.
 
@@ -11,7 +11,7 @@ RansacScoringDoneRight and of nowhere else in the stack.
 
 Everywhere else the rule is pixels in, pixels out, with normalization private to
 one estimator. The benchmark pool is the exception, and it is declared rather
-than silent. The pool record — VisualGeometryCore's `PoolPair` (its `Pools`
+than silent. The pool record — VisualGeometryToolkitCore's `PoolPair` (its `Pools`
 module documents the record, its maps and its accessors) — stores its
 correspondences and models in **`NormalizedImageFrame`**: image centre, scaled
 by HALF the image diagonal, so the image corners lie at unit radius. The
@@ -35,7 +35,7 @@ What the rule then demands of this package:
 * **There is one exit to pixels.** [`pixel_residuals`](@ref) is the image-plane
   Sampson residual of the pool's models in pixels, computed from the light
   record alone: the correspondences come back through the stored maps
-  (VisualGeometryCore's `pixel_csponds`), each model by composition with the
+  (VisualGeometryToolkitCore's `pixel_csponds`), each model by composition with the
   normalization's sides (`inv(D) ∘ M ∘ S`). It never reads the stored residual
   matrix, so it does not depend on that matrix's residual kind — tangent
   Sampson for an essential pool, image-plane Sampson for F and H.
@@ -95,6 +95,6 @@ The option stays for that reason.
 
 ## See also
 
-* [Conventions](https://visualgeometrytoolkit.github.io/VisualGeometryCore/stable/guide/conventions/)
+* [Conventions](https://visualgeometrytoolkit.github.io/VisualGeometryToolkitCore/stable/guide/conventions/)
   — the shared text this page links to rather than restates
 * [API Reference](api/pools.md) — the functions named above

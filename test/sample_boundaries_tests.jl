@@ -1,6 +1,6 @@
 # =============================================================================
 # sample_boundaries_tests.jl — ONE owner of minimal-sample boundaries:
-# VisualGeometryEval `Pools.sample_starts` (certified against the pool's
+# VisualGeometryToolkitEval `Pools.sample_starts` (certified against the pool's
 # `total_samples` stamp). A "new sample where the `sample_indices` column
 # changes" rule merges repeated draws — neurips2026/sample_budget_miscal.jl's
 # own `sample_ids` did, until 2026-10-08 — so no code here compares adjacent

@@ -5,16 +5,16 @@
 # Contains:
 #   - `best_pool_model(scoring, pair, R, loss_width)`: the index of a pair's
 #     best stored model under a width-free loss-width family at a loss width
-#     (the 3-argument form — a scorer AT its width — is VisualGeometryCore's,
+#     (the 3-argument form — a scorer AT its width — is VisualGeometryToolkitCore's,
 #     generic over `score!`)
 #   - the per-pair staging precompute (PrecomputedPair)
-# Every function here takes the light pool record (VisualGeometryCore's
+# Every function here takes the light pool record (VisualGeometryToolkitCore's
 # `PoolPair`) together with its residual matrix `R` (num_points × num_models,
 # Float32, NormalizedImageFrame units): the record no longer carries the
 # residuals, and no scorer opens a file.
 # The JLD2/sidecar HARNESS (SceneEval + scene IO, coarse-range sidecar
 # lookups) moved to the evaluation engine (src/evaluation/) with the rest
-# of the eval subsystem — 2026-07-18 (now VisualGeometryEval)
+# of the eval subsystem — 2026-07-18 (now VisualGeometryToolkitEval)
 # =============================================================================
 
 # StudentTUniformScoring, ScoringWorkspace, score_residuals!, codimension are defined
@@ -139,7 +139,7 @@ loss_width)` ([`pool_model_score`](@ref)), exactly the Exact grid's
 ([`grid_evaluate`](@ref)) per-model score on this one pair. `0` means no model
 (see the sentinel contract above); a matrix of another shape is a
 `DimensionMismatch`. A scorer AT its width (`MsacScoring(dg; threshold = w)`,
-a `StudentTUniformScoring`) goes through VisualGeometryCore's 3-argument
+a `StudentTUniformScoring`) goes through VisualGeometryToolkitCore's 3-argument
 `best_pool_model(scoring, pair, R)` — the same arithmetic, through `score!`.
 """
 function best_pool_model(scoring::LossWidthScoring, pair::PoolPair, R::AbstractMatrix{Float32},
@@ -151,12 +151,12 @@ end
 
 # log(1 + eˣ), stable over the whole range, is LogExpFunctions' `log1pexp` (a
 # dependency of SpecialFunctions already; the local `_softplus` restated it).
-# GaU's argument never exceeds ½; `mixture_nll` (VisualGeometryCore's) needs
+# GaU's argument never exceeds ½; `mixture_nll` (VisualGeometryToolkitCore's) needs
 # the whole range.
 const _SOFTPLUS_HALF = log1pexp(0.5)      # MLESAC's quality normaliser (loss_width_sweep_ka.jl)
 
 # (`evaluate_at` — the single-loss-width, threaded counterpart of
-#  `grid_evaluate` — is deleted: no caller in RSDR, RVG, VisualGeometryEval or LODR. A
+#  `grid_evaluate` — is deleted: no caller in RSDR, RVG, VisualGeometryToolkitEval or LODR. A
 #  one-column `grid_evaluate` answers the same question.)
 
 # (`grid_evaluate` — the CPU grid over a Symbol-named method — is deleted with
@@ -169,7 +169,7 @@ const _SOFTPLUS_HALF = log1pexp(0.5)      # MLESAC's quality normaliser (loss_wi
 #  scale marginals and the mixture marginal.)
 
 # (`_maa` — mean average accuracy as the area under the sorted accuracy curve —
-#  is deleted: a third implementation of VisualGeometryCore's
+#  is deleted: a third implementation of VisualGeometryToolkitCore's
 #  `Synthetic.mean_average_accuracy(errors; T)`, the same area as a mean of
 #  max(0, 1 − e/T). It agreed on finite errors to 8e-16 but not at the edges:
 #  it returned 0.0 for no errors (VGC: NaN) and let a NaN error poison the sum

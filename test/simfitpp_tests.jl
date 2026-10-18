@@ -2,6 +2,7 @@
 # algorithm on synthetic residuals; no dataset, CPU only.
 
 @testitem "simfitpp" setup = [PoolFixtures] begin
+    import VisualGeometryToolkitCore as VgtkCore
     using Test, Random, Statistics
     using Distributions: Chisq, quantile, cdf
     using StaticArrays, LinearAlgebra
@@ -9,9 +10,9 @@
     using RansacScoringDoneRight: SimFitPP, unbiased_median_variance, simfitpp_loss_width,
                                   simfitpp_select, with_residual_unit, residual_unit_scale,
                                   _msac_best_over
-    using VisualGeometryCore.Pools: PoolPair, pool_normalization, pool_frame_calibrations,
+    using VisualGeometryToolkitCore.Pools: PoolPair, pool_normalization, pool_frame_calibrations,
                                     calibration_matrices
-    using VisualGeometryCore
+    using VisualGeometryToolkitCore
 
     @testset "unbiased_median_variance (UnbiasedMed)" begin
         rng = MersenneTwister(7)
@@ -111,7 +112,7 @@
     end
 
     @testset "pixel_residuals: the pool models' residuals in the reference's frame" begin
-        using VisualGeometryCore: sampson_distance, FundMat
+        using VisualGeometryToolkitCore: sampson_distance, FundMat
         rng = MersenneTwister(21)
         n, K = 300, 12
         # A pool in its pool frame: correspondences in [-1,1]², random fundamental
@@ -150,11 +151,11 @@
         c = with_residual_unit(SimFitPP(), residual_unit_scale(pair))
         @test first(simfitpp_select(Dc, 0.01, c; rng = MersenneTwister(3))) in 0:K
         @test residual_unit_scale(pair) == s
-        # the pool's normalization and pool-frame calibrations (VisualGeometryCore's)
+        # the pool's normalization and pool-frame calibrations (VisualGeometryToolkitCore's)
         T1c, T2c = sim(s, -0.9, -0.7), sim(s, -0.95, -0.65)
         pc = mk(T1c, T2c)
         nz = pool_normalization(pc)
-        Sn, Dn = VisualGeometryCore.source_map(nz), VisualGeometryCore.target_map(nz)
+        Sn, Dn = VgtkCore.source_map(nz), VgtkCore.target_map(nz)
         @test (to_homogeneous(Sn), to_homogeneous(Dn)) == (T1c, T2c)
         K1, K2 = calibration_matrices(pc)
         @test pool_frame_calibrations(pc) == (T1c * K1, T2c * K2)

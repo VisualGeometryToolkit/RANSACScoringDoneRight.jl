@@ -30,8 +30,8 @@ grows scarce.
 Code for the NeurIPS 2026 paper "RANSAC Scoring Done Right", in two halves:
 the registered package `RansacScoringDoneRight` — scale-free marginal RANSAC
 scoring (`StudentTUniformScoring`), its CPU/GPU grid evaluators and the
-paper's baseline scorers, an implementation of VisualGeometryCore's scoring and
-pool-selection contracts that depends only on VisualGeometryCore — and the
+paper's baseline scorers, an implementation of VisualGeometryToolkitCore's scoring and
+pool-selection contracts that depends only on VisualGeometryToolkitCore — and the
 research project `neurips2026/` that holds the paper and produces its figures.
 Both, with the package's tests and docs, are one Pkg workspace: they resolve
 together, in one `Manifest.toml` at the repository root that is not committed.
@@ -47,12 +47,12 @@ Pkg.add("RansacScoringDoneRight")
 
 Requires Julia 1.12. Part of the
 [VisualGeometryToolkit](https://github.com/VisualGeometryToolkit) stack; built on
-[VisualGeometryCore.jl](https://github.com/VisualGeometryToolkit/VisualGeometryCore.jl).
+[VisualGeometryToolkitCore.jl](https://github.com/VisualGeometryToolkit/VisualGeometryToolkit.jl/tree/main/VisualGeometryToolkitCore).
 
 ## Contracts implemented
 
-VisualGeometryCore owns the contracts; this package implements them for its
-own types and re-exports nothing VisualGeometryCore owns.
+VisualGeometryToolkitCore owns the contracts; this package implements them for its
+own types and re-exports nothing VisualGeometryToolkitCore owns.
 
 - **Scoring contract** (VGC `robust/estimation.jl`). `StudentTUniformScoring`
   implements `scoring_workspace` (its `ScoringWorkspace`), `score!` (the
@@ -62,31 +62,31 @@ own types and re-exports nothing VisualGeometryCore owns.
   `with_width`/`width_axis` (`OutlierHalfwidth`), and, for
   `StudentTUniformScoring{Predictive}`, `is_predictive` and `scored_model`.
   The consensus scale (`consensus_s2`), the soft inlier weights and the
-  Student-t posterior toolkit are derived in VisualGeometryCore from these.
+  Student-t posterior toolkit are derived in VisualGeometryToolkitCore from these.
 - **Pool-selection contract** (VGC `robust/pool_selection.jl`). Every grid
   family of this package (the marginal, the width-free loss-width families,
   `LossSpec`, `ScaleMarginal`, `SimFitPP`) declares the `:rsdr` staging
   (`selection_staging`, `stage_selection`) and implements `select_on_grid!`
   over its device kernels. `best_pool_model(scoring, pair, R)` is
-  VisualGeometryCore's for any scorer at its width; this package adds the
+  VisualGeometryToolkitCore's for any scorer at its width; this package adds the
   method for its width-free loss-width families.
 
-Problems implement VisualGeometryCore's `AbstractConstraintProblem` (`data_size`, `codimension`,
+Problems implement VisualGeometryToolkitCore's `AbstractConstraintProblem` (`data_size`, `codimension`,
 `minimal_sample_size`, `constraint_with_jacobians`; optionally `solver_covariance`,
 declared by `provides_solver_covariance`, for predictive scoring). The RANSAC
-loop and the problems are RobustVisualGeometry's, the local-optimization
-strategies RobustVisualGeometry's and LocalOptimizationDoneRight's; a caller
+loop and the problems are VisualGeometryToolkitEstimation's, the local-optimization
+strategies VisualGeometryToolkitEstimation's and LocalOptimizationDoneRight's; a caller
 composes them, e.g.
 `find_essential(camera1, camera2, cs; scoring = StudentTUniformScoring(EssentialProblem, a), local_optimization = …)`.
 RANSAC and MSAC at a threshold (`RansacScoring`, `MsacScoring`) are
-VisualGeometryCore's baseline scorers; this package adds their grid methods.
+VisualGeometryToolkitCore's baseline scorers; this package adds their grid methods.
 
 ## GPU scoring (KernelAbstractions)
 
 `ig_sweep_ka.jl` / `loss_width_sweep_ka.jl` / `marg_sweep_ka.jl` provide
 CPU+CUDA-portable device kernels over a pool staged once with
 `stage_ig_shared_from_pairs(pairs, residuals; backend)` — the light pool
-records (VisualGeometryCore's `PoolPair`) and their residual matrices. ONE verb
+records (VisualGeometryToolkitCore's `PoolPair`) and their residual matrices. ONE verb
 evaluates a grid, dispatched on the scoring:
 
 - `grid_evaluate([S,] loss_width_scoring(:msac, dg), staged, loss_widths; aggregation)`
@@ -102,11 +102,11 @@ evaluates a grid, dispatched on the scoring:
 - `grid_evaluate([S,] WelschMarginal(; prior_loss_width, outlier_halfwidth), staged, prior_loss_widths)`
   — the full-data scale marginals (the grid replaces the prior centre).
 
-VisualGeometryCore's `width_axis(scoring)` names the width axis a scoring's
+VisualGeometryToolkitCore's `width_axis(scoring)` names the width axis a scoring's
 grid is native on (`OutlierHalfwidth` or `LossWidth`; this package states it for
 its grid families), `to_native(axis, scale_multiple, scale; d_g)` maps a scale
 multiple onto it, and `native_map(axis; d_g)` is that map curried (both
-VisualGeometryCore's).
+VisualGeometryToolkitCore's).
 
 Built on `KernelAbstractions` (runs on `CPU()` or `CUDA.CUDABackend()`); the
 Float64 device path is bit-identical to the CPU reference
@@ -152,20 +152,20 @@ selection over a pool record and its residual matrix (`best_pool_model` for
 the width-free loss-width families, `pool_model_score`, `precompute_pair`)
 and the KernelAbstractions grids above. A scoring at its width is its own
 pool-selection handle. The prior-spec layer that fits `IGPrior` from
-validation data (`PriorSpec`, `fit_prior`) is VisualGeometryEval's `Tuning`. The pool record
+validation data (`PriorSpec`, `fit_prior`) is VisualGeometryToolkitEval's `Tuning`. The pool record
 itself — `PoolPair` and its accessors (`num_points`, `num_models`, `pool_imc`,
-`pool_normalization`, …) — is VisualGeometryCore's (`VisualGeometryCore.Pools`);
+`pool_normalization`, …) — is VisualGeometryToolkitCore's (`VisualGeometryToolkitCore.Pools`);
 pool IO is the evaluation package's.
 
 This layer is **problem-agnostic**: concrete problem types
 (`HomographyProblem`/`FundMatProblem`/`EssentialProblem`) stay in the consumer
 and are given as a leading `problem_type` argument where a scorer needs one
-(`best_pool_model(StudentTUniformScoring(problem_type, outlier_halfwidth), pair, R)`, VisualGeometryCore's
+(`best_pool_model(StudentTUniformScoring(problem_type, outlier_halfwidth), pair, R)`, VisualGeometryToolkitCore's
 per-pair argmax of a scorer at its width).
 
 ## Vocabulary
 
-VisualGeometryCore's robust layer is authoritative for the loss words: the
+VisualGeometryToolkitCore's robust layer is authoritative for the loss words: the
 shape math `ρ`/`ψ`/`weight`, `scale_multiple` the dimensionless multiple of the
 scale a width sits at, `s2` the noise VARIANCE, `loss_width` a loss's scale
 parameter and `sq_loss_width` its square (`scale_multiple² · s2` for a deployed

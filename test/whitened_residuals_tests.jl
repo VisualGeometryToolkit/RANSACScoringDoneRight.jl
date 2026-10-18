@@ -1,15 +1,15 @@
 # The scorers read the problem protocol's whitened residuals: a DEGENERATE
-# measurement (VisualGeometryCore's one Sampson degeneracy rule — residual 0
+# measurement (VisualGeometryToolkitCore's one Sampson degeneracy rule — residual 0
 # when the constraint vanishes, ±Inf otherwise) reaches the sweep as an outlier,
 # and the covariance-given predictive scorer reports the SAME signed residuals
 # `residuals!` writes. The protocol itself (`whitened_residual`,
-# `residual_context`, the rounding scale) is VisualGeometryCore's and is tested
+# `residual_context`, the rounding scale) is VisualGeometryToolkitCore's and is tested
 # there (constraint_problem_tests.jl).
 
 @testitem "whitened_residuals" begin
     using Test, StaticArrays, LinearAlgebra
-    import VisualGeometryCore as VGC
-    using VisualGeometryCore: AbstractConstraintProblem
+    import VisualGeometryToolkitCore as VGC
+    using VisualGeometryToolkitCore: AbstractConstraintProblem
     using RansacScoringDoneRight
     using RansacScoringDoneRight: alloc_scoring_workspace, score_sq_residuals!, sweep_order, penalties,
         Predictive

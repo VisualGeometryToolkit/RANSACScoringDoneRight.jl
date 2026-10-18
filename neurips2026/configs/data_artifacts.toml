@@ -1,5 +1,5 @@
 # =============================================================================
-# data_artifacts — THE catalog of the paper's published data (VisualGeometryEval
+# data_artifacts — THE catalog of the paper's published data (VisualGeometryToolkitEval
 # DataArtifacts): what each Julia artifact in ../Artifacts.toml (lazy,
 # sha256- and tree-hash-pinned, hosted on Zenodo) holds, where it mounts
 # (data = data_root(), results = results_root()), which Zenodo record carries

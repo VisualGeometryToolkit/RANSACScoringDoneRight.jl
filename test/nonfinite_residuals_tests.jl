@@ -19,7 +19,7 @@
         stage_ig_shared_from_pairs, Exact, LogBinned,
         histogram_pm_score_kernel!, exact_pm_score_kernel!, _build_score_weight_matrix,
         _support_sq
-    using VisualGeometryCore: best_pool_model   # the 4-argument method is this package's
+    using VisualGeometryToolkitCore: best_pool_model   # the 4-argument method is this package's
 
     # One pair whose M models share their residuals except that model j has
     # 3(j−1) of its INLIERS replaced by `bad(j)`. Model 1 keeps every inlier, so it

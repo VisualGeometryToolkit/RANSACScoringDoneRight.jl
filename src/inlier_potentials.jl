@@ -1,11 +1,11 @@
 # =============================================================================
 # inlier_potentials.jl — the inlier-loss layer: canonical depths and the Z̃
-# normalizer integrand, on VisualGeometryCore's loss shapes.
+# normalizer integrand, on VisualGeometryToolkitCore's loss shapes.
 #
-# THE SHAPE MATH IS VisualGeometryCore's, and only VGC's: every path in this
+# THE SHAPE MATH IS VisualGeometryToolkitCore's, and only VGC's: every path in this
 # package — the scale-quadrature data term (`_accumulate_data!`, shared by the
 # Track-B mixture and the full-data marginals), the Z̃ quadrature below, the
-# loss-width sweep bin weights — calls `VisualGeometryCore.ρ` (and `weight`, its
+# loss-width sweep bin weights — calls `VisualGeometryToolkitCore.ρ` (and `weight`, its
 # s-derivative, where needed) directly. The depth-parameterised potential this
 # subsystem works in is VGC's UNIT-WIDTH shape, scaled by the well depth:
 #
@@ -30,7 +30,7 @@
 # The loss shapes
 # -----------------------------------------------------------------------------
 
-# The shape TAGS are VisualGeometryCore's loss family, used here by their own
+# The shape TAGS are VisualGeometryToolkitCore's loss family, used here by their own
 # names — `AbstractLossShape`, `GaussianShape`, `WelschShape`,
 # `GemanMcclureShape`, `SmoothTLSShape`. The formula layer below stays
 # RSDR-owned (methods on the VGC tags — RSDR owns the functions, no piracy).
@@ -47,7 +47,7 @@
 @inline _default_depth(::GemanMcclureShape) = 0.5
 @inline _default_depth(::SmoothTLSShape)    = 1.0
 
-# THE NAMES MATCH VisualGeometryCore: `sq_r` is its `s` (a squared RESIDUAL),
+# THE NAMES MATCH VisualGeometryToolkitCore: `sq_r` is its `s` (a squared RESIDUAL),
 # `sq_loss_width` its squared loss width. There is no scale multiple in this
 # facet: these losses MARGINALISE the loss width rather than deploy a shape at
 # `scale_multiple·σ`, so `sq_loss_width` is the whole width, not
@@ -67,4 +67,4 @@
 #  VGC's `weight`.)
 
 # log Z̃(sq_loss_width; Δ) — the loss's normaliser on [−r_max, r_max] — is
-# VisualGeometryCore's `truncated_log_normaliser`.
+# VisualGeometryToolkitCore's `truncated_log_normaliser`.

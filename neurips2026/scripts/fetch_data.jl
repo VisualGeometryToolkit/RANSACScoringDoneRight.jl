@@ -15,11 +15,11 @@
 # data/exp_raw (made an artifact view when no data root is bound), results
 # artifacts into results_root(). An existing binding wins — CAU_DATA_ROOT /
 # CAU_RESULTS_ROOT or the author's data/exp_raw, data/exp_pro links — and is
-# never written to (VisualGeometryEval DataArtifacts `fetch_artifacts!`).
+# never written to (VisualGeometryToolkitEval DataArtifacts `fetch_artifacts!`).
 # =============================================================================
 using DrWatson
 @quickactivate "NeurIPS2026"
-using VisualGeometryEval: cli_option
+using VisualGeometryToolkitEval: cli_option
 include(srcdir("NeurIPS2026.jl"))
 include(srcdir("data_artifacts.jl"))
 

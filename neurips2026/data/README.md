@@ -1,6 +1,6 @@
 # data/
 
-DrWatson's data directory, bound per machine (VisualGeometryEval Experiments):
+DrWatson's data directory, bound per machine (VisualGeometryToolkitEval Experiments):
 
 | Tree | Resolved by | Access |
 |---|---|---|

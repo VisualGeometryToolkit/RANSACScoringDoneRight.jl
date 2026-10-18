@@ -24,7 +24,7 @@
     using RansacScoringDoneRight
     using RansacScoringDoneRight: default_scoring_workspace, _sweep_score, sweep!,
         _build_lg_table, _alpha0, _build_prior_table
-    using VisualGeometryCore: IGPrior, JeffreysPrior
+    using VisualGeometryToolkitCore: IGPrior, JeffreysPrior
 
     # Reference (brute-force) score of an explicit support I — the same formula
     # sweep! evaluates, applied to an arbitrary subset.

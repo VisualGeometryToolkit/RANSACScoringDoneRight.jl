@@ -3,7 +3,7 @@
 # 4-argument method) it is the Exact grid's per-model score on one pair (the sum
 # of `residual_quality`, fed as staging feeds it); a scorer AT its width — the
 # Student-t marginal, MSAC/RANSAC at a threshold — goes through
-# VisualGeometryCore's generic 3-argument method over `score!`, and must pick
+# VisualGeometryToolkitCore's generic 3-argument method over `score!`, and must pick
 # exactly what the width-free family picks at that width. The sentinel for "no
 # model" is 0, never a valid index. (The typed pool-scorer handles are retired.)
 
@@ -13,8 +13,8 @@
     using RansacScoringDoneRight
     using RansacScoringDoneRight: stage_ig_shared_from_pairs,
         Exact, exact_pm_score_kernel!, _support_sq, pool_model_score
-    using VisualGeometryCore: AbstractConstraintProblem, RansacScoring, MsacScoring, best_pool_model
-    import VisualGeometryCore as VGC
+    using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, best_pool_model
+    import VisualGeometryToolkitCore as VGC
 
     const _BP_FAMILIES = (RansacScoring(), MsacScoring(), MlesacScoring(), MagsacScoring(),
                           WelschCostScoring(), SmoothTLSScoring(), GemanScoring())
@@ -80,7 +80,7 @@
         end
 
         @testset "a scorer at its width ≡ the width-free family at that width (bitwise)" begin
-            # VisualGeometryCore's generic form over `score!` against this
+            # VisualGeometryToolkitCore's generic form over `score!` against this
             # package's 4-argument loop over `residual_quality`: the same index,
             # over several pairs, widths and codimensions, minimal samples and all.
             for _ in 1:12

@@ -1,6 +1,6 @@
 # =============================================================================
 # test_paper_project.jl — the stack's paper-project conventions
-# (VisualGeometryEval `PaperProjects.paper_project_violations`): the layout,
+# (VisualGeometryToolkitEval `PaperProjects.paper_project_violations`): the layout,
 # the data policy (D1–D4), the REPRODUCE.md asset index against what
 # paper/main.tex reads, configs of record, provenance and the data catalog.
 # Opt-outs with their reasons sit in the files they excuse
@@ -9,8 +9,8 @@
 # list only shrinks, and any NEW violation fails.
 # =============================================================================
 using Test
-using VisualGeometryEval.PaperProjects: paper_project_violations
-using VisualGeometryEval.Experiments: DataPolicyAllow
+using VisualGeometryToolkitEval.PaperProjects: paper_project_violations
+using VisualGeometryToolkitEval.Experiments: DataPolicyAllow
 
 # The scoring studies of scripts/studies/ (write-ups in notes/; not paper
 # assets: the paper reads none of their outputs) predate the conventions: they
