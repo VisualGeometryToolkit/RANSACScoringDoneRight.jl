@@ -48,4 +48,6 @@ RANSACScoringDoneRight.PrecomputedPair
 RANSACScoringDoneRight.ig_sweep_kernel!
 RANSACScoringDoneRight.ScaleMarginal
 RANSACScoringDoneRight.SmoothTLSMarginal
+RANSACScoringDoneRight._PredictiveStudentTUniform
+RANSACScoringDoneRight._build_score_weight_matrix
 ```

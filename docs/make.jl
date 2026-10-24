@@ -14,7 +14,7 @@ makedocs(;
         edit_link="main",
     ),
     plugins=[LandingPage(), CodeBlocks()],
-    warnonly=[:missing_docs, :cross_references, :docs_block],
+    warnonly=[:cross_references, :docs_block],
     pages=[
         "Home" => "index.md",
         "Overview" => "overview.md",

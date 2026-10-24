@@ -37,6 +37,18 @@ score_residuals!
 score_sq_residuals!
 ```
 
+### Its methods of the scoring contract
+
+The generic functions are VisualGeometryToolkitCore's; these are the methods
+for the marginal score and its workspace.
+
+```@docs
+outlier_halfwidth(::StudentTUniformScoring)
+scale_prior(::ScoringWorkspace)
+with_width(::StudentTUniformScoring{P, DG}, ::OutlierHalfwidth{Float64}) where {P, DG}
+scored_model(::StudentTUniformScoring{Predictive}, ::Any, ::Any, ::Any)
+```
+
 ## Loss-width scorings
 
 The baselines of the paper (RANSAC, MSAC, GaU/MLESAC, MAGSAC++) and three
