@@ -134,10 +134,11 @@ prior regularization as validation data grows scarce.
 ## Install
 
 **Pkg** — `RANSACScoringDoneRight` is registered in the General registry
-(Julia 1.12+):
+(Julia 1.12+). The example below also uses VisualGeometryToolkitCore, which
+defines the scoring contract:
 
 ```julia
-using Pkg; Pkg.add("RANSACScoringDoneRight")
+using Pkg; Pkg.add(["RANSACScoringDoneRight", "VisualGeometryToolkitCore"])
 ```
 
 **git** — clone the repository and instantiate it:
@@ -162,10 +163,13 @@ in closed form:
 using RANSACScoringDoneRight
 using VisualGeometryToolkitCore: scoring_workspace, score!, inlier_count, consensus_order, consensus_s2
 
-# `r`: the n residuals of one model hypothesis (codimension 1), e.g. a line
-# fit's signed point-to-line distances. A line has 2 parameters.
-scoring = StudentTUniformScoring(2, 0.5)          # model dof, outlier half-width
-W = scoring_workspace(scoring, n, 1)              # sweep buffers, reusable
+# The residuals of one line hypothesis (codimension 1): 80 inliers with noise
+# scale 0.01 and 20 outliers spread uniformly over [-0.5, 0.5].
+n = 100
+r = [0.01 .* randn(80); rand(20) .- 0.5]
+
+scoring = StudentTUniformScoring(2, 0.5)          # a line has 2 parameters; outlier half-width 0.5
+W = scoring_workspace(scoring, n, 1)              # sweep buffers, reusable across hypotheses
 q = Vector{Float64}(undef, n)
 S = score!(W, scoring, q, r, n)                   # the score
 k = inlier_count(scoring, W)                      # the selected inlier count

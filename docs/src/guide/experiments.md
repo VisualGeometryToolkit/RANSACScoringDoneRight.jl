@@ -1,5 +1,26 @@
 # Experiments
 
+## Reproducing the paper
+
+The paper's figures are drawn by drivers in the research project
+`neurips2026/`, which has its own environment:
+
+```bash
+cd neurips2026
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+julia --project=. scripts/fetch_data.jl          # a machine without the data (neurips2026/data/README.md)
+julia --project=. scripts/fig_profile.jl --plan
+julia --project=. test/runtests.jl
+make -C paper
+```
+
+`neurips2026/REPRODUCE.md` maps every figure of the paper to its driver, its
+config of record and its data. The figures regenerate byte for byte from the
+six stored evaluation runs of record. The evaluation that produced those runs
+is documented there but not yet ported to the current stack.
+
+## Scoring studies
+
 The repository ships two scoring studies beside the package: a driver per study
 in `neurips2026/scripts/studies/` and its write-up in `neurips2026/notes/`, checked in together so that a
 result and the code that produced it travel together. Both exercise the

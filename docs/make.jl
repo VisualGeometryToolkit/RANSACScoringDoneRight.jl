@@ -21,6 +21,7 @@ makedocs(;
         "Guides" => [
             "Experiments" => "guide/experiments.md",
             "Conventions" => "conventions.md",
+            "Working on the stack" => "guide/stack.md",
         ],
         "API Reference" => [
             "Scoring" => "api/scoring.md",
