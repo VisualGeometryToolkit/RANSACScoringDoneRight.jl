@@ -21,8 +21,8 @@
 
 @testitem "parametric_sweep" begin
     using Test, Random
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: default_scoring_workspace, _sweep_score, sweep!,
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: default_scoring_workspace, _sweep_score, sweep!,
         _build_lg_table, _alpha0, _build_prior_table
     using VisualGeometryToolkitCore: IGPrior, JeffreysPrior
 

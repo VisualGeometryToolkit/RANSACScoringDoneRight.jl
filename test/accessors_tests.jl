@@ -4,8 +4,8 @@
 
 @testitem "accessors" begin
     using Test
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: sweep_order, penalties, sort_key, lg_table,
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: sweep_order, penalties, sort_key, lg_table,
         alloc_scoring_workspace, default_scoring_workspace, _build_prior_table
     using VisualGeometryToolkitCore: IGPrior, outlier_halfwidth, scale_prior, minimal_sample_size, codimension,
         score!, inlier_count, consensus_order, partition_rss

@@ -1,5 +1,5 @@
 # =============================================================================
-# RansacScoringDoneRight test suite — ReTestItems
+# RANSACScoringDoneRight test suite — ReTestItems
 # =============================================================================
 #
 # Every `*_tests.jl` file under test/ is discovered automatically. Each holds a
@@ -20,10 +20,10 @@
 # =============================================================================
 
 using ReTestItems
-using RansacScoringDoneRight
+using RANSACScoringDoneRight
 
 runtests(
-    RansacScoringDoneRight;
+    RANSACScoringDoneRight;
     nworkers = parse(Int, get(ENV, "RETESTITEMS_NWORKERS", string(max(1, Sys.CPU_THREADS ÷ 2)))),
     name = isempty(ARGS) ? nothing : Regex(join(ARGS, "|")),
 )

@@ -119,7 +119,7 @@ The tables the figures are drawn from came out of VisualGeometryToolkitEstimatio
 on 2026-05-09 ("Pending neurips2026 eval work"); the tree was later moved to
 a since-retired evaluation package (`eval/neurips2026/`, deleted there on
 2026-07-18; the bootstrap tuner it used left
-RansacScoringDoneRight with it). No Manifest was tracked at that commit. The
+RANSACScoringDoneRight with it). No Manifest was tracked at that commit. The
 chain, per cell (dataset × matcher × problem):
 
 1. **pools** — `eval/generate_pt_scoring_data.jl`, `generate_heb_scoring_data.jl`,

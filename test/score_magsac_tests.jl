@@ -9,8 +9,8 @@
 @testitem "score_magsac" setup = [PoolFixtures] begin
     using Test, Random
     using SpecialFunctions: gamma, gamma_inc
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: MagsacScoring, _MAGSAC_DOF, _MAGSAC_SCALE_MULTIPLE
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: MagsacScoring, _MAGSAC_DOF, _MAGSAC_SCALE_MULTIPLE
     using VisualGeometryToolkitCore: best_pool_model   # the 4-argument method is this package's
 
     # MAGSAC++'s quality of a residual r at loss_width: ρ(κ·σ_max) − ρ(r), with
@@ -79,7 +79,7 @@
     # (1) is the guard — the scalar against the paper's ρ above.
     # -----------------------------------------------------------------------------
     using KernelAbstractions
-    using RansacScoringDoneRight: residual_quality, stage_ig_shared_from_pairs,
+    using RANSACScoringDoneRight: residual_quality, stage_ig_shared_from_pairs,
         Exact, LogBinned
 
     @testset "MAGSAC++: the paper's quality; Exact and LogBinned agree" begin

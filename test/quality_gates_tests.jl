@@ -10,7 +10,7 @@
 # (stdlib/test compat entries added); ambiguities 2 → 0 (the dead Track-B
 # quadrature `sweep!` pair, Gaussian-shape method against the abstract-shape one);
 # implicit imports 21 → 0 and stale explicit imports 12 → 0 (every
-# import now lives, explicit, in src/RansacScoringDoneRight.jl); JET 27 → 19.
+# import now lives, explicit, in src/RANSACScoringDoneRight.jl); JET 27 → 19.
 # 2026-09-21: the bound is the count of the package ANALYSED ALONE (19). In the
 # full suite it reads lower (16) because earlier test files define interface
 # methods (`data_size`, `constraint_with_jacobians`, …) for their own test
@@ -31,7 +31,7 @@
     import VisualGeometryToolkitCore as VgtkCore
     using Test, Aqua, ExplicitImports, JET
     using VisualGeometryToolkitCore: VisualGeometryToolkitCore, test_quality_gates
-    using RansacScoringDoneRight
+    using RANSACScoringDoneRight
 
     # The stack's one gate (VisualGeometryToolkitCore's quality extension): Aqua,
     # ExplicitImports, JET. Two qualified accesses are to names their owners
@@ -68,7 +68,7 @@
     # keyword), so the mixture marginal's method reads `minimal_sample_size` of
     # an abstract `Type` — the abstract-stub class of the problem protocol,
     # implemented downstream (as `data_size`/`codimension` above).
-    test_quality_gates(RansacScoringDoneRight; jet_bound = 8,
+    test_quality_gates(RANSACScoringDoneRight; jet_bound = 8,
                        treat_as_own = [VgtkCore.RansacScoring, VgtkCore.MsacScoring],
                        qualified_ignore = (:copyto!, :maxthreadid))
 end

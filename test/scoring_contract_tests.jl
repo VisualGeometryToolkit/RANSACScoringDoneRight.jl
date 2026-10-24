@@ -11,8 +11,8 @@
     import VisualGeometryToolkitCore as VGC
     using VisualGeometryToolkitCore: test_scoring_contract, scoring_workspace, score!, inlier_count,
         consensus_order, MsacScoring, RansacScoring
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: pool_model_score
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: pool_model_score
 
     rng = MersenneTwister(41)
     n = 60

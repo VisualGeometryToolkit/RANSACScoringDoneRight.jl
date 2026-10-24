@@ -1,7 +1,7 @@
 # Posterior weighting
 
 ```@meta
-CurrentModule = RansacScoringDoneRight
+CurrentModule = RANSACScoringDoneRight
 ```
 
 After marginalizing the scale, the inlier density is a Student-t; the selected

@@ -6,6 +6,6 @@
 @testitem "quality_naming" begin
     using Test
     using VisualGeometryToolkitCore: test_naming
-    using RansacScoringDoneRight
-    test_naming(RansacScoringDoneRight)
+    using RANSACScoringDoneRight
+    test_naming(RANSACScoringDoneRight)
 end

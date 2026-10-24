@@ -10,8 +10,8 @@
     using Test, StaticArrays, LinearAlgebra
     import VisualGeometryToolkitCore as VGC
     using VisualGeometryToolkitCore: AbstractConstraintProblem
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: alloc_scoring_workspace, score_sq_residuals!, sweep_order, penalties,
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: alloc_scoring_workspace, score_sq_residuals!, sweep_order, penalties,
         Predictive
 
     # A problem that IS its list of constraint tuples (g, ∂ₓg, ∂_θg[, Σ̃_x]).

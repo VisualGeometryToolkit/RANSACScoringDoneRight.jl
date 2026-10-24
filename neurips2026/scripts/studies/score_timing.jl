@@ -31,12 +31,12 @@
 # =============================================================================
 
 using JLD2, Printf
-using RansacScoringDoneRight
+using RANSACScoringDoneRight
 using VisualGeometryToolkitCore.Pools: num_points, num_models
 using VisualGeometryToolkitEval: cli_option
 using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residuals_path, residual_matrix
 import VisualGeometryToolkitCore as VGC
-const RSDR = RansacScoringDoneRight
+const RSDR = RANSACScoringDoneRight
 
 # The data root: ENV["CAU_DATA_ROOT"] (VisualGeometryToolkitEval's data-root variable).
 # Needed only for the --pool/--out defaults; give both to run without it.

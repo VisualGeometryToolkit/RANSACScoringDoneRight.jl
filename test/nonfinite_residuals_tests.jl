@@ -13,8 +13,8 @@
 @testitem "nonfinite_residuals" setup = [PoolFixtures] begin
     using Test, Random
     using KernelAbstractions
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: MagsacScoring, MlesacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring,
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: MagsacScoring, MlesacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring,
         RansacScoring, MsacScoring,
         stage_ig_shared_from_pairs, Exact, LogBinned,
         histogram_pm_score_kernel!, exact_pm_score_kernel!, _build_score_weight_matrix,

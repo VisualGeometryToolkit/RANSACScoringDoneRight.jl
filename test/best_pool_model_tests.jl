@@ -10,8 +10,8 @@
 @testitem "best_pool_model" setup = [PoolFixtures] begin
     using Test, Random
     using KernelAbstractions
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: stage_ig_shared_from_pairs,
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: stage_ig_shared_from_pairs,
         Exact, exact_pm_score_kernel!, _support_sq, pool_model_score
     using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, best_pool_model
     import VisualGeometryToolkitCore as VGC
@@ -94,7 +94,7 @@
             end
             # the retired handles are gone, not aliased
             for n in ("Msac", "Ransac", "Marginal")     # spelled in fragments: retired names
-                @test !isdefined(RansacScoringDoneRight, Symbol(n, "PoolScorer"))
+                @test !isdefined(RANSACScoringDoneRight, Symbol(n, "PoolScorer"))
             end
             # the marginal at its width: the generic form with a supplied workspace
             # and scratch is the allocating one

@@ -27,9 +27,9 @@
 # identical to the host libm).
 # =============================================================================
 
-using RansacScoringDoneRight
-const RSDR = RansacScoringDoneRight
-using RansacScoringDoneRight: IGSharedData, LossSpec,
+using RANSACScoringDoneRight
+const RSDR = RANSACScoringDoneRight
+using RANSACScoringDoneRight: IGSharedData, LossSpec,
     loss_spec, loss_scale_bounds,
     grid_evaluate,
     WelschMarginal, SmoothTLSMarginal

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-neurips2026: the paper project of RansacScoringDoneRight ("RANSAC Scoring Done
+neurips2026: the paper project of RANSACScoringDoneRight ("RANSAC Scoring Done
 Right", NeurIPS 2026). It follows the stack's paper-project conventions —
 VisualGeometryToolkitEval README, "Paper project conventions"; LocalOptimizationDoneRight's
 accv2026 is the worked example — and `test/runtests.jl` enforces them

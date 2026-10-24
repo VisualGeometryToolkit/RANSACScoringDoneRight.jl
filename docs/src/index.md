@@ -25,7 +25,7 @@ hero:
       link: https://arxiv.org/pdf/2606.27385
     - theme: alt
       text: Code
-      link: https://github.com/VisualGeometryToolkit/RansacScoringDoneRight.jl
+      link: https://github.com/VisualGeometryToolkit/RANSACScoringDoneRight.jl
 features:
   - icon: 🎯
     title: Score a hypothesis
@@ -133,17 +133,17 @@ prior regularization as validation data grows scarce.
 
 ## Install
 
-**Pkg** — `RansacScoringDoneRight` is registered in the General registry
+**Pkg** — `RANSACScoringDoneRight` is registered in the General registry
 (Julia 1.12+):
 
 ```julia
-using Pkg; Pkg.add("RansacScoringDoneRight")
+using Pkg; Pkg.add("RANSACScoringDoneRight")
 ```
 
 **git** — clone the repository and instantiate it:
 
 ```bash
-git clone https://github.com/VisualGeometryToolkit/RansacScoringDoneRight.jl.git && cd RansacScoringDoneRight.jl && julia --project=. -e 'using Pkg; Pkg.instantiate()'
+git clone https://github.com/VisualGeometryToolkit/RANSACScoringDoneRight.jl.git && cd RANSACScoringDoneRight.jl && julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
 ## Getting started
@@ -159,7 +159,7 @@ best score with its inlier count; the scale estimate of that partition follows
 in closed form:
 
 ```julia
-using RansacScoringDoneRight
+using RANSACScoringDoneRight
 using VisualGeometryToolkitCore: scoring_workspace, score!, inlier_count, consensus_order, consensus_s2
 
 # `r`: the n residuals of one model hypothesis (codimension 1), e.g. a line

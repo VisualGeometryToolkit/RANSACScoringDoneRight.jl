@@ -9,9 +9,9 @@
 
 @testitem "sample_boundaries" begin
     using Test
-    using RansacScoringDoneRight
+    using RANSACScoringDoneRight
     adjacent = r"(sample_indices|sidx)[^\n]*\b[jk]\s*[-+]\s*1\b"
-    root = pkgdir(RansacScoringDoneRight)
+    root = pkgdir(RANSACScoringDoneRight)
     offenders = String[]
     dirs = filter(isdir, [joinpath(root, d) for d in ("src", "neurips2026")])
     for dir in dirs, (d, _, fs) in walkdir(dir), f in fs

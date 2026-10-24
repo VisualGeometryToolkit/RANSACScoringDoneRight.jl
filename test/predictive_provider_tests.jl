@@ -6,8 +6,8 @@
 @testitem "predictive_provider" begin
     using Test, StaticArrays
     import VisualGeometryToolkitCore as VGC
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: Predictive, alloc_scoring_workspace, score_sq_residuals!, penalties, sort_key
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: Predictive, alloc_scoring_workspace, score_sq_residuals!, penalties, sort_key
     using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, scored_model, solver_covariance,
         provides_solver_covariance
     const _PV = VGC

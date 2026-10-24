@@ -88,7 +88,7 @@ abstract type LossCostScoring <: AbstractScoring end
 # chain, which becomes an ambiguity for any module that `using`s both.
 
 # AbstractScoring now lives in VisualGeometryToolkitCore (src/robust/estimation.jl) —
-# imported in RansacScoringDoneRight.jl and re-exported. Scoring functions
+# imported in RANSACScoringDoneRight.jl and re-exported. Scoring functions
 # determine how candidate models are scored. The scale-free marginal score
 # (Eq. 12) eliminates σ by marginalizing under the Jeffreys prior π(σ²) ∝ 1/σ²,
 # then optimizes over partitions I. Higher = better. Built-in strategies:

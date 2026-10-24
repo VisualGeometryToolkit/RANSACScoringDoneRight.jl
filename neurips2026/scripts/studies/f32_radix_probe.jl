@@ -17,8 +17,8 @@
 #
 # Usage: julia -t 1 --project=neurips2026 neurips2026/scripts/studies/f32_radix_probe.jl
 # =============================================================================
-using RansacScoringDoneRight
-const RSDR = RansacScoringDoneRight
+using RANSACScoringDoneRight
+const RSDR = RANSACScoringDoneRight
 import JLD2
 using Printf
 using VisualGeometryToolkitCore.Pools: num_points

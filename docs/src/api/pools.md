@@ -1,7 +1,7 @@
 # Pools, grids and tuning
 
 ```@meta
-CurrentModule = RansacScoringDoneRight
+CurrentModule = RANSACScoringDoneRight
 ```
 
 Scoring over a benchmark pool: VisualGeometryToolkitCore's light `PoolPair` record

@@ -13,8 +13,8 @@
 @testitem "loss_width_aggregation" setup = [PoolFixtures] begin
     using Test, Random
     using KernelAbstractions
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: stage_ig_shared_from_pairs,
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: stage_ig_shared_from_pairs,
         Exact, LogBinned, RansacScoring, MsacScoring, MlesacScoring, MagsacScoring,
         WelschCostScoring, SmoothTLSScoring, GemanScoring, residual_quality, _support_sq,
         exact_pm_score_kernel!, histogram_pm_score_kernel!, _build_score_weight_matrix

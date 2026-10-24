@@ -5,7 +5,7 @@ normalization, pixel origins, derivatives — are one canonical page in
 VisualGeometryToolkitCore's documentation,
 [Conventions](https://visualgeometrytoolkit.github.io/VisualGeometryToolkitCore/stable/guide/conventions/).
 This page does not restate them. It states the three things that are true of
-RansacScoringDoneRight and of nowhere else in the stack.
+RANSACScoringDoneRight and of nowhere else in the stack.
 
 ## The pool frame is the one declared exception to "frame in = frame out"
 

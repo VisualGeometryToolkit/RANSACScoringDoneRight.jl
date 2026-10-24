@@ -1,7 +1,7 @@
 # Scoring
 
 ```@meta
-CurrentModule = RansacScoringDoneRight
+CurrentModule = RANSACScoringDoneRight
 ```
 
 The scale-free marginal score and its sort-and-sweep, on VisualGeometryToolkitCore's

@@ -6,8 +6,8 @@
     using Test, Random, Statistics
     using Distributions: Chisq, quantile, cdf
     using StaticArrays, LinearAlgebra
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: SimFitPP, unbiased_median_variance, simfitpp_loss_width,
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: SimFitPP, unbiased_median_variance, simfitpp_loss_width,
                                   simfitpp_select, with_residual_unit, residual_unit_scale,
                                   _msac_best_over
     using VisualGeometryToolkitCore.Pools: PoolPair, pool_normalization, pool_frame_calibrations,

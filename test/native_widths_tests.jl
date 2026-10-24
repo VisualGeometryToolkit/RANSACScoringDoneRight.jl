@@ -12,9 +12,9 @@
     using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth, ScaleMultiple, to_native, native_map, decision_width,
         WelschShape, GauInlier, decision_threshold, IGPrior, RansacScoring, MsacScoring, width_axis,
         best_pool_model
-    using RansacScoringDoneRight
+    using RANSACScoringDoneRight
     import VisualGeometryToolkitCore
-    using RansacScoringDoneRight: LossSpec, loss_spec, stage_ig_shared_from_pairs
+    using RANSACScoringDoneRight: LossSpec, loss_spec, stage_ig_shared_from_pairs
 
     @testset "to_native(::OutlierHalfwidth): the mixture's crossover" begin
         for d_g in (1, 2), scale in (0.01, 1.0, 3.0), k in (0.8, 2.0, 6.0)
@@ -53,7 +53,7 @@
         # the axis is the one `with_width` rebuilds the marginal on
         @test VgtkCore.with_width(m, OutlierHalfwidth(0.7)) == StudentTUniformScoring(5, 0.7; codimension = 1)
         # the retired per-type trait is gone, not aliased
-        @test !isdefined(RansacScoringDoneRight, Symbol("native", "_axis"))   # in fragments: a retired name
+        @test !isdefined(RANSACScoringDoneRight, Symbol("native", "_axis"))   # in fragments: a retired name
     end
 
     @testset "grid_evaluate(::StudentTUniformScoring) selects what best_pool_model selects" begin

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-RansacScoringDoneRight: scale-free marginal RANSAC scoring, as an
+RANSACScoringDoneRight: scale-free marginal RANSAC scoring, as an
 implementation of VisualGeometryToolkitCore's contracts — the scoring contract
 (`StudentTUniformScoring`, the sort-and-sweep marginal score) and the
 pool-selection contract (`select_on_grid!` over its CPU/GPU grid families:

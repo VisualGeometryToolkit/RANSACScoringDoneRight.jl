@@ -14,8 +14,8 @@
 @testitem "radix_sortperm" begin
     using Test
     using Random
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: RadixPermBuffers, _radix_sortperm!, _radix_key,
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: RadixPermBuffers, _radix_sortperm!, _radix_key,
         default_scoring_workspace, sweep!
 
     # The sortperm!-identity contract is a FULL-PRECISION claim, so it is checked

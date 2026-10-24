@@ -13,8 +13,8 @@
         partition_student_t, partition_rss, PosteriorWeightState, s_hat_sq, student_t_dof, sq_residuals,
         inlier_prior, posterior_weights!, posterior_inlier_probs!, inlier_threshold, ScoreBuffers,
         GauInlier, decision_threshold, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: alloc_scoring_workspace, sweep_order
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: alloc_scoring_workspace, sweep_order
 
     rng = MersenneTwister(7)
     n_in, n_out = 80, 20

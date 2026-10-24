@@ -7,8 +7,8 @@
 @testitem "sample_index_bounds" setup = [PoolFixtures] begin
     using Test, StaticArrays
     import VisualGeometryToolkitCore as VGC
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: alloc_scoring_workspace,
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: alloc_scoring_workspace,
         score_residuals!, score_sq_residuals!, precompute_pair
     using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, IGPrior
     const _SB = VGC

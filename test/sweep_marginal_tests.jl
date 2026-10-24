@@ -10,8 +10,8 @@
 
 @testitem "sweep_marginal" begin
     using Test
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: alloc_scoring_workspace, _sweep_score
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: alloc_scoring_workspace, _sweep_score
     using VisualGeometryToolkitCore: IGPrior
 
     function _brute_Sk(r, model_dof, dg, halfwidth, prior, sws, profile_prior)

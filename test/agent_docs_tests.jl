@@ -4,7 +4,7 @@
     # patterns are VisualGeometryToolkitCore's; release tooling adds its own patterns
     # through AGENT_DOC_PATTERNS (a file, one regular expression per line).
     using VisualGeometryToolkitCore: agent_doc_violations
-    violations = agent_doc_violations(pkgdir(RansacScoringDoneRight); extra = get(ENV, "AGENT_DOC_PATTERNS", nothing))
+    violations = agent_doc_violations(pkgdir(RANSACScoringDoneRight); extra = get(ENV, "AGENT_DOC_PATTERNS", nothing))
     isempty(violations) || @error "agent docs carry private content" violations
     @test isempty(violations)
 end
@@ -13,7 +13,7 @@ end
     # The stack conventions live once, in VisualGeometryToolkitCore's conventions/
     # folder. This CLAUDE.md points there and carries no copy of the shared
     # text: the copies drifted, a pointer cannot. No sibling checkout needed.
-    claude = read(joinpath(pkgdir(RansacScoringDoneRight), "CLAUDE.md"), String)
+    claude = read(joinpath(pkgdir(RANSACScoringDoneRight), "CLAUDE.md"), String)
     @test occursin(r"^#+ Stack Conventions$"m, claude)
     @test occursin("VisualGeometryToolkitCore/conventions/", claude)
     @test occursin("VisualGeometryToolkitCore.conventions_dir()", claude)

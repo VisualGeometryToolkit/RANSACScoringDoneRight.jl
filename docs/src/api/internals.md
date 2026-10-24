@@ -1,7 +1,7 @@
 # Internals
 
 ```@meta
-CurrentModule = RansacScoringDoneRight
+CurrentModule = RANSACScoringDoneRight
 ```
 
 Declared `public` because downstream packages (the paper scripts, the
@@ -39,13 +39,13 @@ Documented internals that the public docstrings refer to. They are not part of
 the API.
 
 ```@docs
-RansacScoringDoneRight.RadixPermBuffers
-RansacScoringDoneRight._radix_sortperm!
-RansacScoringDoneRight._radix_key
-RansacScoringDoneRight._build_prior_table
+RANSACScoringDoneRight.RadixPermBuffers
+RANSACScoringDoneRight._radix_sortperm!
+RANSACScoringDoneRight._radix_key
+RANSACScoringDoneRight._build_prior_table
 Base.resize!(::ScoringWorkspace, ::Integer)
-RansacScoringDoneRight.PrecomputedPair
-RansacScoringDoneRight.ig_sweep_kernel!
-RansacScoringDoneRight.ScaleMarginal
-RansacScoringDoneRight.SmoothTLSMarginal
+RANSACScoringDoneRight.PrecomputedPair
+RANSACScoringDoneRight.ig_sweep_kernel!
+RANSACScoringDoneRight.ScaleMarginal
+RANSACScoringDoneRight.SmoothTLSMarginal
 ```

@@ -51,7 +51,7 @@
     # rho instead of hand-written closed forms. Pin BOTH the agreement and the
     # assumption it rests on.
     # =============================================================================
-    using RansacScoringDoneRight: WelschCostScoring, SmoothTLSScoring, GemanScoring,
+    using RANSACScoringDoneRight: WelschCostScoring, SmoothTLSScoring, GemanScoring,
         MlesacScoring, MagsacScoring
     using VisualGeometryToolkitCore: MsacScoring, RansacScoring, residual_quality
     import VisualGeometryToolkitCore as VGC

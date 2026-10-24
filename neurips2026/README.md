@@ -1,6 +1,6 @@
 # neurips2026 — "RANSAC Scoring Done Right" (NeurIPS 2026)
 
-The paper project of RansacScoringDoneRight: the manuscript, the drivers that
+The paper project of RANSACScoringDoneRight: the manuscript, the drivers that
 produce its figures, their configs of record, and the asset index that ties
 every figure the paper reads to its generator and data. A
 [DrWatson](https://juliadynamics.github.io/DrWatson.jl/) project laid out by

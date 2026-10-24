@@ -26,12 +26,12 @@
 @testitem "loss_parity" begin
     using Test
     import VisualGeometryToolkitCore as VGC
-    using RansacScoringDoneRight
+    using RANSACScoringDoneRight
     using VisualGeometryToolkitCore: WelschShape, GemanMcclureShape, SmoothTLSShape
-    using RansacScoringDoneRight: WelschMarginal, SmoothTLSMarginal, _default_depth
+    using RANSACScoringDoneRight: WelschMarginal, SmoothTLSMarginal, _default_depth
     using VisualGeometryToolkitCore: IGPrior
     using LogExpFunctions: logsumexp
-    const _R = RansacScoringDoneRight
+    const _R = RANSACScoringDoneRight
 
     @testset "loss potentials are VGC's ρ at depth Δ" begin
         # Track-B evidence (the evidence device kernel, on CPU()): with ONE residual past

@@ -1,9 +1,9 @@
-module RansacScoringDoneRight
+module RANSACScoringDoneRight
 
 import VisualGeometryToolkitCore as VgtkCore
 
 # =============================================================================
-# RansacScoringDoneRight — scale-free marginal RANSAC scoring
+# RANSACScoringDoneRight — scale-free marginal RANSAC scoring
 # =============================================================================
 #
 # The paper scorers on VisualGeometryToolkitCore's scoring contract: the sort-and-sweep
@@ -194,4 +194,4 @@ include("marg_sweep_ka.jl")           # KA marginal kernels: grid_evaluate(::Sca
 include("native_widths.jl")           # width_axis of the grid families
 include("selection.jl")               # the grid families on the pool-selection contract
 
-end # module RansacScoringDoneRight
+end # module RANSACScoringDoneRight

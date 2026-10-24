@@ -13,8 +13,8 @@
     using Test, Random, LinearAlgebra
     using StaticArrays
     using KernelAbstractions
-    using RansacScoringDoneRight
-    using RansacScoringDoneRight: stage_ig_shared_from_pairs, loss_spec, Exact, LossSpec, pair_chunk_budget,
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: stage_ig_shared_from_pairs, loss_spec, Exact, LossSpec, pair_chunk_budget,
         simfitpp_select, pixel_residuals, residual_unit_scale
     using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, IGPrior, WelschShape,
         FundMat, sampson_distance, select_on_grid!, selection_staging, stage_selection

@@ -1,5 +1,5 @@
 # =============================================================================
-# neurips2026 — the NeurIPS 2026 research project of RansacScoringDoneRight
+# neurips2026 — the NeurIPS 2026 research project of RANSACScoringDoneRight
 # ("RANSAC Scoring Done Right"): drivers (scripts/), configs of record
 # (configs/), data bindings (data/), the paper (paper/) and its asset index
 # (REPRODUCE.md). A DrWatson project (VisualGeometryToolkitEval PaperProjects
@@ -9,7 +9,7 @@
 # the repository's workspace (../Project.toml): the package, its tests, its docs
 # and this project resolve together, in the one untracked root Manifest.
 #
-# RansacScoringDoneRight has no pool IO (pools are read with
+# RANSACScoringDoneRight has no pool IO (pools are read with
 # VisualGeometryToolkitEval.Pools) and no concrete problem types (they are
 # VisualGeometryToolkitEstimation's); the studies here need both, so they live in this
 # environment rather than widening the package's [deps].
@@ -26,7 +26,7 @@ Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
-RansacScoringDoneRight = "e23d4225-f201-4c3a-a297-7efae5f2deeb"
+RANSACScoringDoneRight = "084d9f33-8b05-4903-a655-8a8c4926d033"
 VisualGeometryToolkitEstimation = "9a478df9-9a37-4dc7-9070-58617efe7573"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -34,10 +34,10 @@ TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 VisualGeometryToolkitCore = "96820d6b-1dad-4e77-ad4a-8276f2ec1ce7"
 VisualGeometryToolkitEval = "86c88899-11c8-4b8e-8d7a-f01a8ab99b28"
-VisualGeometryToolkitIo = "2c312ccb-3050-452c-9523-414c480ba3da"
+VisualGeometryToolkitIO = "0a7ae7e7-e931-45f8-9bba-03d07899cebc"
 
 [sources]
-RansacScoringDoneRight = {path = ".."}
+RANSACScoringDoneRight = {path = ".."}
 
 [compat]
 DataFrames = "1.8"
@@ -45,7 +45,7 @@ Dates = "1"
 DrWatson = "2.19"
 JLD2 = "0.6"
 Printf = "1"
-RansacScoringDoneRight = "0.1"
+RANSACScoringDoneRight = "0.1"
 VisualGeometryToolkitEstimation = "0.1"
 SpecialFunctions = "2"
 Statistics = "1"
@@ -53,5 +53,5 @@ TOML = "1"
 Test = "1"
 VisualGeometryToolkitCore = "0.1"
 VisualGeometryToolkitEval = "0.1"
-VisualGeometryToolkitIo = "0.1"
+VisualGeometryToolkitIO = "0.1"
 julia = "1.12"

@@ -1,4 +1,4 @@
-# RansacScoringDoneRight.jl
+# RANSACScoringDoneRight.jl
 
 ## Abstract
 
@@ -28,7 +28,7 @@ grows scarce.
 ## Overview
 
 Code for the NeurIPS 2026 paper "RANSAC Scoring Done Right", in two halves:
-the registered package `RansacScoringDoneRight` — scale-free marginal RANSAC
+the registered package `RANSACScoringDoneRight` — scale-free marginal RANSAC
 scoring (`StudentTUniformScoring`), its CPU/GPU grid evaluators and the
 paper's baseline scorers, an implementation of VisualGeometryToolkitCore's scoring and
 pool-selection contracts that depends only on VisualGeometryToolkitCore — and the
@@ -42,7 +42,7 @@ Documentation and project page: <https://ransacscoringdoneright.github.io>.
 
 ```julia
 using Pkg
-Pkg.add("RansacScoringDoneRight")
+Pkg.add("RANSACScoringDoneRight")
 ```
 
 Requires Julia 1.12. Part of the

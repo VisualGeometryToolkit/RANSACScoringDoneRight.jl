@@ -5,7 +5,7 @@
 # still runs standalone — `julia --project=. test/gate_marg_mix_ka.jl [--cuda]`
 # adds a CUDABackend run from an environment that provides CUDA.
 @testitem "marg_mix_gate" begin
-    include(joinpath(pkgdir(RansacScoringDoneRight), "test", "gate_marg_mix_ka.jl"))
+    include(joinpath(pkgdir(RANSACScoringDoneRight), "test", "gate_marg_mix_ka.jl"))
     @testset "Track-B mixture + full-data marginal bit-exact gate" begin
         @test run_gate() == 0
     end

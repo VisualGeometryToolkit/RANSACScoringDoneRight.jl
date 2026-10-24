@@ -1,10 +1,10 @@
 using Documenter
 using DocumenterLandingPage   # LandingPage(): the VitePress-style home page (index.md frontmatter)
 using DocumenterCodeBlocks    # CodeBlocks(): line numbers, docstring links and tooltips in code blocks
-using RansacScoringDoneRight
+using RANSACScoringDoneRight
 
 makedocs(;
-    modules=[RansacScoringDoneRight],
+    modules=[RANSACScoringDoneRight],
     authors="James Pritts <jbpritts@gmail.com>, Felix Seegräber, Kevin Köser",
     sitename="RANSAC Scoring Done Right",
     format=Documenter.HTML(;

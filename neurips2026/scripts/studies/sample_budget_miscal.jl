@@ -66,8 +66,8 @@
 # =============================================================================
 
 using JLD2, Printf, Statistics, TOML
-using RansacScoringDoneRight
-using RansacScoringDoneRight: alloc_scoring_workspace
+using RANSACScoringDoneRight
+using RANSACScoringDoneRight: alloc_scoring_workspace
 # `best_pool_model`: VisualGeometryToolkitCore's generic (a scorer at its width) plus this
 # package's 4-argument method (a width-free loss-width family at a loss width).
 using VisualGeometryToolkitCore: width_axis, JeffreysPrior, codimension, best_pool_model
