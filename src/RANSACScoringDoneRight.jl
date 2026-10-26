@@ -72,7 +72,7 @@ using VisualGeometryToolkitCore:
     sampson_distance, sources, targets,
     # a pool model's frame change is composition with the normalization's two
     # sides (`pixel_residuals`)
-    source_map, target_map
+    source_map, destination_map
 # The benchmark pool record and its accessors are VisualGeometryToolkitCore's (its
 # `Pools` module): RSDR's pool scorers take the light `PoolPair` together with
 # its residual matrix, and read the record only through these.

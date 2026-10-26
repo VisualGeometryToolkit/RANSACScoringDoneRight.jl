@@ -59,7 +59,7 @@ The rule is the stack's (`conventions/frames.md`); how it lands here:
 
 The pool record is VisualGeometryToolkitCore's `PoolPair` (`VisualGeometryToolkitCore.Pools`):
 csponds and models in `NormalizedImageFrame`, the maps its `source_map`/
-`target_map`, the two sides of `pool_normalization(pair)` (VGC also builds the
+`destination_map`, the two sides of `pool_normalization(pair)` (VGC also builds the
 pool frame of two image sizes there). The residual matrix is NOT in the record:
 every pool scorer here takes the record AND its `num_points × num_models`
 Float32 matrix `R` in the same unit — `best_pool_model(scoring, pair, R, …)`,

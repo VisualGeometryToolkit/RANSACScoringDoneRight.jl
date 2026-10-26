@@ -112,7 +112,7 @@
             pair = PoolPair(; csponds, K1 = Kc, K2 = Kc, R_gt = I3s, t_gt = SVector(1.0, 0.0, 0.0), models,
                             sample_indices = S, errors_r = fill(NaN, K), errors_t = fill(NaN, K),
                             gt_inliers = falses(n), gt_variance = 1.0e-4 * k,
-                            source_map = sim(s, -0.9, -0.7), target_map = sim(s, -0.95, -0.65))
+                            source_map = sim(s, -0.9, -0.7), destination_map = sim(s, -0.95, -0.65))
             (pair, D)
         end
         spairs, sRs = first.(sp), last.(sp)

@@ -126,7 +126,7 @@
         mk(T1, T2; ms = models) = PoolPair(; csponds, K1 = Kc, K2 = Kc, R_gt = I3s, t_gt = SVector(1.0, 0.0, 0.0),
                                            models = ms, sample_indices = zeros(Int, 7, length(ms)),
                                            errors_r = fill(NaN, length(ms)), errors_t = fill(NaN, length(ms)),
-                                           gt_inliers = falses(n), gt_variance = NaN, source_map = T1, target_map = T2)
+                                           gt_inliers = falses(n), gt_variance = NaN, source_map = T1, destination_map = T2)
         # identity maps: the pixel frame IS the pool frame — the image-plane
         # Sampson of the models, recomputed (the stored matrix is never read)
         @test pixel_residuals(mk(I3s, I3s)) == Dc
@@ -155,7 +155,7 @@
         T1c, T2c = sim(s, -0.9, -0.7), sim(s, -0.95, -0.65)
         pc = mk(T1c, T2c)
         nz = pool_normalization(pc)
-        Sn, Dn = VgtkCore.source_map(nz), VgtkCore.target_map(nz)
+        Sn, Dn = VgtkCore.source_map(nz), VgtkCore.destination_map(nz)
         @test (to_homogeneous(Sn), to_homogeneous(Dn)) == (T1c, T2c)
         K1, K2 = calibration_matrices(pc)
         @test pool_frame_calibrations(pc) == (T1c * K1, T2c * K2)

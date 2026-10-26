@@ -30,7 +30,7 @@
         return PoolPair{eltype(models)}(;
             csponds = [SVector(0.0, 0.0) => SVector(0.0, 0.0) for _ in 1:n], K1 = _KC, K2 = _KC,
             R_gt = I3, t_gt = SVector(1.0, 0.0, 0.0), models, sample_indices, errors_r, errors_t,
-            gt_inliers = falses(n), gt_variance = NaN, source_map = I3, target_map = I3)
+            gt_inliers = falses(n), gt_variance = NaN, source_map = I3, destination_map = I3)
     end
 
     """

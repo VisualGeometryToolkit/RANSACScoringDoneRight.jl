@@ -178,7 +178,7 @@ loss-width guess from a pool-frame-unit grid); anything the bounds gate must
 run on [`pixel_residuals`](@ref).
 """
 function residual_unit_scale(pair::PoolPair)
-    return (pair.source_map[1, 1] + pair.target_map[1, 1]) / 2
+    return (pair.source_map[1, 1] + pair.destination_map[1, 1]) / 2
 end
 
 """
@@ -207,7 +207,7 @@ function pixel_residuals(pair::PoolPair)
     n, M = num_points(pair), num_models(pair)
     (n == 0 || M == 0) && return Matrix{Float32}(undef, n, M)
     N = pool_normalization(pair)
-    S, D = source_map(N), target_map(N)
+    S, D = source_map(N), destination_map(N)
     iD = inv(D)
     px = pixel_csponds(pair)
     u = [SVector{2,Float64}(x) for x in sources(px)]
