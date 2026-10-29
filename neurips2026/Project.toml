@@ -38,11 +38,6 @@ VisualGeometryToolkitIO = "0a7ae7e7-e931-45f8-9bba-03d07899cebc"
 
 [sources]
 RANSACScoringDoneRight = {path = ".."}
-# TEMPORARY: the unreleased 0.2 wave; replaced by the registered versions at release
-VisualGeometryToolkitCore = {path = "/home/jbpritts/src/vgtk-hand-eye-nlls/VisualGeometryToolkitCore"}
-VisualGeometryToolkitEstimation = {path = "/home/jbpritts/src/vgtk-hand-eye-nlls/VisualGeometryToolkitEstimation"}
-VisualGeometryToolkitEval = {path = "/home/jbpritts/src/vgtk-hand-eye-nlls/VisualGeometryToolkitEval"}
-VisualGeometryToolkitIO = {path = "/home/jbpritts/src/vgtk-hand-eye-nlls/VisualGeometryToolkitIO"}
 
 [compat]
 DataFrames = "1.8"
@@ -50,7 +45,7 @@ Dates = "1"
 DrWatson = "2.19"
 JLD2 = "0.6"
 Printf = "1"
-RANSACScoringDoneRight = "0.1"
+RANSACScoringDoneRight = "0.2"
 VisualGeometryToolkitEstimation = "0.2"
 SpecialFunctions = "2"
 Statistics = "1"
