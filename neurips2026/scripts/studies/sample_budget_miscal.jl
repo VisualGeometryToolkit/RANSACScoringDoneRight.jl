@@ -328,6 +328,7 @@ function main(args = ARGS)
         # the LAST line of a successful run is the number to size
         # --cpus-per-task from (peak_GB / 8).
         hwm = try
+            # paper-project: allow C2 not data: the kernel's per-process status file, read for the peak RSS it reports
             parse(Int, match(r"VmHWM:\s+(\d+)", read("/proc/self/status", String))[1]) / 1024^2
         catch; NaN end
         @info "scene done" scene npairs = P peak_rss_GB = round(hwm; digits = 1)

@@ -32,8 +32,6 @@ const PAPER_PROJECT_ALLOW = [
     DataPolicyAllow("C2", "scripts/studies/f32_radix_probe.jl", "(1:20)"),
     DataPolicyAllow("P1", "scripts/studies/sample_budget_miscal.jl", _STUDY_NO_PROVENANCE),
     DataPolicyAllow("P2", "scripts/studies/sample_budget_miscal.jl", _STUDY_NO_KEY),
-    # not data: the kernel's per-process status file, read for the peak RSS it reports
-    DataPolicyAllow("C2", "scripts/studies/sample_budget_miscal.jl", "\"/proc/self/status\""),
     DataPolicyAllow("C1", "scripts/studies/score_timing.jl", _STUDY_NO_CONFIG),
     DataPolicyAllow("P1", "scripts/studies/score_timing.jl", _STUDY_NO_PROVENANCE),
     DataPolicyAllow("P2", "scripts/studies/score_timing.jl", _STUDY_NO_KEY),
