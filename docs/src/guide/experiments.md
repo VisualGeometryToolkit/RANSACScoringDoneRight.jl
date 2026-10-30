@@ -7,7 +7,7 @@ The paper's figures are drawn by drivers in the research project
 
 ```bash
 cd neurips2026
-julia --project=. -e 'using Pkg; Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
+julia --project=. -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
 julia --project=. scripts/fetch_data.jl          # a machine without the data (neurips2026/data/README.md)
 julia --project=. scripts/fig_profile.jl --plan
 julia --project=. test/runtests.jl
@@ -47,7 +47,7 @@ drivers need pool IO (VisualGeometryToolkitEval) and the concrete problem types
 (VisualGeometryToolkitEstimation), which the package deliberately does not depend on.
 
 ```bash
-cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
+cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
 ```
 
 The pools are read with VisualGeometryToolkitEval's `load_pool` and

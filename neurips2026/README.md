@@ -10,7 +10,7 @@ package: the package in `..` never depends on it.
 
 ```
 cd neurips2026
-julia --project=. -e 'using Pkg; Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
+julia --project=. -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
 julia --project=. scripts/fetch_data.jl               # a machine without the data: the published runs
 julia --project=. scripts/fig_profile.jl --plan       # a driver's stages: done / pending
 julia --project=. scripts/fig_profile.jl              # run what is pending

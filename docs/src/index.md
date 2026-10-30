@@ -146,7 +146,7 @@ project needs VisualGeometryToolkitEval, which is in CauRegistry, so the command
 adds it:
 
 ```bash
-git clone https://github.com/VisualGeometryToolkit/RANSACScoringDoneRight.jl.git && cd RANSACScoringDoneRight.jl && julia --project=. -e 'using Pkg; Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
+git clone https://github.com/VisualGeometryToolkit/RANSACScoringDoneRight.jl.git && cd RANSACScoringDoneRight.jl && julia --project=. -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
 ```
 
 ## Getting started
