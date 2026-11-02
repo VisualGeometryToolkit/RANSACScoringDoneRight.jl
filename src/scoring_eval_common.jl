@@ -170,8 +170,8 @@ const _SOFTPLUS_HALF = log1pexp(0.5)      # MLESAC's quality normaliser (loss_wi
 
 # (`_maa` — mean average accuracy as the area under the sorted accuracy curve —
 #  is deleted: a third implementation of VisualGeometryToolkitCore's
-#  `Synthetic.mean_average_accuracy(errors; T)`, the same area as a mean of
-#  max(0, 1 − e/T). It agreed on finite errors to 8e-16 but not at the edges:
+#  `Synthetic.mean_average_accuracy(errors; max_error)`, the same area as a mean of
+#  max(0, 1 − e/max_error). It agreed on finite errors to 8e-16 but not at the edges:
 #  it returned 0.0 for no errors (VGC: NaN) and let a NaN error poison the sum
 #  (VGC: a failure, scoring 0). Every caller now uses VGC's.)
 

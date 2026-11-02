@@ -9,7 +9,7 @@ import VisualGeometryToolkitCore as VgtkCore
 # The paper scorers on VisualGeometryToolkitCore's scoring contract: the sort-and-sweep
 # Student-t + uniform marginal score (Algorithm 1, `StudentTUniformScoring`), its
 # CPU/GPU grids, and the paper baselines. The scoring core
-# depends on VisualGeometryToolkitCore (for Uncertain/whiten/constraint_with_jacobians)
+# depends on VisualGeometryToolkitCore (for Uncertain and the constraint-problem protocol)
 # and StaticArrays/SpecialFunctions; the GPU sweep port adds KernelAbstractions
 # (and GPUArrays, to free its device scratch eagerly),
 # and the scoring/tuning VOCABULARY layer (with SIMFIT++) adds Distributions,
@@ -60,10 +60,10 @@ using KernelAbstractions: KernelAbstractions, @kernel, @index, @Const
 # not public, and CUDA.jl 5.11 does not extend it: on CUDA it frees nothing.)
 using GPUArrays: GPUArrays
 
-# `whiten` is the ONE whitening (and degeneracy rule) of the residual path; the
-# restated `_mahalanobis` that needed `propagate`/`_propagate_scalar` beside it
-# now goes through it, so neither — the second a VGC internal — is imported.
-using VisualGeometryToolkitCore: VisualGeometryToolkitCore, Uncertain, CovMat, whiten, geom
+# VisualGeometryToolkitCore's `whitened_constraint_residual` / `whitened_constraint_rows`
+# (a problem's point, by `(problem, model, i)`) are the ONE whitening and degeneracy
+# rule of the residual path: this package computes no Sampson residual of its own.
+using VisualGeometryToolkitCore: VisualGeometryToolkitCore, Uncertain, CovMat, geom
 # Geometry the evaluation subsystem scores against (scoring_eval_common.jl,
 # simfitpp.jl).
 using VisualGeometryToolkitCore:
@@ -81,7 +81,6 @@ using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_im
 # The width axes, their native maps and the native-axis conversions are
 # VisualGeometryToolkitCore's; this package states the axis of its grid families.
 using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth
-using VisualGeometryToolkitCore: constraint_with_jacobians
 # The contracts this package implements are VisualGeometryToolkitCore's: the
 # constraint-problem protocol, the scoring contract, and the robust-statistics
 # toolkit (scale, the Student-t + uniform mixture, the posterior-weight state).
@@ -89,6 +88,7 @@ using VisualGeometryToolkitCore: constraint_with_jacobians
 # algorithms and paper baselines; it re-exports nothing VGC owns.
 using VisualGeometryToolkitCore: AbstractConstraintProblem, data_size,
     solver_covariance, provides_solver_covariance, sq_norm, whitened_constraint_residual,
+    whitened_constraint_rows,
     whitened_distance, IGPrior, JeffreysPrior,
     square_residuals!, zero_sample!, GauInlier, decision_threshold,
     truncated_log_normaliser, consensus_s2, ScoreBuffers, residuals,

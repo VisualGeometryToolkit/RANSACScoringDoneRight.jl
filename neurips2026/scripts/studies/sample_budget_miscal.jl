@@ -341,7 +341,7 @@ function main(args = ARGS)
     for ((k, ζ), curves) in results
         Mb = length(budgets)
         med = [median(filter(!isnan, [c[b] for c in curves])) for b in 1:Mb]
-        maa = [mean_average_accuracy([c[b] for c in curves]; T = maa_threshold()) for b in 1:Mb]
+        maa = [mean_average_accuracy([c[b] for c in curves]; max_error = maa_threshold()) for b in 1:Mb]
         agg[(k, ζ)] = (; median = med, maa10 = maa, n = length(curves))
         for b in 1:Mb
             push!(rows, @sprintf("%s\t%g\t%d\t%.6f\t%.6f\t%d",

@@ -14,7 +14,7 @@
     using RANSACScoringDoneRight: alloc_scoring_workspace, score_sq_residuals!, sweep_order, penalties,
         Predictive
 
-    # A problem that IS its list of constraint tuples (g, ∂ₓg, ∂_θg[, Σ̃_x]).
+    # A problem that IS its list of constraint tuples (g, ∂ₓg, ∂_θg).
     struct _CDProblem{C} <: AbstractConstraintProblem
         cds::Vector{C}
     end
@@ -25,16 +25,19 @@
 
     _scalar(g, gx) = (g, SVector{2,Float64}(gx...), SVector(1.0, 2.0))
 
-    # The epipolar constraint of VGC's FundMat at each pair, as a 5-tuple with the
-    # model's rounding scale.
-    struct _F5Problem <: AbstractConstraintProblem
+    # The epipolar constraint of VGC's FundMat at each pair, with the model's
+    # rounding scale supplied through the problem's `constraint_rounding_scale` hook.
+    struct _FRProblem <: AbstractConstraintProblem
         cs::Vector{Pair{SVector{2,Float64},SVector{2,Float64}}}
     end
-    VGC.data_size(p::_F5Problem) = length(p.cs)
-    function VGC.constraint_with_jacobians(p::_F5Problem, F, i::Int)
+    VGC.data_size(p::_FRProblem) = length(p.cs)
+    function VGC.constraint_with_jacobians(p::_FRProblem, F, i::Int)
         u, v = p.cs[i]
-        g, Gx, Gθ = VGC.constraint_with_jacobians(F, u, v)
-        return (g, Gx, Gθ, I, VGC.constraint_rounding_scale(F, u, v))
+        return VGC.constraint_with_jacobians(F, u, v)
+    end
+    function VGC.constraint_rounding_scale(p::_FRProblem, F, i::Int)
+        u, v = p.cs[i]
+        return VGC.constraint_rounding_scale(F, u, v)
     end
 
     @testset "the sweeps read a degenerate point as an outlier" begin
@@ -52,7 +55,7 @@
         @test !(5 in sweep_order(sws)[1:k])
         @test k == n - 2                                 # both outliers out
 
-        # predictive: whiten's zero Jacobian row gives V = 1, so q = Inf, ℓ = 0
+        # predictive: whitened_constraint_rows' zero rows give V = 1, so q = Inf, ℓ = 0
         sp = StudentTUniformScoring{Predictive}(2, 5.0)
         swp = alloc_scoring_workspace(n, 1, sp); qp = zeros(n)
         Sp, kp = score_sq_residuals!(swp, qp, sp, p, nothing, [1, 2], n)
@@ -75,7 +78,7 @@
         @test rp == r
     end
 
-    @testset "a 5-tuple constraint: the scorer squares sampson_distance" begin
+    @testset "a rounding-scale hook: the scorer squares sampson_distance" begin
         S2 = SVector{2,Float64}
         F1 = VGC.FundMat{Float64}(1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
         F2 = VGC.FundMat{Float64}(0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -83,7 +86,7 @@
             (F1, [S2(0.0, 5.0) => S2(0.0, -3.0), S2(1e-18, 5.0) => S2(0.0, -3.0), S2(0.7, 2.0) => S2(-0.4, 1.0)]),
             (F2, [S2(0.0, 0.0) => S2(0.0, 0.0), S2(1e-17, 0.0) => S2(0.0, 1e-17), S2(0.3, -0.2) => S2(0.5, 0.9)]))
         for (F, cs) in cases
-            p = _F5Problem(cs)
+            p = _FRProblem(cs)
             n = length(cs)
             d = [VGC.sampson_distance(F, c) for c in cs]
             s = StudentTUniformScoring(2, 5.0)

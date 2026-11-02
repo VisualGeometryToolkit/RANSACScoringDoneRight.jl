@@ -369,7 +369,7 @@ function score_sq_residuals!(sws::ScoringWorkspace, q::AbstractVector{T}, s::Stu
     @inbounds for i in 1:n
         # squared norm of the whitened residual itself, not of its norm — no
         # sqrt round trip for a vector constraint
-        q[i] = sq_norm(whitened_constraint_residual(constraint_with_jacobians(problem, model, i)))
+        q[i] = sq_norm(whitened_constraint_residual(problem, model, i))
     end
     @inbounds for i in n+1:length(q)
         q[i] = typemax(T)
@@ -451,7 +451,7 @@ function score_sq_residuals!(sws::ScoringWorkspace, q::AbstractVector{T},
                              sample_idx::Union{Nothing,AbstractVector{Int}}, n::Int;
                              residuals::Union{Nothing,AbstractVector{<:Real}} = nothing) where T
     @inbounds for i in 1:n
-        rᵢ, ∂θgᵢ_w, _ = whiten(constraint_with_jacobians(problem, model, i)...)
+        rᵢ, ∂θgᵢ_w = whitened_constraint_rows(problem, model, i)
         residuals === nothing || (residuals[i] = whitened_distance(rᵢ))
         q[i], sws.penalties[i] = _predictive_score_penalty(rᵢ, ∂θgᵢ_w, Σ̃_θ)
         # sort_key = q (unit-scale Mahalanobis). The historical raw-r²
