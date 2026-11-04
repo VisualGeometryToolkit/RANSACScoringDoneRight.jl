@@ -11,7 +11,7 @@
                                   simfitpp_select, with_residual_unit, residual_unit_scale,
                                   _msac_best_over
     using VisualGeometryToolkitCore.Pools: PoolPair, pool_normalization, pool_frame_calibrations,
-                                    calibration_matrices
+                                    calibration_matrices, pixel_residuals
     using VisualGeometryToolkitCore
 
     @testset "unbiased_median_variance (UnbiasedMed)" begin

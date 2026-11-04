@@ -32,7 +32,7 @@ What the rule then demands of this package:
 * **Every width on pool data is in the pool frame's unit and says so**: the
   outlier half-width, the loss width, the IG scale prior, every
   [`grid_evaluate`](@ref) grid and `POOL_FRAME_R_MAX`.
-* **There is one exit to pixels.** [`pixel_residuals`](@ref) is the image-plane
+* **There is one exit to pixels.** VisualGeometryToolkitCore's `Pools.pixel_residuals` is the image-plane
   Sampson residual of the pool's models in pixels, computed from the light
   record alone: the correspondences come back through the stored maps
   (VisualGeometryToolkitCore's `pixel_csponds`), each model by composition with the

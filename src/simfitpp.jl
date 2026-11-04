@@ -175,51 +175,10 @@ exact conversion — the pool frame scales the two images independently and the
 Sampson denominator mixes both images' gradients, so no single scalar relates
 the two frames per point. Use it only for soft quantities (an initial
 loss-width guess from a pool-frame-unit grid); anything the bounds gate must
-run on [`pixel_residuals`](@ref).
+run on VisualGeometryToolkitCore's `Pools.pixel_residuals`.
 """
 function residual_unit_scale(pair::PoolPair)
     return (pair.source_map[1, 1] + pair.destination_map[1, 1]) / 2
-end
-
-"""
-    pixel_residuals(pair::PoolPair) -> Matrix{Float32}
-
-The image-plane Sampson residuals of the pair's stored models in the PIXEL
-frame, `num_points × num_models`. Pixels are the frame the SIMFIT++ reference works in, so
-its pixel bounds apply to them without any scalar approximation (the pool frame
-scales the two images independently, cf. [`residual_unit_scale`](@ref)). One
-n×M scan of the light record: the correspondences come back to pixels through
-the stored maps (`pixel_csponds`), each model by composition with the
-pool normalization's two sides, `inv(D) ∘ M ∘ S` (a pool `F` → `T₂ᵀ F T₁`, a
-pool `H` → `T₂⁻¹ H T₁`). A model type with neither law (a bare matrix) has no
-`sampson_distance` and is a `MethodError`.
-
-It never reads the pool's stored residual matrix, so it does not depend on that
-matrix's residual kind. The stored residuals of an essential pool are TANGENT
-Sampson distances (the pool generator's `residual_kind = :tangent_sampson`),
-those of an F or H pool image-plane Sampson (`:sampson`); this exit is
-image-plane Sampson for every pool, the quantity SIMFIT++'s pixel bounds are
-stated in. (It used to return the stored matrix itself when both maps were the
-identity — the image-plane quantity for an F/H pool, but the tangent one for an
-E pool: two routes to two quantities under one name.)
-"""
-function pixel_residuals(pair::PoolPair)
-    n, M = num_points(pair), num_models(pair)
-    (n == 0 || M == 0) && return Matrix{Float32}(undef, n, M)
-    N = pool_normalization(pair)
-    S, D = source_map(N), destination_map(N)
-    iD = inv(D)
-    px = pixel_csponds(pair)
-    u = [SVector{2,Float64}(x) for x in sources(px)]
-    v = [SVector{2,Float64}(x) for x in targets(px)]
-    out = Matrix{Float32}(undef, n, M)
-    @inbounds for (j, m) in enumerate(pair.models)
-        mp = iD ∘ m ∘ S
-        for i in 1:n
-            out[i, j] = Float32(sampson_distance(mp, u[i], v[i]))
-        end
-    end
-    return out
 end
 
 """
@@ -236,7 +195,7 @@ validation-split residuals; the returned index is the MSAC argmax over ALL
 points at the final loss width.
 
 The pair method is PIXELS in, pixels out: it runs on
-[`pixel_residuals`](@ref)`(pair)`, the pool models' residuals in pixels, so
+VisualGeometryToolkitCore's `Pools.pixel_residuals(pair)`, the pool models' residuals in pixels, so
 `initial_loss_width_px`, the bounds of `cfg` (the reference's pixel defaults,
 0.25–8 px) and the returned loss width are all pixels. To work in the pool
 frame's unit instead, call the matrix method on the pair's stored residual

@@ -84,7 +84,6 @@ SimFitPP
 simfitpp_loss_width
 simfitpp_select
 unbiased_median_variance
-pixel_residuals
 residual_unit_scale
 with_residual_unit
 ```

@@ -135,7 +135,7 @@ origin, scaled by half the image diagonal so the corners lie at unit radius.
 It is the one declared exception to the stack's rule that a public function
 returns results in the frame its inputs came in. Every width applied to pool
 data (outlier half-width, loss width, IG prior, every `grid_evaluate` grid) is
-in that frame's unit, and [`pixel_residuals`](@ref) is the one exit to pixels.
+in that frame's unit, and VisualGeometryToolkitCore's `Pools.pixel_residuals` is the one exit to pixels.
 [Conventions](conventions.md) states the rule and what it demands of this
 package.
 

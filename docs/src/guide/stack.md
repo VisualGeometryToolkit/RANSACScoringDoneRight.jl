@@ -116,7 +116,7 @@ reference calls the loss width its threshold.
 
 The reference's bounds, 0.25 and 8, are pixel constants. A pool stores its
 data in `NormalizedImageFrame` (image centre, half diagonal), and no single
-scalar relates the two frames point by point. [`pixel_residuals`](@ref)`(pair)`
+scalar relates the two frames point by point. VisualGeometryToolkitCore's `Pools.pixel_residuals(pair)`
 is the image-plane Sampson residual of the pool's models in pixels. It is
 computed from the light record and never reads the stored residual matrix, so
 it does not depend on that matrix's residual kind (tangent Sampson for E

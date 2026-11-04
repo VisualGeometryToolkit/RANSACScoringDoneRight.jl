@@ -15,10 +15,10 @@
     using KernelAbstractions
     using RANSACScoringDoneRight
     using RANSACScoringDoneRight: stage_ig_shared_from_pairs, loss_spec, Exact, LossSpec, pair_chunk_budget,
-        simfitpp_select, pixel_residuals, residual_unit_scale
+        simfitpp_select, residual_unit_scale
     using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, IGPrior, WelschShape,
         FundMat, sampson_distance, select_on_grid!, selection_staging, stage_selection
-    using VisualGeometryToolkitCore.Pools: PoolPair
+    using VisualGeometryToolkitCore.Pools: PoolPair, pixel_residuals
     import VisualGeometryToolkitCore as VGC
 
     struct _SGProblem <: AbstractConstraintProblem end

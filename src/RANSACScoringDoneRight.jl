@@ -68,16 +68,12 @@ using VisualGeometryToolkitCore: VisualGeometryToolkitCore, Uncertain, CovMat, g
 # simfitpp.jl).
 using VisualGeometryToolkitCore:
     # the loss shapes the inlier-loss layer and the scale marginals dispatch on
-    AbstractLossShape, WelschShape, GemanMcclureShape, SmoothTLSShape,
-    sampson_distance, sources, targets,
-    # a pool model's frame change is composition with the normalization's two
-    # sides (`pixel_residuals`)
-    source_map, destination_map
+    AbstractLossShape, WelschShape, GemanMcclureShape, SmoothTLSShape
 # The benchmark pool record and its accessors are VisualGeometryToolkitCore's (its
 # `Pools` module): RSDR's pool scorers take the light `PoolPair` together with
-# its residual matrix, and read the record only through these.
-using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_imc, pool_normalization,
-    pixel_csponds
+# its residual matrix, and read the record only through these. `pixel_residuals`
+# is the pool's one exit to pixels (the pair's image-plane Sampson residuals).
+using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_imc, pixel_residuals
 # The width axes, their native maps and the native-axis conversions are
 # VisualGeometryToolkitCore's; this package states the axis of its grid families.
 using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth
@@ -139,7 +135,7 @@ export WelschMarginal,
     pool_model_score   # one stored model's loss-width-family score (the per-model term of best_pool_model)
 public pair_chunk_budget
 # SIMFIT++ (simfitpp.jl): loss-width estimation from held-out residuals + the pool adapter
-export SimFitPP, unbiased_median_variance, simfitpp_loss_width, simfitpp_select, pixel_residuals,
+export SimFitPP, unbiased_median_variance, simfitpp_loss_width, simfitpp_select,
     residual_unit_scale
 # The SIMFIT++ bounds in another residual unit (`simfitpp_select`'s matrix method).
 public with_residual_unit
