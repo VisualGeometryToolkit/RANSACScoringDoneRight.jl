@@ -2,10 +2,10 @@
 # `checkdocs = :public` only sees docstrings that exist, so a public name with
 # none, a docstring detached from its definition by a blank or comment line
 # (Julia 1.12 makes it a bare string) and a signature line that drifted from
-# the methods (a removed keyword) all pass it. The General registration review
+# the methods (a removed keyword) all get through it. The General registration review
 # asks for every public name to be documented (#173032).
 #
-# docs_gates.jl is the julia-docs-pass copy the stack's suites also carry; it
+# docs_gates.jl is the docs skill's copy the stack's suites also carry; it
 # is not a `*_tests.jl` file, so ReTestItems does not run it.
 
 @testitem "docs" begin
