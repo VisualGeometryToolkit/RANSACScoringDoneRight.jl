@@ -76,6 +76,9 @@
 
         @testset "a degenerate sample is no hypothesis" begin
             sws = alloc_scoring_workspace(n, 1, sp); q = fill(7.0, n)
+            # sort_key is allocated uninitialized: its bits may be a NaN, which is
+            # never == itself. A sentinel makes "untouched" a deterministic check.
+            fill!(sort_key(sws), 7.0)
             pen = copy(penalties(sws)); key = copy(sort_key(sws))
             @test score_sq_residuals!(sws, q, sp, degen, θ, idx, n) === (-Inf, 0)
             @test q == fill(7.0, n)                               # untouched
