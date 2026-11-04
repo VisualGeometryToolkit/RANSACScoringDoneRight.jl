@@ -4,95 +4,82 @@
 [![Docs](https://img.shields.io/badge/docs-ransacscoringdoneright.github.io-blue.svg)](https://ransacscoringdoneright.github.io)
 [![Coverage](https://codecov.io/gh/VisualGeometryToolkit/RANSACScoringDoneRight.jl/branch/main/graph/badge.svg)](https://app.codecov.io/gh/VisualGeometryToolkit/RANSACScoringDoneRight.jl)
 
-**[RANSAC Scoring Done Right](https://arxiv.org/abs/2606.27385)**
-James Pritts, Felix Seegräber and Kevin Köser. *NeurIPS 2026*.
-[Project page](https://ransacscoringdoneright.github.io).
+RANSACScoringDoneRight scores RANSAC hypotheses with the scale-free marginal
+score of the NeurIPS 2026 paper
+[RANSAC Scoring Done Right](https://arxiv.org/abs/2606.27385): the inlier scale
+is integrated out in closed form, and the best inlier partition is found by one
+sort-and-sweep, so no inlier threshold has to be set. It also holds the paper's
+baseline scorers (RANSAC, MSAC, GaU, MAGSAC++ and three robust losses) and CPU
+and GPU evaluators that score a stored hypothesis pool at every value of a
+hyperparameter grid.
 
-The most widely used RANSAC variants score candidate models by counting inliers
-or summing per-point scores that saturate beyond a residual threshold. Every
-such score requires a user-supplied parameter that is a function of the inlier
-scale, which must itself be estimated from contaminated data. We remove this
-dependence by reversing the usual order of inference: rather than estimating
-the scale and then scoring against it, we marginalize the inlier scale
-analytically in closed form under a conjugate Inverse-Gamma prior for a fixed
-inlier partition, then optimize over partitions. A single closed-form
-expression spans the non-informative Jeffreys limit and informative
-empirical-Bayes priors, so the same score adapts across data-rich and
-data-scarce regimes without any change to the algorithm. The proposed RANSAC
-score is the first in which the inlier scale is genuinely absent from the
-formula. The score admits O(N log N) computation via sort-and-sweep. On a
-benchmark of nearly 70 000 image pairs spanning different two-view estimation
-problems and both engineered and learned feature pipelines, the proposed score
-exceeds the state of the art (RANSAC, MSAC, GaU, MAGSAC): it stays nearly flat
-under threshold miscalibration where baselines degrade, reaches near-optimal
-accuracy from as few as two validation pairs where baselines need on the order
-of 100 times more, and tightens its prior regularization as validation data
-grows scarce.
-
-## What the package does
-
-RANSACScoringDoneRight implements the paper's scale-free marginal score for
-RANSAC, `StudentTUniformScoring`. Given the residuals of one model hypothesis,
-it finds the best inlier partition and its score with the inlier scale
-integrated out, so no inlier threshold has to be set. The package also has the
-paper's baseline scorers (RANSAC, MSAC, GaU, MAGSAC++ and three robust losses)
-and CPU and GPU evaluators that score a stored pool of hypotheses at every
-value of a hyperparameter grid.
-
-The scorers plug into the scoring contract of
+The scorers implement the scoring contract of
 [VisualGeometryToolkitCore](https://github.com/VisualGeometryToolkit/VisualGeometryToolkit.jl/tree/main/VisualGeometryToolkitCore),
 so any RANSAC written against that contract can use them, including
-VisualGeometryToolkitEstimation's. The repository also holds the paper's
-research project in `neurips2026/`.
+VisualGeometryToolkitEstimation's.
 
 ## Installation
 
-The package requires Julia 1.12 or later. The quick start below also uses
+The package requires Julia 1.12 or later. The example also loads
 VisualGeometryToolkitCore, which defines the scoring contract:
 
 ```julia-repl
 pkg> add RANSACScoringDoneRight VisualGeometryToolkitCore
 ```
 
-## Quick start
+## Example
 
-Score one hypothesis from its residuals. The sweep sorts them, scores every
+Score one hypothesis from its residuals: the sweep sorts them, scores every
 candidate inlier partition with the scale marginalized out, and returns the
-best score with its inlier count. The scale estimate of that partition then
-follows in closed form.
+best score with its inlier count, whose scale estimate follows in closed form.
 
 ```julia
 using RANSACScoringDoneRight
 using VisualGeometryToolkitCore: scoring_workspace, score!, inlier_count, consensus_order, consensus_s2
+using Random
 
 # The residuals of one line hypothesis (codimension 1): 80 inliers with noise
 # scale 0.01 and 20 outliers spread uniformly over [-0.5, 0.5].
+rng = Xoshiro(7)
 n = 100
-r = [0.01 .* randn(80); rand(20) .- 0.5]
+r = [0.01 .* randn(rng, 80); rand(rng, 20) .- 0.5]
 
-scoring = StudentTUniformScoring(2, 0.5)          # a line has 2 parameters; outlier half-width 0.5
-W = scoring_workspace(scoring, n, 1)              # sweep buffers, reusable across hypotheses
+scoring = StudentTUniformScoring(2, 0.5)  # a line has 2 parameters; outlier half-width 0.5
+W = scoring_workspace(scoring, n, 1)      # sweep buffers, reusable across hypotheses
 q = Vector{Float64}(undef, n)
-S = score!(W, scoring, q, r, n)                   # the score
-k = inlier_count(scoring, W)                      # the selected inlier count
-s2 = consensus_s2(scoring, r, consensus_order(scoring, W), k; model_dof = 2, d_g = 1)   # its scale ŝ²
+S = score!(W, scoring, q, r, n)           # the score, with the scale integrated out
+k = inlier_count(scoring, W)              # the selected inlier count: about 80
+s2 = consensus_s2(scoring, r, consensus_order(scoring, W), k; model_dof = 2, d_g = 1)
+sqrt(s2)                                  # the partition's scale ŝ: about 0.01
 ```
 
 `StudentTUniformScoring(2, 0.5; prior = IGPrior(α₀, β₀))`, with
 VisualGeometryToolkitCore's `IGPrior`, scores under an informative scale prior
-instead of the Jeffreys prior.
+instead of the Jeffreys prior. The [Overview](https://ransacscoringdoneright.github.io/overview/)
+continues from here.
 
-## Links
+## Documentation
 
-- [Documentation](https://ransacscoringdoneright.github.io): the overview, the
-  API reference, the conventions and the guide for people working on the stack.
-- [Paper](https://arxiv.org/abs/2606.27385) on arXiv.
-- [`neurips2026/REPRODUCE.md`](neurips2026/REPRODUCE.md): how each figure of the
-  paper is reproduced.
-- [VisualGeometryToolkit](https://github.com/VisualGeometryToolkit), the stack
-  of Julia packages this one belongs to.
+- [Overview](https://ransacscoringdoneright.github.io/overview/): scoring
+  versus selection, the scorers, the scale priors and the pool frame.
+- [Experiments](https://ransacscoringdoneright.github.io/guide/experiments/):
+  the scoring studies shipped with the repository.
+- [Conventions](https://ransacscoringdoneright.github.io/conventions/): units,
+  frames and widths, and why they are named as they are.
+- [API Reference](https://ransacscoringdoneright.github.io/api/scoring/).
 
-## Citation
+The package is part of the
+[VisualGeometryToolkit](https://github.com/VisualGeometryToolkit) stack:
+VisualGeometryToolkitCore defines the contracts it implements, and
+[BlobBoards](https://blobboards.github.io) and the ACCV 2026 study of
+[Robust Local Optimization Done Right](https://localoptimizationdoneright.github.io)
+use its scorers. The paper's research project, with the drivers of every
+figure, is in [`neurips2026/`](neurips2026/REPRODUCE.md).
+
+## Citing
+
+James Pritts, Felix Seegräber and Kevin Köser. RANSAC Scoring Done Right.
+*NeurIPS 2026* ([arXiv](https://arxiv.org/abs/2606.27385)).
 
 ```bibtex
 @inproceedings{Pritts2026RansacScoring,

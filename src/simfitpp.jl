@@ -58,8 +58,7 @@ end
 The same configuration with the loss-width bounds expressed in another residual
 unit. `min_loss_width`/`max_loss_width` are multiplied by `unit_scale` (e.g.
 `residual_unit_scale(pair)` to carry the reference's pixel bounds into a
-pool stored in the pool frame). The argument was a bare `s`, the letter this package
-otherwise spends on a noise scale.
+pool stored in the pool frame).
 """
 with_residual_unit(cfg::SimFitPP, unit_scale::Real) =
     SimFitPP(cfg.alpha, cfg.max_iter, cfg.ftol, cfg.train_fraction,
@@ -68,7 +67,7 @@ with_residual_unit(cfg::SimFitPP, unit_scale::Real) =
 """
     unbiased_median_variance(residuals_sq, sq_loss_width; dg = 1) -> σ²
 
-The reference's `UnbiasedMed`: the noise VARIANCE from the squared residuals
+The reference's `UnbiasedMed`: the noise variance from the squared residuals
 below `sq_loss_width`, corrected for the truncation. With `med` the median of
 the kept residuals and `ratio = sq_loss_width / med`, the quantile `q` that the truncated median
 corresponds to under χ²_dg solves `q = F(ratio · F⁻¹(q)) / 2`, iterated five
@@ -77,10 +76,8 @@ below 5 has no useful fixed point and the naive `med / F⁻¹(1/2)` is returned
 (the reference's `min_ratio`). Returns `NaN` when no residual lies below the
 loss width.
 
-**It returns σ², not σ** — which is why the name no longer says "scale". It was
-`unbiased_median_scale`, sitting in the same package as a partition-scale
-verb that returned a LINEAR σ̂. Two exported `*_scale` names, one squared and one
-not, is the ambiguity VisualGeometryToolkitCore's `s2` convention exists to remove.
+It returns σ², not σ, as its name says (VisualGeometryToolkitCore's `s2`
+convention: a squared scale is named as one).
 """
 function unbiased_median_variance(residuals_sq::AbstractVector{<:Real}, sq_loss_width::Real; dg::Integer = 1)
     dist = Chisq(dg)

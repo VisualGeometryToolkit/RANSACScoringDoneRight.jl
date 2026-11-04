@@ -23,8 +23,10 @@ stage_selection(::Val{:rsdr}, pairs, residuals; backend = KernelAbstractions.CPU
 """
     pair_chunk_budget(M_max, T) -> Int
 
-Pairs per chunk of a device selection grid over `T` columns of pools with up
-to `M_max` models: the chunk bounds the score block (Float64, pairs × M_max ×
+The number of pairs per chunk of a device selection grid.
+
+The grid has `T` columns over pools of up to `M_max` models; the chunk bounds
+the score block (Float64, pairs × M_max ×
 T) plus argmax's broadcast temporary under ~6 GiB, clamped to [1, 256].
 T-aware, so a wide miscalibration grid (T up to ~600) stays in device memory
 and narrow validation grids keep the chunk large.

@@ -15,7 +15,6 @@ interface.
 sweep!
 default_scoring_workspace
 alloc_scoring_workspace
-_build_lg_table
 ```
 
 ## Accessors
@@ -27,18 +26,14 @@ sort_key
 lg_table
 ```
 
-## Helpers
-
-```@docs
-_predictive_score_penalty
-```
-
 ## Not public
 
 Documented internals that the public docstrings refer to. They are not part of
 the API.
 
 ```@docs
+RANSACScoringDoneRight._build_lg_table
+RANSACScoringDoneRight._predictive_score_penalty
 RANSACScoringDoneRight.RadixPermBuffers
 RANSACScoringDoneRight._radix_sortperm!
 RANSACScoringDoneRight._radix_key

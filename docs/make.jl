@@ -1,7 +1,15 @@
 using Documenter
 using DocumenterLandingPage   # LandingPage(): the VitePress-style home page (index.md frontmatter)
 using DocumenterCodeBlocks    # CodeBlocks(): line numbers, docstring links and tooltips in code blocks
+using DocumenterInterLinks    # InterLinks(): `[x](@extref VisualGeometryToolkitCore.x)` against Core's inventory
 using RANSACScoringDoneRight
+
+# VisualGeometryToolkitCore's names (the scoring contract, the mixture toolkit)
+# are documented in its manual: `@extref` resolves them against the inventory
+# (objects.inv) its published `dev` docs carry, as the stack's other docs do.
+const LINKS = InterLinks(
+    "VisualGeometryToolkitCore" => "https://visualgeometrytoolkit.github.io/VisualGeometryToolkitCore/dev/",
+)
 
 makedocs(;
     modules=[RANSACScoringDoneRight],
@@ -13,8 +21,18 @@ makedocs(;
         canonical="https://ransacscoringdoneright.github.io/",
         edit_link="main",
     ),
-    plugins=[LandingPage(), CodeBlocks()],
-    warnonly=[:cross_references, :docs_block],
+    plugins=[LandingPage(), CodeBlocks(), LINKS],
+    # The docs gates (General review, #171997, #173031, #173032): every public
+    # docstring is in the manual, the doctests run, every external link
+    # resolves, and nothing is warnonly — a warning fails the build. That
+    # every public name HAS a docstring is test/docs_tests.jl's job (the
+    # missing-docs check only sees docstrings that exist).
+    checkdocs=:public,
+    doctest=true,
+    linkcheck=true,
+    # github.com rate-limits a crawler (429 on VisualGeometryToolkitCore's
+    # build, 2026-11-04), so a failure there says nothing about the link.
+    linkcheck_ignore=[r"^https://github\.com/"],
     pages=[
         "Home" => "index.md",
         "Overview" => "overview.md",

@@ -319,8 +319,8 @@ Allocate scratch buffers for Algorithm 1 sweep. Depends on:
 - `scoring.scale_prior` — lg_table α₀ offset (Jeffreys → 0.0)
 - `scoring.profile_prior` — whether the profiled-γ correction table is built
 
-Called by `RansacWorkspace(problem, scoring)` so buffers live on
-`RansacWorkspace.scoring_ws`.
+A RANSAC's workspace (VisualGeometryToolkitEstimation's `RansacWorkspace`)
+calls it, so the buffers live with the loop that reuses them.
 """
 function alloc_scoring_workspace(problem::AbstractConstraintProblem,
                                  scoring::StudentTUniformScoring)
@@ -387,7 +387,23 @@ Squares `residuals[1:n]` into `q`, pads `q[n+1:end]` with `typemax`, zeros the
 `sws` penalties, and sweeps for the optimal partition (overwriting the `sws`
 sweep buffers). The `sample_idx` points get `q = 0`.
 
-Returns `(S, k)`: sweep score and optimal inlier count.
+Returns `(S, k)`: sweep score and optimal inlier count. The residuals are in
+the caller's unit, the one `scoring`'s outlier half-width is in.
+
+```jldoctest
+julia> using RANSACScoringDoneRight
+
+julia> r = [0.010, -0.020, 0.015, 0.005, -0.010, 0.012, -0.008, 0.40, -0.45, 0.30];
+
+julia> scoring = StudentTUniformScoring(2, 0.5);   # 2 model parameters, outlier half-width 0.5
+
+julia> sws = RANSACScoringDoneRight.alloc_scoring_workspace(length(r), 1, scoring);
+
+julia> S, k = score_residuals!(sws, zeros(length(r)), scoring, r, length(r));
+
+julia> k   # the seven small residuals are the inliers
+7
+```
 """
 function score_residuals!(sws::ScoringWorkspace, q::AbstractVector{T}, s::StudentTUniformScoring,
                           residuals::AbstractVector{<:Real},
@@ -440,7 +456,7 @@ model carries it. Fills `q[i]` with the predictive squared residual
 `sample_idx` (or `nothing`): the minimal sample's points, which satisfy their
 constraints exactly — their `q` and penalty are set to zero, as `q` is in
 [`score_residuals!`](@ref). When `residuals` is supplied it receives each
-point's [`whitened_residual`](@ref) from the same constraint evaluation — SIGNED
+point's [`whitened_residual`](@extref VisualGeometryToolkitCore.whitened_residual) from the same constraint evaluation — signed
 for a scalar constraint, exactly what `residuals!` writes.
 
 Returns `(S, k)`: sweep score and optimal inlier count.

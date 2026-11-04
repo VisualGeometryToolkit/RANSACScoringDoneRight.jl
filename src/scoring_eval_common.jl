@@ -131,14 +131,16 @@ end
 """
     best_pool_model(scoring::LossWidthScoring, pair::PoolPair, R, loss_width::Real) -> Int
 
-Index of the best-scoring stored pool model of `pair` under the width-free
-loss-width family `scoring` at `loss_width`, scored on its residual matrix `R`
-(`num_points(pair) × num_models(pair)`, Float32, `NormalizedImageFrame` units —
-`loss_width` is in that unit too): per model `Σᵢ residual_quality(scoring, dᵢ²,
-loss_width)` ([`pool_model_score`](@ref)), exactly the Exact grid's
-([`grid_evaluate`](@ref)) per-model score on this one pair. `0` means no model
-(see the sentinel contract above); a matrix of another shape is a
-`DimensionMismatch`. A scorer AT its width (`MsacScoring(dg; threshold = w)`,
+The index of the best-scoring stored model of `pair` under a loss-width scoring.
+
+`scoring` is a width-free loss-width family, evaluated at `loss_width`, on the
+pair's residual matrix `R` (`num_points(pair) × num_models(pair)`, Float32,
+`NormalizedImageFrame` units; `loss_width` is in that unit too): per model
+`Σᵢ residual_quality(scoring, dᵢ², loss_width)` ([`pool_model_score`](@ref)),
+exactly the Exact grid's ([`grid_evaluate`](@ref)) per-model score on this one
+pair. `0` means no model (the pair stores none, or none scores above `-Inf`;
+a NaN score never wins; ties go to the first); a
+matrix of another shape is a `DimensionMismatch`. A scorer at its width (`MsacScoring(dg; threshold = w)`,
 a `StudentTUniformScoring`) goes through VisualGeometryToolkitCore's 3-argument
 `best_pool_model(scoring, pair, R)` — the same arithmetic, through `score!`.
 """

@@ -134,11 +134,11 @@ prior regularization as validation data grows scarce.
 ## Install
 
 **Pkg** — `RANSACScoringDoneRight` is registered in the General registry
-(Julia 1.12+). The example below also uses VisualGeometryToolkitCore, which
+(Julia 1.12+). The example below also loads VisualGeometryToolkitCore, which
 defines the scoring contract:
 
-```julia
-using Pkg; Pkg.add(["RANSACScoringDoneRight", "VisualGeometryToolkitCore"])
+```julia-repl
+pkg> add RANSACScoringDoneRight VisualGeometryToolkitCore
 ```
 
 **git** — clone the repository and instantiate it; the checkout's `neurips2026/`
@@ -151,36 +151,45 @@ git clone https://github.com/VisualGeometryToolkit/RANSACScoringDoneRight.jl.git
 
 ## Getting started
 
-The [Overview](overview.md) introduces the package: scoring versus selection,
-the scorers, the scale priors, native widths and the pool frame.
-[Experiments](guide/experiments.md) describes the scoring studies shipped with
-the repository.
-
-Score one hypothesis from its residuals. The sweep sorts them, scores every
+Score one hypothesis from its residuals: the sweep sorts them, scores every
 candidate inlier partition with the scale marginalized out, and returns the
-best score with its inlier count; the scale estimate of that partition follows
-in closed form:
+best score with its inlier count, whose scale estimate follows in closed form.
 
 ```julia
 using RANSACScoringDoneRight
 using VisualGeometryToolkitCore: scoring_workspace, score!, inlier_count, consensus_order, consensus_s2
+using Random
 
 # The residuals of one line hypothesis (codimension 1): 80 inliers with noise
 # scale 0.01 and 20 outliers spread uniformly over [-0.5, 0.5].
+rng = Xoshiro(7)
 n = 100
-r = [0.01 .* randn(80); rand(20) .- 0.5]
+r = [0.01 .* randn(rng, 80); rand(rng, 20) .- 0.5]
 
-scoring = StudentTUniformScoring(2, 0.5)          # a line has 2 parameters; outlier half-width 0.5
-W = scoring_workspace(scoring, n, 1)              # sweep buffers, reusable across hypotheses
+scoring = StudentTUniformScoring(2, 0.5)  # a line has 2 parameters; outlier half-width 0.5
+W = scoring_workspace(scoring, n, 1)      # sweep buffers, reusable across hypotheses
 q = Vector{Float64}(undef, n)
-S = score!(W, scoring, q, r, n)                   # the score
-k = inlier_count(scoring, W)                      # the selected inlier count
-s2 = consensus_s2(scoring, r, consensus_order(scoring, W), k; model_dof = 2, d_g = 1)   # its scale ŝ²
+S = score!(W, scoring, q, r, n)           # the score, with the scale integrated out
+k = inlier_count(scoring, W)              # the selected inlier count: about 80
+s2 = consensus_s2(scoring, r, consensus_order(scoring, W), k; model_dof = 2, d_g = 1)
+sqrt(s2)                                  # the partition's scale ŝ: about 0.01
 ```
 
 `StudentTUniformScoring(2, 0.5; prior = IGPrior(α₀, β₀))` scores under an
 informative prior instead (its workspace is built from the scoring, so it
 carries that prior).
+
+## Documentation
+
+- **Start here:** the [Overview](overview.md) — scoring versus selection, the
+  scorers, the scale priors, native widths and the pool frame.
+- **How to:** [Experiments](guide/experiments.md) reproduces the paper's
+  figures and runs the scoring studies shipped with the repository.
+- **Explanation:** [Conventions](conventions.md) — units, frames and widths;
+  [Working on the stack](guide/stack.md) — the contracts the package
+  implements, its GPU evaluators and its vocabulary.
+- **Reference:** [Scoring](api/scoring.md), [Posterior weighting](api/posterior.md),
+  [Pools, grids and tuning](api/pools.md) and [Internals](api/internals.md).
 
 ## Method
 

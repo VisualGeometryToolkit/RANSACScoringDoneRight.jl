@@ -259,7 +259,7 @@ end
     MlesacScoring{DG}()
 
 MLESAC (GaU) at codimension `DG`: the Gaussian-uniform log-density at a fixed
-scale, normalised to 1 at `d = 0` (see [`residual_quality`](@ref)). Symbol name
+scale, normalised to 1 at `d = 0` (see [`residual_quality`](@extref VisualGeometryToolkitCore.residual_quality)). Symbol name
 `:mlesac`.
 """
 struct MlesacScoring{DG}     <: GauScoring end
@@ -269,7 +269,7 @@ struct MlesacScoring{DG}     <: GauScoring end
 
 MAGSAC++ at codimension `DG`: the σ-marginalised quality, zero from the cutoff
 on; its loss width is that cutoff, `_MAGSAC_SCALE_MULTIPLE·σ_max` (see
-[`residual_quality`](@ref)). Symbol name `:magsac`.
+[`residual_quality`](@extref VisualGeometryToolkitCore.residual_quality)). Symbol name `:magsac`.
 """
 struct MagsacScoring{DG}     <: GauScoring end
 
@@ -304,8 +304,7 @@ struct GemanScoring{DG}      <: LossCostScoring end
 The loss-width-parameterised scorings of both branches at codimension `DG` — the
 paper's "threshold-based family". A Union, not a supertype: "takes a loss width" cuts
 across `GauScoring` and `LossCostScoring`, so it cannot be a supertype of both
-without implying a mixture underneath the losses, which is exactly what
-the retired `ThresholdFamily` got wrong.
+without implying a mixture underneath the losses.
 
 This is the type the loss-width sweep entry points accept. Widening them to
 `AbstractScoring` would readmit `StudentTUniformScoring`, which has no loss width and would
@@ -398,12 +397,16 @@ _family_type(::Val{X}) where {X} =
           "(expected :ransac/:msac/:mlesac/:magsac/:welsch_cost/:smooth_tls/:geman)")
 
 """
-    loss_width_scoring(method::Symbol[, dg | problem]) -> LossWidthScoring
+    loss_width_scoring(method::Symbol) -> LossWidthScoring
+    loss_width_scoring(method::Symbol, dg::Integer) -> LossWidthScoring
+    loss_width_scoring(method::Symbol, problem) -> LossWidthScoring
 
-The `LossWidthScoring` member a Symbol names — `:ransac`, `:msac`, `:mlesac`,
-`:magsac`, `:welsch_cost`, `:smooth_tls`, `:geman` (the tag rule: the type's
-name without `Scoring`, snake_cased) — at codimension `dg`, or at
-`codimension(problem)`. Bare, it is codimension 1.
+The [`LossWidthScoring`](@ref) member a Symbol names, at a codimension.
+
+The Symbols are `:ransac`, `:msac`, `:mlesac`, `:magsac`, `:welsch_cost`,
+`:smooth_tls` and `:geman` (the tag rule: the type's name without `Scoring`,
+snake_cased). The codimension is `dg`, or `codimension(problem)`; bare, it
+is 1.
 
 Supply the codimension whenever the problem has one other than 1: the Symbol
 vocabulary must not be a back door that silently re-defaults `DG`.

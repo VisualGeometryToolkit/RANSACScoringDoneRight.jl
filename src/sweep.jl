@@ -235,10 +235,10 @@ end
 
 Pre-allocated scratch buffers for scale-free marginal scoring (Algorithm 1).
 
-Separated from [`StudentTUniformScoring`](@ref) so that scoring carries only the
-immutable spec (model DOF, outlier half-width, codimension) while the mutable
-workspace lives on `RansacWorkspace`. Mirrors the spec/workspace
-split already in place for local-optimization via `lo_ws`.
+Separated from [`StudentTUniformScoring`](@ref) so that the scoring carries only
+the immutable spec (model DOF, outlier half-width, codimension) while the
+mutable workspace lives with the caller (a RANSAC's workspace holds one per
+thread); VisualGeometryToolkitCore's `scoring_workspace(scoring, n, dg)` builds it.
 
 ### Prior consistency
 
@@ -259,13 +259,13 @@ lg_table with an IG score formula.
 - `penalties::Vector{Float64}` — per-point ℓᵢ = log|Ṽᵢ| (predictive scoring)
 - `sort_key::Vector{Float64}` — the sweep ordering key: the per-point unit-scale
   Mahalanobis `q` in Predictive scoring (raw r² only in the model-certain
-  fallback). The historical raw-r² key is retired — with heterogeneous penalties
-  `sweep!` follows the generalized sweep lemma's parametric ordering.
+  fallback); with heterogeneous penalties `sweep!` follows the generalized
+  sweep lemma's parametric ordering.
 - `prior_table::Vector{Float64}` — profiled-γ correction; empty = flat prior
 - `scale_prior::IGPrior` — the prior the lg_table was built for (α₀=β₀=0 ⇒ Jeffreys)
 
-Build with `alloc_scoring_workspace(problem, scoring)` (defined in
-`estimators/ransac/scoring.jl`) or `default_scoring_workspace(n; dg, scale_prior)`.
+Build with [`alloc_scoring_workspace`](@ref)`(problem, scoring)` or
+[`default_scoring_workspace`](@ref)`(n; dg, scale_prior)`.
 """
 mutable struct ScoringWorkspace{K<:Unsigned}
     const perm::Vector{Int}

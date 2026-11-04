@@ -81,13 +81,13 @@ MAGSAC++ are singleton types (VisualGeometryToolkitCore's `RansacScoring` and `M
 [`MlesacScoring`](@ref), [`MagsacScoring`](@ref)), together with three robust
 costs (Welsch, smooth TLS, Geman–McClure). They form the
 [`LossWidthScoring`](@ref) union: each takes a loss width, and each scores
-through one per-residual scalar, [`residual_quality`](@ref). Every scoring
+through one per-residual scalar, [`residual_quality`](@extref VisualGeometryToolkitCore.residual_quality). Every scoring
 carries its constraint codimension `DG`, because a loss width means a different
 multiple of the scale at each codimension.
 
-**The mixture's decision boundary.** [`GauInlier`](@ref) is the
-Gaussian-uniform mixture; [`decision_threshold`](@ref) and its inverse
-`decision_width` are the one map between an outlier half-width and the residual
+**The mixture's decision boundary.** [`GauInlier`](@extref VisualGeometryToolkitCore.GauInlier) is the
+Gaussian-uniform mixture; [`decision_threshold`](@extref VisualGeometryToolkitCore.decision_threshold) and its inverse
+[`decision_width`](@extref VisualGeometryToolkitCore.decision_width) are the one map between an outlier half-width and the residual
 at which the MAP inlier/outlier decision flips, so a grid of outlier half-widths
 is never confused with a grid of thresholds.
 
