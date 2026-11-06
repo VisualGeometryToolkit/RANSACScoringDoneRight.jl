@@ -22,13 +22,12 @@ const RSDR = RANSACScoringDoneRight
 import JLD2
 using Printf
 using VisualGeometryToolkitCore.Pools: num_points
+using VisualGeometryToolkitEval.Experiments: data_root
 using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residuals_path, residual_matrix
 
-# The data root: ENV["CAU_DATA_ROOT"] (VisualGeometryToolkitEval's data-root variable).
-const DATA_ROOT = get(ENV, "CAU_DATA_ROOT") do
-    error("set CAU_DATA_ROOT to the data root holding accv2026/data/PT-E-SIFT-4K")
-end
-const POOL  = joinpath(DATA_ROOT, "accv2026", "data", "PT-E-SIFT-4K", "british_museum.jld2")
+# The data root is VisualGeometryToolkitEval's `data_root()` (ENV["VGTK_DATA_ROOT"],
+# else the project's data/exp_raw); it holds accv2026/data/PT-E-SIFT-4K.
+const POOL  = joinpath(data_root(), "accv2026", "data", "PT-E-SIFT-4K", "british_museum.jld2")
 const REPS  = 5
 
 # --- the three sort variants ------------------------------------------------

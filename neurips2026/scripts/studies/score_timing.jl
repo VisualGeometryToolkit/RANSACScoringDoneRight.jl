@@ -34,15 +34,14 @@ using JLD2, Printf
 using RANSACScoringDoneRight
 using VisualGeometryToolkitCore.Pools: num_points, num_models
 using VisualGeometryToolkitEval: cli_option
+using VisualGeometryToolkitEval.Experiments: data_root
 using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residuals_path, residual_matrix
 import VisualGeometryToolkitCore as VGC
 const RSDR = RANSACScoringDoneRight
 
-# The data root: ENV["CAU_DATA_ROOT"] (VisualGeometryToolkitEval's data-root variable).
-# Needed only for the --pool/--out defaults; give both to run without it.
-data_root() = get(ENV, "CAU_DATA_ROOT") do
-    error("set CAU_DATA_ROOT to the data root, or give --pool and --out")
-end
+# The data root is VisualGeometryToolkitEval's `data_root()` (ENV["VGTK_DATA_ROOT"],
+# else the project's data/exp_raw). Needed only for the --pool/--out defaults;
+# give both to run without it.
 
 # The marginal scorer's native parameter is the outlier half-width, NOT a loss
 # width. This driver feeds it the same NUMBER as the loss-width methods' loss
