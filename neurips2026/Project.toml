@@ -38,10 +38,6 @@ VisualGeometryToolkitIO = "0a7ae7e7-e931-45f8-9bba-03d07899cebc"
 
 [sources]
 RANSACScoringDoneRight = {path = ".."}
-# TEMPORARY, until the stack's 0.6 series is registered (the root's Core source likewise)
-VisualGeometryToolkitEstimation = {path = "../../VisualGeometryToolkit.jl/VisualGeometryToolkitEstimation"}
-VisualGeometryToolkitEval = {path = "../../VisualGeometryToolkit.jl/VisualGeometryToolkitEval"}
-VisualGeometryToolkitIO = {path = "../../VisualGeometryToolkit.jl/VisualGeometryToolkitIO"}
 
 [compat]
 DataFrames = "1.8"
