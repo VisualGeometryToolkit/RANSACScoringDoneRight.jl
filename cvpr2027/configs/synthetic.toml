@@ -1,0 +1,235 @@
+# =============================================================================
+# synthetic — configuration of record of scripts/synthetic.jl: the
+# one-candidate simulations of Sec. 4.1 (Tab. synthetic). One candidate model
+# is held fixed; each trial draws its inlier and outlier distances (d_g = 1,
+# n_theta = 0, Jeffreys prior), and every estimator and outlier model scores
+# the SAME draws (paired comparisons).
+#
+# Ported from the exploration scripts (extremely-right/explore/evt_pot.py,
+# evt_max.py, evt_sweep.py, removed in the move to this project); the rules
+# below are theirs. The submitted table predates this driver and is the
+# author's; this driver's table is compared with it, never written over it.
+# =============================================================================
+
+[simulate]
+seed = 1
+trials = 100
+# The sweep visits prefixes k = kmin, ..., N - kmax_margin.
+kmin = 3
+kmax_margin = 10
+# The outlier models the score uses (src/evt.jl, outlier_loglik):
+#   uniform  Gaussian-uniform, the half-width estimated (the plug-in score)
+#   gpd      the fitted generalized Pareto law carried down to zero as the
+#            outlier density (the uniform model at xi = -1)
+outlier_models = ["uniform", "gpd"]
+# The label priors (src/evt.jl, label_prior_term):
+#   half      the fixed gamma = 1/2 of the profile-marginal score
+#   profile   gamma profiled at k/N
+#   marginal  gamma integrated out under Jeffreys' Beta(1/2, 1/2)
+label_priors = ["half", "profile", "marginal"]
+
+# The conjugate prior of the inlier fraction for the `marginal` label prior:
+# Beta(alpha, beta); (0.5, 0.5) is Jeffreys'.
+[label_prior]
+beta = [0.5, 0.5]
+
+# Peaks-over-threshold rules (src/evt.jl, pot_endpoint).
+[pot]
+min_excess = 5
+# A fitted shape at or above this has no finite endpoint: fall back to the
+# largest coordinate.
+xi_finite = -1e-3
+
+[[cases]]
+key = "uniform"
+label = "uniform"
+outliers = "uniform"
+n_in = 300
+n_out = 700
+A = 100.0
+
+[[cases]]
+key = "uniform_3pct"
+label = "uniform, 3% inliers"
+outliers = "uniform"
+n_in = 30
+n_out = 970
+A = 100.0
+
+[[cases]]
+key = "uniform_A10"
+label = "uniform, A = 10"
+outliers = "uniform"
+n_in = 300
+n_out = 700
+A = 10.0
+
+[[cases]]
+key = "linear"
+label = "linearly decaying"
+outliers = "linear"
+n_in = 300
+n_out = 700
+A = 100.0
+
+# The heterogeneous setting: each trial its own outlier shape (uniform or
+# linear) and extent A, log-uniform on [A_min, A_max]. One calibrated width
+# cannot fit every trial; a per-trial fit can.
+[[cases]]
+key = "mixed"
+label = "mixed shape and extent"
+outliers = "mixed"
+n_in = 300
+n_out = 700
+A_min = 10.0
+A_max = 1000.0
+
+# The estimators of the half-width. `fixed` supplies `scale` times the
+# trial's true support A (scale = 1: the known width, an oracle per trial);
+# the rest estimate it from each prefix's complement. Each estimator is scored
+# with the outlier models it has: every one with `uniform`, the POT
+# estimators also with `gpd` (the extended model needs a fitted shape).
+[[estimators]]
+key = "fixed"
+kind = "fixed"
+scale = 1.0
+
+[[estimators]]
+key = "block_max20"
+kind = "block_max"
+blocks = 20
+
+[[estimators]]
+key = "block_min20"
+kind = "block_min"
+blocks = 20
+
+[[estimators]]
+key = "pot80"
+kind = "pot"
+eta = 0.80
+
+[[estimators]]
+key = "pot90"
+kind = "pot"
+eta = 0.90
+
+[[estimators]]
+key = "pot95"
+kind = "pot"
+eta = 0.95
+
+# The soft-label inference: the labels summed out per residual instead of
+# profiled over partitions; sigma^2 (Jeffreys) and gamma (the label prior)
+# integrated out on a grid. The outlier density is fitted once per candidate,
+# to the upper tail of ALL residuals at level eta (so the top 1 - eta must be
+# outliers). log sigma spans log_sigma_range around the residuals' median.
+[[estimators]]
+key = "soft90"
+kind = "soft"
+eta = 0.90
+log_sigma_range = [-10.0, 3.0]
+n_sigma = 66
+n_gamma = 49
+
+# The calibrated Gaussian-uniform baseline: one width a for every trial of a
+# case, the best of this log-spaced grid by mean F1 of the selected partition.
+# It is calibrated on the very trials it is scored on, so it is an upper bound
+# on any cross-validated width: the comparison favours the baseline. The same
+# grid gives the response of the selection to the width (the sensitivity
+# paragraph).
+[calibration]
+a_min = 1.0
+a_max = 3000.0
+n = 36
+criterion = "f1"
+
+# The unit-invariance check (Prop. invariance): the same draws, residuals
+# multiplied by `scale`, must select the same prefix.
+[invariance]
+case = "uniform"
+trials = 30
+scale = 1000.0
+estimator = "pot90"
+
+# Excluded from the run key (Experiments RUN_KEY_EXCLUDED): how the summary is
+# printed, not what was computed.
+[render]
+table = "tab_synthetic.tex"
+macros = "synthetic_numbers.tex"
+digits = 0
+f1_digits = 3
+xi_digits = 2
+a_digits = 1
+
+# The table's row labels, by case key.
+[render.case_tex]
+uniform = 'uniform'
+uniform_3pct = 'uniform, $3\%$ inliers'
+uniform_A10 = 'uniform, $A = 10$'
+linear = 'linearly decaying'
+mixed = 'mixed shape and extent'
+
+# The table's columns, in order: (group, estimator key, outlier model, label prior, header).
+[[render.columns]]
+group = "Reference"
+estimator = "fixed"
+model = "uniform"
+prior = "half"
+header = 'Known $a$'
+
+[[render.columns]]
+group = "Reference"
+estimator = "calibrated"
+model = "uniform"
+prior = "half"
+header = 'Cal.\ $a$'
+
+[[render.columns]]
+group = "Reference"
+estimator = "calibrated"
+model = "uniform"
+prior = "marginal"
+header = 'Cal.\ $a$, $\gamma$ m.'
+
+[[render.columns]]
+group = "Hard labels"
+estimator = "pot90"
+model = "uniform"
+prior = "half"
+header = 'O1'
+
+[[render.columns]]
+group = "Hard labels"
+estimator = "pot90"
+model = "gpd"
+prior = "half"
+header = 'O2'
+
+[[render.columns]]
+group = "Hard labels"
+estimator = "pot90"
+model = "uniform"
+prior = "marginal"
+header = 'O1, $\gamma$ m.'
+
+[[render.columns]]
+group = "Hard labels"
+estimator = "pot90"
+model = "gpd"
+prior = "marginal"
+header = 'O2, $\gamma$ m.'
+
+[[render.columns]]
+group = "Soft labels"
+estimator = "soft90"
+model = "uniform"
+prior = "marginal"
+header = 'O1, $\gamma$ m.'
+
+[[render.columns]]
+group = "Soft labels"
+estimator = "soft90"
+model = "gpd"
+prior = "marginal"
+header = 'O2, $\gamma$ m.'
