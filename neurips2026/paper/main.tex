@@ -219,7 +219,8 @@ quantile~$q$ of the inlier scale~$\sigma$, so tuning the threshold is equivalent
 tuning the inlier scale in different units.
 We call scores of this form \emph{threshold-based}.
 
-We propose an \emph{inlier-scale-free} \ransac score by reversing the
+We propose an \emph{inlier-scale-free} \ransac score, the
+\emph{profile-marginal score}, by reversing the
 usual order of elimination.  Threshold-based scores sum or maximize
 over the latent inlier/outlier labels first, retaining the inlier scale
 through the threshold.  We instead integrate out the inlier
@@ -316,11 +317,11 @@ distance~\cite{Sampson1982,Hartley2003,Chojnacki2000}. Equivalently,
 it is the squared Mahalanobis distance, with respect
 to~$\btSigma_{\bx_i}$, from~$\bx_i$ to the linearization
 of~$\cM_{\btheta}$ at~$\bx_i$.  Its relation to the geometric distance
-to~$\cM_{\btheta}$ is discussed in ~\cite{Harker2006,Rydell2024}. Our
-model requires only that the distribtuion of the residual be isotropic
+to~$\cM_{\btheta}$ is discussed in~\cite{Harker2006,Rydell2024}. Our
+model requires only that the distribution of the residual be isotropic
 normal.
 
-We adopt the standard Gaussian-uniform
+We adopt the standard \gaussunif
 mixture~\cite{Torr2000,Shekhovtsov2025}: a latent label $z_i \in
 	\{0,1\}$ marks observation~$i$ as inlier ($z_i{=}1$) or outlier
 ($z_i{=}0$) with prior $\Pr(z_i{=}1) = \gamma$, and the
@@ -360,7 +361,7 @@ the likelihood factorizes as
 \end{equation}
 
 % =====================================================================
-\section{Scale-Free Marginal Likelihood Scoring}
+\section{Profile-Marginal Likelihood Scoring}
 \label{sec:scoring}
 % =====================================================================
 
@@ -422,7 +423,7 @@ and then optimize over partitions, giving the model score
 	S^*(\btheta) \coloneqq \max_{\cI} \; S(\btheta, \cI).
 	\label{eq:profile-I}
 \end{equation}
-This is a \emph{profile-marginal} hybrid: profile over
+We call~$S^*$ the \emph{profile-marginal score}: profile over
 labels~$\bz$ (equivalently partitions~$\cI$), marginal
 over~$\sigma$.  A fully Bayesian score would marginalize
 \emph{both}, but $\log \sum_{\cI} \exp S(\btheta,\cI)$ has $2^N$
@@ -432,15 +433,16 @@ $\sigma$-integral~\eqref{eq:S-def} has a closed form
 (\Cref{sec:score}).
 
 % ---------------------------------------------------------------------
-\subsection{The Scale-Free Marginal Score}
+\subsection{The Profile-Marginal Score in Closed Form}
 \label{sec:score}
 
 The \invgamma is the conjugate prior for the variance of a zero-mean
 Gaussian, so~\eqref{eq:S-def} has a closed form for any
 $\alpha_0, \beta_0 > 0$; we keep $(\alpha_0, \beta_0)$ general, so the
 score holds for every prior in the family.  Taking logarithms yields
-the \emph{scale-free marginal score} (\Cref{sec:supp-score-deriv} gives
-the full derivation):
+the closed form of~$S$, from which the profile-marginal
+score~\eqref{eq:profile-I} follows by maximizing over~$\cI$
+(\Cref{sec:supp-score-deriv} gives the full derivation):
 \begin{equation}
 	\boxed{
 		S(\btheta, \cI)
@@ -471,7 +473,7 @@ density in~$\sigma^2$, so the posterior given the inlier residuals is
 \end{equation}
 Each inlier~$i$ outside the minimal sample contributes $d_g$ residual
 coordinates to~$\nu$ and $\|\br_i\|^2$ to~$\RSS_\cI$ (so
-$\nu = (n_I - m)\,d_g$, \Cref{sec:supp-dof}).  Without prior
+$\nu = (n_I - m)\,d_g$ for an exact minimal solver, \Cref{sec:supp-dof}).  Without prior
 information (the Jeffreys limit) the posterior is
 $\IG(\nu/2, \RSS_\cI/2)$; comparing with~\eqref{eq:ig-posterior}, the prior only replaces the
 coordinate count~$\nu$ by $\nu + 2\alpha_0$ and the sum of squares
@@ -492,9 +494,11 @@ for $\nu > 0$,
 \begin{equation*}
 	\hat s^2 \coloneqq \frac{2\beta_0 + \RSS_\cI}{2\alpha_0 + \nu}
 	= \frac{2\alpha_0}{2\alpha_0 + \nu}\,s_0^2
-	+ \frac{\nu}{2\alpha_0 + \nu}\,\frac{\RSS_\cI}{\nu}:
+	+ \frac{\nu}{2\alpha_0 + \nu}\,\frac{\RSS_\cI}{\nu}.
 \end{equation*}
-the prior mean square dominates when $\nu \ll 2\alpha_0$ and the observed one
+Marginally, an inlier residual coordinate is then Student-$t$ with
+$2\alpha_0 + \nu$ degrees of freedom and scale~$\hat s$.  The prior
+mean square dominates when $\nu \ll 2\alpha_0$ and the observed one
 when $\nu \gg 2\alpha_0$, which is how the prior regularizes the variance
 estimate in the data-scarce regime of \Cref{sec:experiments}.
 
@@ -513,7 +517,7 @@ All four terms of~\eqref{eq:score} depend on the partition~$\cI$:
 	      the uniform-model cost $d_g\log(2a)$.
 \end{enumerate}
 
-\paragraph{Noninformative limit (Jeffreys prior).}
+\paragraph{Non-informative limit (Jeffreys prior).}
 The limit $(\alpha_0, \beta_0) \to (0,0)$ gives the improper Jeffreys
 prior $\pi(\sigma^2) \propto 1/\sigma^2$~\cite{Jeffreys1946}, which
 introduces no scale assumption. Its posterior is proper whenever $\nu
@@ -530,7 +534,7 @@ where the combination $(\nu/2)\log(2\pi) + (\nu/2)\log(\RSS_\cI/2) =
 	(\nu/2)\log(\pi\,\RSS_\cI)$ has been merged.  Every term is data-only,
 without any pseudo-observation contribution from the prior, so $S_J$
 is the natural baseline against which an informative prior adds value
-only when $\nu$ is small. I.e.\ when there are too few inlier
+only when $\nu$ is small, i.e.\ when there are too few inlier
 residuals to constrain~$\sigma$ (the weighted average above).
 
 \paragraph{Implicit threshold.}
@@ -538,12 +542,13 @@ Although the score eliminates~$\sigma$, the boundary of the optimal
 partition~$\cI^*$ defines an \emph{implicit} threshold that, in the
 large-sample limit, satisfies the MAP condition $\pin(\br;\hat s) =
 	\pout$ at $\|\br\| = \tau^*$ (the inlier density depends on~$\br$ only
-through $\|\br\|$), with $\hat s = \sqrt{\RSS_{\cI^*}/\nu}$:
+through $\|\br\|$), with $\hat s$ the variance estimate above evaluated at~$\cI^*$
+($\hat s^2 = \RSS_{\cI^*}/\nu$ in the Jeffreys limit):
 \begin{equation}
 	\tau^* = \hat s\,\sqrt{2\,d_g\log\bigl(a\sqrt{2/\pi}\,/\,\hat s\bigr)},
 	\qquad
 	\frac{\partial\log\tau^*}{\partial\log a}
-	= \frac{1}{2\log\bigl(a\sqrt{2/\pi}\,/\,\hat s\bigr)},
+	= \frac{1}{2\log\bigl(a\sqrt{2/\pi}\,/\,\hat s\bigr)}.
 	\label{eq:implicit-threshold}
 \end{equation}
 Unlike the baselines' one global~$\tau$, the proposed profile-marginal
@@ -569,19 +574,19 @@ likely, and tightens automatically as outliers become denser.
 % ---------------------------------------------------------------------
 \subsection{The Sort-and-Sweep Algorithm}
 
-For a fixed~$\btheta$, the squared distances $q_i = \|\br_i\|^2$
+For a fixed~$\btheta$, the distances $\delta_i = \|\br_i\|$
 depend only on~$\btheta$, not on the partition.  Sorting them
-$q_{(1)} \leq \cdots \leq q_{(N)}$, the optimal inlier set is
+$\delta_{(1)} \leq \cdots \leq \delta_{(N)}$, the optimal inlier set is
 always a prefix $\cI_k = \{(1),\ldots,(k)\}$ of some length~$k$,
 written $\cI^* = \cI_{k^*}$ at the optimum: swapping any
-included point for an excluded one with a smaller residual
+included point for an excluded one with a smaller distance
 lowers~$\RSS_\cI$ at fixed~$n_I$ and strictly raises the score.
-Since $\RSS_{\cI_k} = \sum_{j=1}^{k} q_{(j)}$ is then a prefix sum, a
+Since $\RSS_{\cI_k} = \sum_{j=1}^{k} \delta_{(j)}^2$ is then a prefix sum, a
 running accumulator evaluates the full score in one $O(N)$ pass after
 the sort, starting at $k = \lfloor n_\theta/d_g \rfloor + 1$, the smallest
 length with
 $\nu = k\,d_g - n_\theta > 0$ (\Cref{sec:score}); the Jeffreys limit ($\alpha_0{=}\beta_0{=}0$) is the
-same algorithm without the prior pseudo-counts.
+same algorithm without the pseudo-observations.
 \Cref{alg:score} summarizes the
 procedure.  Within \ransac, the
 sweep is applied to each candidate model generated from a
@@ -594,27 +599,27 @@ same order as \msac at a few microseconds more per hypothesis
 
 \begin{algorithm}[h]
 	\caption{Sort-and-sweep computation of the
-		scale-free marginal score~\eqref{eq:score}.
+		profile-marginal score~\eqref{eq:profile-I}, using~\eqref{eq:score}.
 		The algorithm returns the best-scoring prefix
 		$\cI^* = \{(1),\ldots,(k^*)\}$ with one sort and an $O(N)$ sweep.}
 	\label{alg:score}
 	\begin{algorithmic}[1]
-		\Require squared distances
-		$q_1,\ldots,q_N$;
+		\Require distances
+		$\delta_1,\ldots,\delta_N$;
 		codimension~$d_g$;
 		model parameters~$n_\theta$;
 		outlier half-width $a$;
 		prior parameters $(\alpha_0, \beta_0)$
 		\Ensure best score $S^*$; optimal inlier count $k^*$
 		\State Sort so that
-		$q_{(1)} \leq q_{(2)} \leq \cdots \leq q_{(N)}$
+		$\delta_{(1)} \leq \delta_{(2)} \leq \cdots \leq \delta_{(N)}$
 		\State $k_{\min} \gets \min\!\bigl(\lfloor n_\theta/d_g \rfloor,\, N\bigr)$
 		\Comment{largest prefix with $\nu \leq 0$}
-		\State $\RSS \gets \sum_{j=1}^{k_{\min}} q_{(j)}$
+		\State $\RSS \gets \sum_{j=1}^{k_{\min}} \delta_{(j)}^2$
 		\Comment{seed the zero-DOF prefix}
 		\State $S^* \gets -\infty$, \quad $k^* \gets 0$
 		\For{$k = k_{\min}+1, \ldots, N$}
-		\State $\RSS \gets \RSS + q_{(k)}$
+		\State $\RSS \gets \RSS + \delta_{(k)}^2$
 		\State $\nu \gets k\,d_g - n_\theta$
 		\Comment{positive DOF guaranteed}
 		\State $S \gets \log\Gamma\!\bigl(\nu/2 + \alpha_0\bigr)
@@ -693,7 +698,7 @@ single hyperparameter.  Our three proposed marginal-likelihood variants (Jeffrey
 \igrobust, \igmle) likewise share a single hyperparameter, the
 outlier half-width from~\eqref{eq:score}.  We write~$\kappa$ for
 each method's single hyperparameter generically (the half-width
-$a$ for our marginal scores, the threshold quantile for the
+$a$ for our profile-marginal scores, the threshold quantile for the
 baselines), normalized to its per-dataset optimum~$\kappa^\star$
 in all plots.  However, the physical interpretation of the role of the
 hyperparameter in each family is different, and we should not
@@ -778,21 +783,12 @@ below are given in \Cref{sec:supp-datasets}
 The Profile experiment plots each method's median rotation
 error across all pairs in the dataset as a function of its
 hyperparameter, swept exhaustively over the two-decade
-interval described in \Cref{sec:eval-protocol}.  This is not a deployable tuning protocol: it is
-computationally expensive (every grid point evaluated on the
-full pool), and a user is unlikely to have ground-truth
-annotations for so many examples of their problem
-setting (the Sensitivity experiments of
-\Cref{sec:sensitivity-expt} outline a pragmatic protocol for
-tuning the estimators).  But
-the curve shape is informative on two fronts: each method's
-minimum is its achievable lower bound on the dataset, and the
-rate at which error climbs as the hyperparameter is perturbed
-off-optimum over two decades is a direct readout of
-sensitivity to miscalibration.  Validation~$=$~test is fine
-here because no model is selected: every grid point is plotted
-on its own, so the ``tune on val, report on val'' leakage mode
-does not apply.
+interval described in \Cref{sec:eval-protocol}.  It is not a
+tuning protocol (\Cref{sec:sensitivity-expt} gives a practical one):
+each method's minimum is its achievable lower bound, and the rate at
+which error climbs off-optimum is a direct readout of sensitivity to
+miscalibration.  No model is selected, so evaluating on the full pool
+involves no validation--test leakage.
 
 % All three Profile cells now use production data.
 
@@ -874,8 +870,8 @@ does not apply.
 		each method's minimum on the fine grid; the axis is normalized
 		by the coarse-search optimum, so $x = 1$ need not be a minimum.
 		Shaded bands are 95\% bootstrap confidence intervals on the median.
-		\textbf{In the data-rich regime (PT, \ethd) the proposed
-			methods are remarkably robust to hyperparameter
+		\textbf{In the data-rich regime (PT, \ethd) our variants
+			are remarkably robust to hyperparameter
 			miscalibration}, with curves nearly flat across the full
 		two-decade window where threshold-based baselines degrade
 		markedly.  On \heb---the data-scarce
@@ -897,14 +893,14 @@ GT-Oracle, the lowest error in each pair's pool, i.e.\ the lower
 bound for any scoring function.
 
 \subsubsection{Results}
-In the data-rich regime (\phototourism and \ethd), the proposed
-methods are remarkably robust to miscalibration of their
+In the data-rich regime (\phototourism and \ethd), our variants
+are remarkably robust to miscalibration of their
 hyperparameter~$a$: the median-error curves are nearly flat
 across the full two-decade window---varying by ${<}0.02^\circ$ on
 \phototourism---while the threshold-based baselines degrade as
 the hyperparameter is perturbed (on \phototourism they span
 ${\sim}0.8^\circ$--$2.9^\circ$ over the window, vanilla \ransac most
-sharply).  The three IG variants (Jeffreys, \igmle, \igrobust)
+sharply).  Our three variants (Jeffreys, \igmle, \igrobust)
 overlap throughout the window: \igrobust fixes $\alpha_0 = 1$ and
 \igmle fits an $\alpha_0$ that is likewise small relative to the
 per-pair inlier count ($n_p \approx 140$ on PT), so the data term
@@ -913,7 +909,7 @@ informative variants approach the Jeffreys limit
 (\Cref{par:pseudo-obs}).
 
 \paragraph{Convergence at the optimum.}
-The proposed methods and the threshold-based baselines reach
+Our variants and the threshold-based baselines reach
 the \emph{same} ceiling on every dataset, despite using
 different inlier distributions: the marginalized model has a
 Student-$t$ inlier (from the Gaussian + IG hierarchy after
@@ -956,7 +952,7 @@ dominant planes injects further label noise, raising the
 floor of the per-pair noise-variance estimate
 $\hat\sigma^2_p$ (the variance of inlier residuals under the
 oracle pose, used to anchor the IG prior).  In this context, \igrobust pulls away from the baselines and
-the other proposed methods over most of the two-decade
+the other variants over most of the two-decade
 search region.  With $\alpha_0 = 1$ contributing two
 pseudo-residuals and a median-anchored $\beta_0$, the prior
 regularizes per-partition scale estimates when $n_p$ is
@@ -966,7 +962,7 @@ tails produced by structured-outlier contamination and by
 annotation errors in the dominant-plane labels.  MLE regression of the IG parameters is not robust to these
 corruptions, which negates \igmle's regularization advantage.
 Jeffreys gives up the regularization entirely, and with only
-$n_p \approx 10$ inlying measurements per pair its
+$n_p \approx 10$ inliers per pair its
 per-partition scale estimate is too noisy to discriminate
 models reliably.  Threshold-based methods cannot adapt at
 all, since a single global $\sigma$ has no per-partition
@@ -978,7 +974,7 @@ achievable error if its hyperparameter were retuned on every
 pair to select the model closest to the ground truth.  These
 envelopes invert the ordering of the solid curves' minima:
 \ransac gives the best lower bound, threshold-based baselines
-next, the proposed methods highest.
+next, our variants highest.
 This is not a measure of attainable performance but an
 artifact of how each family's hyperparameter interacts with
 the per-pair argmax.  For threshold-based methods the
@@ -1023,7 +1019,7 @@ window from \Cref{sec:eval-protocol}: $1\,000$ minimal-sample
 models are drawn per pair, scored at every hyperparameter
 $\kappa$, the best-scoring model is selected at each $\kappa$,
 and its error against the GT pose is recorded.  With these errors
-cached, the bootstrap loop is fast: draw a validation pool
+cached, the bootstrap loop is fast: draw a validation set
 $\mathcal{V}$ of cardinality $|\mathcal{V}|$ (on \heb, sampled
 from a random subset of scenes held out for validation, with the
 disjoint remaining scenes forming the test pool, so trial
@@ -1123,7 +1119,7 @@ $2048$ on \heb).
 \end{figure}
 
 \subsubsection{Results}
-The proposed methods reach near-optimal expected test error
+Our variants reach near-optimal expected test error
 at validation budgets as small as $|\mathcal{V}| = 2$, while
 the threshold-based baselines need $\ConvRatioPT\times$ more
 validation data to converge on \phototourism ($\ConvRatioETH\times$ on \ethd
@@ -1134,7 +1130,7 @@ $0.77^\circ$ already at $|\mathcal{V}| = 2$, whereas
 \msac, \gau, and \magsacpp start at ${\sim}0.90^\circ$
 and need $|\mathcal{V}| \approx 1024$ to reach the same
 floor; vanilla \ransac starts higher ($1.08^\circ$) and never
-reaches it, plateauing near $0.87^\circ$.  \ethd shows the same convergence pattern.  The proposed methods are also more reproducible
+reaches it, plateauing near $0.87^\circ$.  \ethd shows the same convergence pattern.  Our variants are also more reproducible
 at small $|\mathcal{V}|$: their cross-trial standard deviation
 $\mathrm{std}[e_{\mathbf{R}}]$ sits at
 $0.002^\circ$--$0.019^\circ$ at $|\mathcal{V}| = 2$, while
@@ -1142,20 +1138,13 @@ threshold-based baselines disperse over
 $\BaselinesStdVtwoLo^\circ$--$\BaselinesStdVtwoHi^\circ$ at the same budget---every baseline at least $\StdGapVtwoLo\times$ (\ethd) to
 $\StdGapVtwoHi\times$ (\phototourism) more than any proposed variant.
 
-This is the deployment counterpart of the Profile robustness
-result.  In \Cref{fig:profile-grid} the proposed methods'
-curves are nearly flat across the two-decade
-$\kappa/\kappa^\star$ window---a single hyperparameter is
-nearly as good as any other.  Under sampling noise that
-property translates directly into validation-budget
-insensitivity: when many $\kappa$ values are nearly equally
-good, the particular $\kappa^\star(\mathcal{V})$ chosen on a
-tiny validation pool lands inside the ``good $\kappa$''
-region with high probability.  Threshold-based methods, by
-contrast, have steeper curves and therefore narrower good
-regions, so a small $\mathcal{V}$ is unlikely to put
-$\kappa^\star(\mathcal{V})$ inside one.  For the \ransac
-practitioner this means the proposed methods can be deployed
+This is the deployment counterpart of the Profile result: the
+our variants' curves in \Cref{fig:profile-grid} are nearly flat,
+so the $\kappa^\star(\mathcal{V})$ chosen on a tiny validation set
+lands in the wide ``good $\kappa$'' region with high probability,
+whereas the baselines' steeper curves leave a narrow one that a small
+$\mathcal{V}$ rarely hits.  For the \ransac
+practitioner this means our variants can be deployed
 with a handful of ground-truth pairs---or, in the data-rich
 regime, with the prior alone---while threshold-based scoring
 demands a substantial labelled validation set to be tuned
@@ -1176,10 +1165,9 @@ for the best threshold-based baseline) and in std (lowest of any
 method for $|\mathcal{V}| \ge 32$).
 
 \paragraph{Complete pipeline.}
-The experiments above isolate the score on fixed candidate pools.  Its
-selected prefix also supplies the inlier ratio and scale that local
-optimization and termination need (\Cref{sec:supp-deploy-lo}), and in
-a complete \ransac pipeline (\Cref{sec:supp-deploy-e2e}) the score is more accurate than
+The selected prefix also supplies the inlier ratio and scale that
+local optimization and termination need (\Cref{sec:supp-deploy-lo});
+in one complete \ransac pipeline (\Cref{sec:supp-deploy-e2e}) the score is more accurate than
 \superansac~\cite{Barath2025superansac}, at $1.3\times$ its runtime
 when both are calibrated and faster when they are not.
 
@@ -1188,8 +1176,8 @@ when both are calibrated and faster when they are not.
 \label{sec:conclusion}
 % =====================================================================
 
-We marginalize the noise scale analytically out of the
-\gaussunif inlier model under a conjugate \invgamma
+We marginalize the inlier scale analytically out of the
+\gaussunif mixture under a conjugate \invgamma
 prior, yielding a closed-form \ransac score, computable by
 \sortsweep, in which the inlier scale is genuinely absent and
 a single expression spans the Jeffreys limit and informative
@@ -1214,10 +1202,8 @@ is less reliable when the selected inlier set is small, which the
 selected~$\nu^\star$ flags at inference
 (\Cref{sec:supp-deploy-reliability}).  The \gaussunif model
 does not describe structured outliers such as \heb's competing
-planes.  Our evaluation is limited to two-view geometry and isolates
-the score on fixed candidate pools; we report one complete pipeline
-(\Cref{sec:supp-deploy-e2e}), and transfer to other robust-fitting
-problems is untested.
+planes.  Our evaluation is limited to two-view geometry and mostly to fixed
+candidate pools; transfer to other robust-fitting problems is untested.
 
 \begin{ack}
 	James Pritts is funded by Kiel Training for Excellence, an EU Horizon
@@ -1242,7 +1228,7 @@ problems is untested.
 \section*{Supplementary Material}
 
 % =====================================================================
-\section{Derivation of the Scale-Free Marginal Score}
+\section{Derivation of the Profile-Marginal Score}
 \label{sec:supp-score-deriv}
 % =====================================================================
 
@@ -1287,7 +1273,7 @@ Jeffreys-marginalized form.
 Replacing $n_I\,d_g$ by the effective degrees of freedom
 $\nu = n_I\,d_g - n_\theta$ (the $n_\theta$ parameters consumed by
 the minimal-sample fit) and taking logarithms gives the boxed
-scale-free marginal score~\eqref{eq:score}; \Cref{sec:supp-dof}
+closed form~\eqref{eq:score}; \Cref{sec:supp-dof}
 derives this correction.
 
 \paragraph{The variance estimate~$\hat s^2$.}
@@ -1404,13 +1390,13 @@ $\mathbb{E}[\RSS_\cI/2\sigma^2 \mid \cI] = \RSS_\cI/2\hat s^2$.
 			$n_I\,d_g - n_\theta$ effective DOF                                                                                                       \\
 			\midrule
 			\multicolumn{2}{@{}l}{\emph{Model parameters and priors}}                                                                                 \\[2pt]
-			$\sigma$            & inlier noise scale                                                                                                  \\
+			$\sigma$            & inlier scale                                                                                                        \\
 			$a$                 & outlier domain half-width in shape-whitened constraint space~\eqref{eq:component-densities}; same units as~$\sigma$ \\
 			$\gamma$            & prior inlier probability; set to $\tfrac{1}{2}$                                                                     \\
 			$\tau$              & decision threshold (\gau / \msac); implicit in our score                                                            \\
 			\midrule
 			\multicolumn{2}{@{}l}{\emph{Scores}}                                                                                                      \\[2pt]
-			$S(\btheta,\cI)$    & scale-free marginal score~\eqref{eq:score}                                                                          \\
+			$S(\btheta,\cI)$    & log-marginal of a partition~\eqref{eq:score}                                                                          \\
 			$S^*(\btheta)$      & $\max_\cI S(\btheta,\cI)$                                                                                           \\
 			\midrule
 			\multicolumn{2}{@{}l}{\emph{Jacobians}}                                                                                                   \\[2pt]
@@ -1469,7 +1455,7 @@ $\mathbb{E}[\RSS_\cI/2\sigma^2 \mid \cI] = \RSS_\cI/2\hat s^2$.
 	\label{sec:supp-quality-vs-size}
 	% =====================================================================
 
-	We show that the marginal score can prefer a model with fewer
+	We show that the profile-marginal score can prefer a model with fewer
 	inliers over one with more, provided the former has a tighter fit.
 	For the isotropic $d_g = 1$ case, collecting the constant
 	$-N\log(2a)$ (constant across
@@ -1532,7 +1518,7 @@ $\mathbb{E}[\RSS_\cI/2\sigma^2 \mid \cI] = \RSS_\cI/2\hat s^2$.
 	where $x = a$ for the IG family and $x = \tau$ for the
 	$\tau$-baselines, and
 	$\sigma_{\mathrm{med}} = \sqrt{\mathrm{median}_p
-			\hat\sigma^2_p}$ is the cell's empirical noise scale measured
+			\hat\sigma^2_p}$ is the cell's empirical inlier scale measured
 	from the GT inlier sets
 	(\Cref{sec:supp-prior-estimation}).  The probe minimises the
 	same per-protocol scalar objective that the Sensitivity
@@ -1737,7 +1723,7 @@ optimal partition from the data
 and the score converges to the \gau log-likelihood at the
 per-partition maximum-likelihood scale, which a globally fixed
 $\sigma$ can match but not exceed: threshold-based scoring is the
-$\sigma$-fixed specialization of the marginal score, and the
+$\sigma$-fixed specialization of the profile-marginal score, and the
 per-model adaptation of~$\tau^*$ through~$\hat s$ is what no global
 threshold can replicate.
 
@@ -1885,7 +1871,7 @@ corresponds to $\sim$$9\text{mm}$ at the surface, but the same
 			      itself using any $r_p$ tolerance---so it does not bias the
 			      noise distribution we are trying to measure.
 			\item For each surviving cspond, compute~$\|r_p\|$ in metres.
-			\item Estimate the noise scale robustly by the median absolute
+			\item Estimate the inlier scale robustly by the median absolute
 			      deviation:
 			      \begin{equation}
 				      \sigma_{\mathrm{match}}
