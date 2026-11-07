@@ -10,7 +10,6 @@
 %% This file contains a number of tweaks that are typically applied to the main document.
 %% They are not enabled by default, but can be enabled by uncommenting the relevant lines.
 
-
 %%
 %% Official support for 2-column teaser figure
 %%
@@ -176,8 +175,8 @@
 % THE score names (one source: cvpr2027/src/labels.jl writes these macros into
 % every generated table). A score is named for its mixture: Stu-t (the Gaussian
 % inlier, its scale integrated out) and the outlier component; -beta marks the
-% mixing parameter integrated out, soft- the labels summed out.
-% \subscriptnamestrue sets the extreme-value width as a subscript instead.
+% inlier probability integrated out, soft- the labels summed out.
+% \subscriptnamestrue sets the estimated half-width as a subscript instead.
 \newif\ifsubscriptnames
 \newcommand{\evname}{\ifsubscriptnames$_{\mathrm{EV}}$\else-EV\fi}
 \newcommand{\stuU}{\mname{Stu-$t$U}}
@@ -219,143 +218,79 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-A \ransac score ranks candidate models by how well they explain the
-observed geometric errors. A recent likelihood-based score integrated out the unknown
-inlier noise level but still required an outlier width: a distance that
-specifies how far erroneous observations can lie from the model. We
-remove this last distance parameter. For each candidate model, we consider
-successively larger sets of inliers and estimate the outlier width from
-the largest residual coordinates among the remaining observations.
-Extreme-value theory relates the distribution of these large errors to
-the upper limit of the outlier distribution. To our knowledge, this is
-the first use of an extreme-value model of geometric errors to score
-\ransac hypotheses. \evsac used extreme values of descriptor distances to
-guide sampling. Our score requires only a dimensionless choice of which
-fraction of the upper tail to fit, and changing residual units preserves
-the ranking of hypotheses. The fitted tail also defines a nested
-extreme-value outlier component, which reduces to the uniform one at a
-shape of $-1$. Removing the width exposes the remaining prior choice,
-the probability that an observation is an inlier. We show that a
-calibrated width largely compensates for fixing this mixing parameter:
-in a synthetic validation, marginalizing it returns the calibrated width
-to the true outlier support, where the extreme-value estimate matches
-calibrated performance. Profiling over hard partitions then collapses
-when inlier and outlier residuals overlap heavily; summing the labels
-out does not, and with the extreme-value outlier component it gives
-the best result when the outliers vary between hypotheses, above the
-best calibrated \gaussunif mixture.
+A likelihood-based \ransac score can integrate out the inlier noise scale
+while still requiring an outlier half-width in residual units. We estimate
+this half-width from the upper tail of absolute residual coordinates.
+A generalized Pareto fit supplies either the endpoint of a uniform
+outlier distribution or both the endpoint and shape of a nonuniform
+distribution. Both scores preserve hypothesis rankings under a common
+change of residual units with Jeffreys' scale prior and an equivariant
+integration grid for soft labels. Synthetic experiments show that
+calibrating the uniform half-width can compensate for a misspecified
+inlier probability. Integrating over that probability improves inlier
+classification when inliers are rare, but hard assignments become
+unstable under heavy overlap. Soft assignments improve F1 in that
+regime. When outlier shape and extent vary across trials, the soft
+generalized Pareto model achieves the highest mean F1 among the tested scores.
 \end{abstract}
+
 \section{Introduction}
 \label{sec:intro}
 
-A geometric hypothesis can agree closely with many correspondences by
-chance. To rank hypotheses, \ransac~\cite{Fischler1981} therefore needs
-some account of how much agreement to expect from inliers and from
-outliers. A distance threshold answers both questions with one number.
-Its value depends on the residual, the coordinate units and the
-localization accuracy of the observations.
+A geometric hypothesis can agree with an incorrect correspondence by
+chance. How much that agreement counts in \ransac~\cite{Fischler1981}
+depends on both the localization error of an inlier and the probability
+that an outlier lies close to the model. The profile-marginal score
+of Pritts et~al.~\cite{Pritts2026} integrates out the Gaussian inlier
+scale for each candidate partition. Its uniform outlier component still
+requires a half-width $a$ in residual units. Increasing $a$ lowers the
+outlier density and makes a small residual stronger evidence for an inlier.
 
-The profile-marginal score of Pritts et~al.~\cite{Pritts2026} separates
-the two questions. For a
-given set of \tinliers, it integrates out the unknown scale of
-their Gaussian residuals. It assigns the remaining observations a uniform
-outlier density and selects the partition with the highest score. This
-leaves one parameter in residual units: the half-width $a$ of the uniform
-distribution. A large $a$ makes a chance agreement less likely than a
-small $a$, so this choice can change which hypothesis wins.
+We estimate $a$ from the largest absolute residual coordinates. Under
+the uniform model, each coordinate magnitude has upper endpoint $a$.
+A peaks-over-threshold fit~\cite{Balkema1974,Pickands1975,Coles2001}
+estimates this endpoint using a dimensionless quantile level. We compare
+two uses of the fit. The first retains a uniform density over the
+estimated support. The second also uses the fitted shape to model
+variation in outlier density within that support.
 
-We estimate $a$ from the geometric errors already available when scoring
-a hypothesis. Each \tinlier set specifies its own \toutliers. Small residuals in this complement are ambiguous: a short
-inlier set can leave many genuine inliers just outside it. Large absolute
-residual coordinates, however, carry information about the outer boundary
-of the outlier distribution. We fit their upper tail by peaks over
-threshold~\cite{Balkema1974,Pickands1975,Coles2001} and use its estimated
-endpoint as the half-width in the score. The threshold for fitting the
-tail is an empirical quantile. Choosing its level requires no knowledge
-of the units or magnitude of the errors.
-
-Removing the width exposes a second prior choice, which has no units:
-the probability $\gamma$ that an observation is an inlier. The earlier
-score fixes $\gamma=\tfrac12$. We show that, at a fixed width, changing
-$\gamma$ is exactly equivalent to rescaling $a$, so a calibrated width
-tunes the mixing parameter as much as the outlier support. Integrating
-$\gamma$ out under its conjugate prior separates the two, keeps the
-search exact and preserves the invariance to units.
-
-The state of the art saturates on the \gaussunif mixture: its scores
-differ in how they treat the inlier scale, not in what they assume
-about outliers~\cite{Shekhovtsov2025}. We therefore keep the Gaussian
-inlier component fixed and ask whether an extreme-value outlier
-component can do better. We explore two outlier components and two ways
-of eliminating the labels, and select between them on performance.
+Estimating the half-width exposes the role of the inlier probability
+$\gamma$. For partitions covered by the uniform support, calibrating
+$a$ can compensate for fixing $\gamma$ at the wrong value. We derive
+this equivalence and compare fixing $\gamma$ with integrating it out.
+Synthetic trials isolate how these choices affect inlier classification
+when the two populations overlap or the outlier distribution varies.
 
 \paragraph{Extreme values in sampling and scoring.}
-Fragoso et al.~\cite{Fragoso2013evsac} introduced extreme-value theory
-into \ransac through \evsac. A query descriptor has many incorrect
-candidate matches, and nearest-neighbor matching selects the one with
-the smallest descriptor distance if it beats the correct match.
-\evsac models the minimum among incorrect matches with a generalized
-extreme-value distribution, fitted using second-nearest-neighbor
-distances. A Gamma model for correct matches completes the mixture.
-The resulting correspondence weights guide the sampling of minimal sets
-before a geometric hypothesis exists.
-
-Here the random variable, the extreme and the decision all change. We
-model large geometric residual coordinates under a particular hypothesis,
-fit their tail anew for each candidate partition, and use its endpoint
-to rank hypotheses. To our knowledge, this is the first \ransac score to
-use an extreme-value model of outlier geometric errors in the hypothesis
-likelihood. The sampler and score can be used together, as can the score
-and any sampler guided by match quality, such as
-\prosac~\cite{ChumMatas2005}.
+\evsac~\cite{Fragoso2013evsac} uses second-nearest descriptor distances
+to fit a generalized extreme-value model of the closest incorrect match.
+Together with a Gamma model for correct matches, this yields weights
+for sampling minimal sets. Our fit uses the upper tail of a geometric
+residual under a candidate hypothesis. It acts during scoring and can
+therefore be combined with \evsac or \prosac~\cite{ChumMatas2005}.
 
 \paragraph{Geometric scoring.}
-Inlier counting and \msac~\cite{Torr1998} require an inlier tolerance.
-\mlesac~\cite{Torr2000} scores a Gaussian--uniform mixture at a specified
-inlier scale. These choices are related: fixing a Gaussian quantile
-converts a scale into a distance tolerance~\cite{Shekhovtsov2025}.
-\magsac and \magsacpp~\cite{Barath2019,Barath2020} integrate over a range
-of scales whose upper limit must still be specified. Adaptive estimators,
-including \assc, \askc, \simfit and \simfitpp
-\cite{Wang2004,Wang2010,Heinrich2013,Edstedt2025}, infer a scale from
-the residuals. Our score integrates it out separately for each \tinlier set. \recon~\cite{Raguram2011} instead uses agreement between
-residual rankings, and learned scores rank hypotheses from data, with
-correspondences~\cite{Barath2022} or without them~\cite{BarrosoLaguna2023}.
-The mixture itself is the outlier-process view of robust estimation, in
-which a robust loss is an inlier density with an outlier
-alternative~\cite{BlackRangarajan1996}; \mlesac fits its mixing parameter by
-expectation maximization~\cite{Torr2000,Dempster1977}, and Torr treats the
-mixture's parameters in a Bayesian way~\cite{Torr2002}. The a-contrario methods \minpran~\cite{Stewart1995}
-and \orsa/\acransac~\cite{Moisan2004,Moisan2012,Moulon2012} also avoid prescribing
-an inlier scale. They quantify chance agreement under a specified
-background model. We estimate the background extent from each
-hypothesis's residuals within the Gaussian--uniform scoring model.
+Inlier counting and \msac~\cite{Torr1998} require a distance tolerance.
+\mlesac~\cite{Torr2000} evaluates a Gaussian--uniform mixture at a
+specified inlier scale and fits the inlier probability by expectation
+maximization~\cite{Dempster1977}. A fixed Gaussian quantile relates
+scale to tolerance~\cite{Shekhovtsov2025}. \magsac and
+\magsacpp~\cite{Barath2019,Barath2020} integrate over scales up to a
+prescribed maximum. \assc, \askc, \simfit and
+\simfitpp~\cite{Wang2004,Wang2010,Heinrich2013,Edstedt2025} estimate
+scale from residuals. Other methods use agreement between residual
+rankings~\cite{Raguram2011} or learn scores with or without
+correspondences~\cite{Barath2022,BarrosoLaguna2023}.
 
-\paragraph{Contributions.}
-\begin{enumerate}
- \item We replace the prescribed outlier half-width by an endpoint
-  estimate, prove that under Jeffreys' prior a change of residual units
-  preserves both the selected partition and the hypothesis ranking, and
-  show why thresholds within a generalized Pareto tail target the same
-  endpoint.
- \item We keep the inlier component fixed and propose two outlier
-  components: a uniform one whose width is estimated by extreme-value
-  theory, and a generalized Pareto distribution on the residual
-  coordinates themselves, which reduces to the first at $\xi=-1$. We show
-  why the second must be built on coordinates rather than distances.
- \item We eliminate the labels in two ways, by profiling over hard
-  partitions with an exact sort-and-sweep and by summing them out, and
-  compare both formulations with both outlier components.
- \item We show that a supplied width and a fixed mixing parameter are
-  interchangeable, and integrate the mixing parameter out under its
-  conjugate Beta prior without losing the exactness of the search.
- \item A synthetic validation tests each claim, including where the
-  extreme-value component and the marginalized mixing parameter fail.
-\end{enumerate}
+Our formulation builds on outlier-process models of robust
+estimation~\cite{BlackRangarajan1996} and Bayesian treatments of mixture
+parameters~\cite{Torr2002,Pritts2026}. A-contrario methods such as
+\minpran~\cite{Stewart1995} and \orsa/\acransac~\cite{Moisan2004,Moisan2012,Moulon2012}
+quantify chance agreement under a specified background model. Here the
+residuals of each hypothesis determine the extent of its outlier component.
 
-\section{The generative model}
+\section{Residual model}
 \label{sec:method}
-
 
 \label{sec:model}
 
@@ -364,15 +299,7 @@ a candidate geometric model~$\btheta \in \Reals^{n_\theta}$. The
 noise-free point~$\bar\bx_i$ of each inlier lies on the model manifold
 $\cM_{\btheta} = \{\bx \in \Reals^d : \bg(\bx,\btheta) = \bzero\}$,
 whose codimension $d_g = d - \dim\cM_{\btheta}$ is the number of
-directions normal to it. Noise along~$\cM_{\btheta}$ leaves~$\bg$
-unchanged to first order, so only the $d_g$ normal directions carry
-evidence. The codimension therefore fixes the dimension of the
-residual vector, and each observation imposes $d_g$ independent scalar
-constraints on~$\btheta$, one per normal direction. A minimal sample
-has $m = \lceil n_\theta/d_g \rceil$ observations, the fewest whose
-constraints determine~$\btheta$ up to finitely many solutions. A
-minimal solver computes these solutions in the hypothesis step that
-proposes models for scoring.
+directions normal to it.
 
 An inlier is a noisy observation of a point on the model,
 $\bx_i = \bar\bx_i + \bvarepsilon_i$ with $\bg(\bar\bx_i,\btheta) = \bzero$
@@ -392,18 +319,16 @@ form of the squared Sampson
 distance~\cite{Sampson1982,Hartley2003,Chojnacki2000}. Equivalently,
 it is the squared Mahalanobis distance, with respect
 to~$\btSigma_{\bx_i}$, from~$\bx_i$ to the linearization
-of~$\cM_{\btheta}$ at~$\bx_i$. Its relation to the geometric distance
-to~$\cM_{\btheta}$ is discussed in~\cite{Harker2006,Rydell2024}. The
-model requires only that the distribution of the inlier residual be
-isotropic normal, and for two-view geometry this is well supported.
-Marginalizing the unknown true point along the manifold makes the density
-of the residual along any ray normal to it exactly Gaussian when the
-observation noise is Gaussian, for any codimension, and close to Gaussian
-when it is not~\cite[Sec.~3.2]{Shekhovtsov2025}. Inlier Sampson errors on
-PhotoTourism and HPatches agree with this model, with scales that vary
-between keypoints~\cite[Fig.~3]{Shekhovtsov2025}, and Edstedt
-et~al.~\cite{Edstedt2025} report Gaussian-like residuals for relative
-pose across matchers.
+of~$\cM_{\btheta}$ at~$\bx_i$. For analyses of this approximation,
+see~\cite{Harker2006,Rydell2024}. Marginalizing the unknown true point
+along the manifold makes the density of the residual along any ray
+normal to it Gaussian for Gaussian observation noise, in any codimension,
+and close to Gaussian otherwise~\cite[Sec.~3.2]{Shekhovtsov2025}.
+Empirical inlier residuals on
+PhotoTourism and HPatches support a Gaussian approximation, with
+variation in scale across keypoints~\cite[Fig.~3]{Shekhovtsov2025}.
+Similar behavior has been reported across relative-pose
+matchers~\cite{Edstedt2025}.
 
 We adopt the standard \gaussunif
 mixture~\cite{Torr2000,Shekhovtsov2025}: a latent label
@@ -414,57 +339,42 @@ residual~$\br_i$ has conditional density
  \begin{aligned}
  p(\br_i \mid z_i{=}1, \btheta, \sigma) &= \pin(\br_i;\sigma)
    \coloneqq (2\pi\sigma^2)^{-d_g/2}\,e^{-\|\br_i\|^2/2\sigma^2},\\
- p(\br_i \mid z_i{=}0, \btheta, a) &= p_a(\br_i) \coloneqq (2a)^{-d_g},
+ p(\br_i \mid z_i{=}0, \btheta, a) &= p_a(\br_i) \coloneqq (2a)^{-d_g}\,\mathbf{1}_{\{\|\br_i\|_\infty\le a\}},
  \end{aligned}
  \label{eq:component-densities}
 \end{equation}
-a Gaussian inlier density and a uniform outlier density on the cube
-$[-a,a]^{d_g}$, zero outside it. A random mismatch has unrelated
-components, so its density is uniform over the observation domain, up to
-the domain's boundary~\cite[Sec.~3.2.2]{Shekhovtsov2025}; the boundary is
-where outlier component~II departs from the uniform one. The half-width~$a$ has the same units
-as~$\sigma$ (\eg pixels for a Sampson distance). The earlier
-score~\cite{Pritts2026} fixes it by normalizing coordinates so that the
-image half-diagonal is one; here it is estimated from the residuals.
-The inlier component is fixed (\cref{sec:inlier}); we propose two
-outlier components, a uniform one whose width is estimated by
-extreme-value theory (\cref{sec:outlier}) and an extreme-value
-distribution on the residuals themselves (\cref{sec:gpd-component}).
+where $a$ is the half-width of the outlier cube in residual units. A
+random mismatch has unrelated components, so its density is uniform over
+the observation domain up to the domain's
+boundary~\cite[Sec.~3.2.2]{Shekhovtsov2025}; the boundary is where the
+generalized Pareto component of \cref{sec:gpd-component} departs from
+the uniform one.
+The earlier score fixes $a$ after normalizing by image
+extent~\cite{Pritts2026}. We estimate it from residual coordinates.
 
 Collecting the inlier labels defines a \tinlier set
 $\cI \coloneqq \{i : z_i = 1\}$, with complement
 $\cO = \{1,\ldots,N\}\setminus\cI$ of \toutliers, $n_I = |\cI|$ and
-$n_O = |\cO|$. By conditional independence, the likelihood of a
-partition is
+$n_O = |\cO|$. By conditional independence, the residual likelihood conditional on the partition is
 \begin{equation}
  p(\br\mid\btheta,\cI,\sigma,a)
  =\prod_{i\in\cI}\pin(\br_i;\sigma)
   \prod_{i\in\cO}p_a(\br_i).
  \label{eq:partition-likelihood}
 \end{equation}
-This is the model under which Shekhovtsov~\cite{Shekhovtsov2025} analyzes
-\ransac scores: \msac is its profile likelihood over the labels and \mlesac
-its marginal likelihood, both at a threshold that is a fixed quantile of the
-inlier scale, and when tuned they select models almost identically. The two
-ways of eliminating the labels in \cref{sec:inference} are these two, with
-the inlier scale integrated out and the outlier support estimated.
-As in~\cite{Pritts2026}, $\gamma=\tfrac12$ gives every partition the same
-prior weight $2^{-N}$, and we treat the partition as a free variable to
-optimize rather than labelling each point at a fixed~$\sigma$;
-\cref{sec:label-prior} integrates $\gamma$ out instead.
+With $\gamma=\tfrac12$, all partitions have prior mass $2^{-N}$.
+\Cref{sec:label-prior} gives the partition prior for unknown $\gamma$.
 
 \subsection{The inlier component}
 \label{sec:evpm}
 \label{sec:inlier}
 
-The inlier component is the Gaussian of \cref{eq:component-densities}
-with its scale integrated out, as in the earlier score~\cite{Pritts2026}.
-At a fixed partition the integral has a closed form.
+At a fixed partition, the inlier scale can be integrated out
+analytically~\cite{Pritts2026}.
 
 Write $\RSS_\cI=\sum_{i\in\cI}\delta_i^2$ and
 $\nu=n_I d_g-n_\theta$. The latter is the residual degrees-of-freedom
-adjustment used in the earlier score for a fitted model. With the
-inverse-gamma prior $\IG(\alpha_0,\beta_0)$, its adjusted inlier term
+adjustment used in the earlier score for a fitted model. With the variance prior $\sigma^2\sim\IG(\alpha_0,\beta_0)$, its adjusted inlier term
 is, up to a common additive constant,
 \begin{equation}
  \begin{aligned}
@@ -477,8 +387,8 @@ In the limit of Jeffreys' prior~\cite{Jeffreys1946}, $\alpha_0=\beta_0=0$ and
 $\pi(\sigma^2)\propto1/\sigma^2$; the integral requires $\nu>0$
 and $\RSS_\cI>0$.
 
-\subsection{Outlier component I: uniform, with an extreme-value width}
-\label{sec:outlier}
+\subsection{Uniform outliers with an estimated half-width}
+\label{sec:outlier}\label{sec:why-maxima}
 
 The uniform outlier model assigns residual vectors to the cube
 $[-a,a]^{d_g}$. Its half-width is a coordinate bound. A vector near a
@@ -492,6 +402,16 @@ multiplicities:
 \end{equation}
 Under the uniform model, each absolute coordinate is uniform on $[0,a]$.
 
+\paragraph{Choice of tail.}
+For a block of $b$ independent uniform magnitudes, the expected
+minimum is $a/(b+1)$. This suggests estimating $a$ from block minima,
+but a short prefix leaves genuine inliers in its complement. Their
+small residuals depress the estimated half-width and inflate the
+uniform density level. Upper-tail estimation is less sensitive to
+these residuals when gross errors dominate the tail. We use peaks
+over threshold to retain all exceedances and compare with block
+extremes in \cref{sec:synthetic}.
+
 Choose a quantile level $\eta$ and set $u=Q_\eta(\cZ(\cO))$.
 For $z>u$, the excess is $y=z-u$. Under the usual extreme-value
 domain-of-attraction conditions, a generalized Pareto distribution
@@ -503,38 +423,29 @@ threshold~\cite{Balkema1974,Pickands1975}. Its distribution function is
 \end{equation}
 for $y\geq0$, $1+\xi y/\omega>0$ and $\omega>0$, with the
 exponential limit at $\xi=0$. A negative shape $\xi$ gives the finite
-endpoint $u-\omega/\xi$. For a uniform coordinate the excess is
+endpoint $u-\omega/\xi$. For a uniform coordinate magnitude the excess is
 exactly uniform on $[0,a-u]$, so $\xi=-1$ and $\omega=a-u$.
 
-We fit shape and scale by probability-weighted
+We fit the shape and scale of the excesses by probability-weighted
 moments~\cite{Hosking1987}. For a finite-endpoint fit, the estimated
 half-width and corresponding uniform density level are
 \begin{align}
  \ahat(\cO)&=u-\hat\omega/\hat\xi,  \label{eq:endpoint}\\
  \pout(\cO)&=(2\ahat(\cO))^{-d_g}.     \label{eq:pout}
 \end{align}
-In the score of this subsection the generalized Pareto law supplies only
-the endpoint; the density used to score an outlier remains uniform.
-\Cref{sec:gpd-component} uses the fitted shape as well.
+We compute $u$ by linear interpolation. With fewer than five excesses
+or $\hat\xi\geq-10^{-3}$, we use the largest coordinate magnitude in
+the complement. This excludes unbounded fits and finite endpoints that
+are unstable near zero shape. Otherwise we raise the fitted endpoint
+to the observed maximum if necessary to cover the complement.
 
-\paragraph{Rules.}
-The threshold $u$ is the empirical $\eta$-quantile with linear
-interpolation. With fewer than five excesses, or a fitted shape
-$\hat\xi\geq-10^{-3}$, which has no finite endpoint, $\ahat$ falls back
-to the largest coordinate in the complement. A fitted endpoint below
-the largest coordinate is raised to it, so that every \toutliers lie in
-the support and the uniform likelihood is finite. Each rule is
-equivariant under a change of units.
-
-\subsection{Outlier component II: an extreme-value distribution on the residuals}
+\subsection{Generalized Pareto outliers}
 \label{sec:gpd-component}
 
-Outlier component I uses the generalized Pareto fit only for its
-endpoint. The fit also estimates a shape. By threshold
-stability (\cref{sec:properties}), a generalized Pareto law above $u$ is
-the restriction of the same law above any lower threshold. Carrying the
-fitted law down to zero gives the density of an absolute outlier
-coordinate,
+The second component extends the fitted generalized Pareto law down
+to zero. Threshold stability describes excesses above higher thresholds
+and cannot establish this extension from the tail alone. Under this
+additional assumption, the density of an absolute outlier coordinate is
 \begin{equation}
  f(z;\hat\xi,\ahat)=\frac{1}{\omega_0}
  \Bigl(1+\frac{\hat\xi z}{\omega_0}\Bigr)^{-1/\hat\xi-1},
@@ -542,25 +453,24 @@ coordinate,
  \label{eq:gpd-density}
 \end{equation}
 and, with independent coordinates and symmetric signs, the outlier
-density $p(\br_i)=\prod_j\tfrac12 f(|r_{ij}|)$, which replaces $p_a$ in
+density is $p(\br_i)=\prod_j\tfrac12 f(|r_{ij}|)$, which replaces $p_a$ in
 \cref{eq:partition-likelihood}. At $\hat\xi=-1$, $f=1/\ahat$ and this
 is the uniform component: the \gaussunif score is the special case
 $\xi=-1$ of a Gaussian--generalized-Pareto mixture, so the two models are
-nested. For $\hat\xi>-1$ the density falls toward the endpoint, and its
+nested. For $-1<\hat\xi<0$ the density falls toward the endpoint, and its
 value at the model, $f(0)=1/(|\hat\xi|\ahat)$, exceeds the uniform
-level. Extending the tail law down to zero is an assumption, and it is
-the assumption the plug-in score avoids: tail shape alone does not
-identify the density near zero.
+level.
 
-\paragraph{Coordinates, not distances.}
+\paragraph{Coordinate and radial densities.}
+
 For $d_g=1$ the absolute coordinate is the distance. For $d_g\geq2$ the
-two differ. A density $f(\delta)$ on distances defines the residual
+two differ. Under isotropy, a density $f(\delta)$ on distances defines the residual
 density $f(\delta)/(S_{d_g-1}\delta^{d_g-1})$, where $S_{d_g-1}$ is the
 area of the unit sphere. If $f(0)>0$, as for a generalized Pareto law
 carried down to zero, this residual density diverges at the model for
-$d_g\geq2$, and the outlier component would claim the inliers. The norm
-of a uniform vector in the cube also thins out linearly toward the
-corners ($\xi=-\tfrac12$ for $d_g=2$), so a model on distances would
+$d_g\geq2$, and the resulting likelihood can favor outliers arbitrarily close to the model. The norm
+of a uniform vector in the cube also has a density that vanishes toward the
+maximum norm ($\xi=-\tfrac12$ for $d_g=2$), so a model on distances would
 read the geometry of the cube as thinning outliers. On coordinates the
 uniform cube has $\xi=-1$ exactly. This is the distinction Shekhovtsov
 draws between the density of the residual along a ray normal to the
@@ -568,13 +478,13 @@ manifold, which defines the likelihood, and the distribution of the
 residual's norm, which does not~\cite[Sec.~5.1]{Shekhovtsov2025}.
 
 \paragraph{Endpoint.}
-For $\hat\xi>-1$ the density vanishes at the endpoint, so the largest
+For $-1<\hat\xi<0$ the density vanishes at the endpoint, so the largest
 coordinate cannot lie on it. Where the fitted endpoint does not exceed
-the largest coordinate $z_{(n)}$, the component uses
-$z_{(n)}+(z_{(n)}-z_{(n-1)})$, which is also equivariant under a change
-of units.
+the largest coordinate $z_{(n)}$, the component uses $z_{(n)}$ plus the
+mean spacing of the complement's coordinates, which is positive unless
+they all tie and is also equivariant under a change of units.
 
-\subsection{The mixing parameter}
+\subsection{The inlier probability}
 \label{sec:label-prior}
 
 With a general prior $\gamma$, the label prior adds
@@ -582,15 +492,15 @@ $n_I\log\gamma+n_O\log(1-\gamma)$ to the score. At a fixed width,
 changing $\gamma$ to $\gamma'$ changes every partition's score by
 $n_I\log\frac{\gamma'(1-\gamma)}{\gamma(1-\gamma')}$ plus a constant,
 and changing $a$ to $a'$ changes it by $n_I d_g\log(a'/a)$ plus a
-constant. The two are therefore interchangeable: the scores at
-$(\gamma',a)$ and at $(\gamma,a')$ select the same partitions when
+constant. For partitions covered by both cubes, the scores at
+$(\gamma',a)$ and at $(\gamma,a')$ differ by a common constant when
 \begin{equation}
  a'=a\left(\frac{\gamma'/(1-\gamma')}{\gamma/(1-\gamma)}\right)^{1/d_g}.
  \label{eq:gamma-width}
 \end{equation}
-With $\gamma=\tfrac12$ fixed, a width calibrated on data therefore
-absorbs any mismatch between $\tfrac12$ and the actual inlier fraction,
-and tunes the label prior as much as the outlier support.
+Thus calibration of the uniform density level can absorb a misspecified
+inlier probability. A change in support coverage also affects the
+indicator in \cref{eq:component-densities}.
 
 The earlier score noted that $\gamma$ can be integrated out under its
 conjugate prior~\cite{Pritts2026}. Under $\gamma\sim\mathrm{Beta}(\alpha_\gamma,\beta_\gamma)$,
@@ -599,33 +509,22 @@ conjugate prior~\cite{Pritts2026}. Under $\gamma\sim\mathrm{Beta}(\alpha_\gamma,
  =\frac{B(n_I+\alpha_\gamma,\,n_O+\beta_\gamma)}{B(\alpha_\gamma,\beta_\gamma)},
  \label{eq:label-marginal}
 \end{equation}
-and the score gains the logarithm of this term. It depends on the
-partition only through $n_I$, so the best partition of each size, and
-with it the exactness of the search in \cref{sec:computation}, is
-unchanged; it is dimensionless, so \cref{prop:invariance} still holds.
-Profiling $\gamma$ at $n_I/N$ instead differs from it by $O(\log N)$.
-Marginalizing $\gamma$ separates the two roles of the width: $\ahat$
-estimates the support, and the partition determines the inlier fraction.
-We use Jeffreys' prior, $\alpha_\gamma=\beta_\gamma=\tfrac12$.
+and its logarithm depends only on the inlier count. It adds constant
+work per prefix and preserves invariance to residual units. We use
+Jeffreys' prior on $\gamma$, with $\alpha_\gamma=\beta_\gamma=\tfrac12$.
+We also compare profiling $\gamma$ at $n_I/N$.
 
-\section{Eliminating the labels}
+\section{Hypothesis scoring}
 \label{sec:inference}
 
-\paragraph{Names.}
-Each score is named for its mixture. The inlier component is always the
-Gaussian with its scale integrated out, written Stu-$t$; the profile-marginal
-score with a supplied width is \stuU. With outlier component~I it is
-\stuUev, with component~II \stuGP; integrating the mixing parameter out
-appends $\beta$ (\stuUevB, \stuGPB), and summing the labels out prefixes
-soft- (\soft{\stuGPB}).
+We compare selecting a residual-norm prefix (hard labels) with
+summing over labels conditional on the mixture parameters (soft labels).
+In the tables, \stuU denotes a supplied uniform half-width, \stuUev an
+estimated uniform half-width, and \stuGP a fitted generalized Pareto
+density. The suffix $\beta$ denotes integration over $\gamma$, and the
+prefix soft- denotes label summation.
 
-Both outlier components, the inlier component and the mixing parameter
-define one generative model. Scoring a hypothesis requires eliminating
-its labels, and we compare two ways of doing so: profiling over hard
-partitions, which the sort-and-sweep makes exact and fast, and summing
-each label out, which keeps every residual's label soft.
-
-\subsection{Hard labels: profiling over partitions}
+\subsection{Hard labels by prefix selection}
 \label{sec:computation}
 
 With the uniform outlier component of \cref{sec:outlier}, the score of
@@ -645,7 +544,7 @@ $\gamma$ integrated out the score gains the logarithm of
 Sort the observations by $\delta_i$. For each admissible prefix
 $\cI_k=\{(1),\ldots,(k)\}$, accumulate its sum of squares, fit the
 upper tail of its complement, and evaluate \cref{eq:evpm-closed}.
-The hypothesis score is
+For each prefix we use the chosen outlier term and label prior. The hypothesis score is
 \begin{equation}
  S^*(\btheta)=\max_{k}S(\btheta,\cI_k).
  \label{eq:evpm-profile}
@@ -653,22 +552,21 @@ The hypothesis score is
 Thus we marginalize the inlier scale and profile over the prefix length;
 we call $S^*$ the \emph{extreme-value profile-marginal score}. The
 search covers all partitions induced by a threshold on residual norm.
-For fixed $a$, the best partition of each size is a prefix because
+For a fixed uniform cube covering all observations, a prefix is optimal at each size because
 exchanging an inlier for a closer observation reduces $\RSS_\cI$.
 With a fitted width, the exchange can also change $\ahat$. The earlier
 argument therefore gives no guarantee of optimality over arbitrary
 subsets.
 
-\Cref{sec:complexity} gives the cost of the sweep with each outlier
-component.
-
-\subsection{Soft labels: summing them out}
+\subsection{Soft labels by mixture integration}
 \label{sec:soft}
 
-Profiling over partitions makes every label hard. The alternative is to
-sum each label out, as \mlesac does at a fixed
-scale~\cite{Torr2000}, there with the mixing parameter fitted by
-expectation maximization~\cite{Dempster1977}. The marginal likelihood of a hypothesis is then
+Conditional on a shared scale and inlier probability, summing each
+label gives the mixture likelihood~\cite{Torr2000}. We fit the
+outlier density $p$ once to all coordinate magnitudes for the
+hypothesis, assuming outliers dominate the upper tail.
+Integrating over the shared parameters gives the plug-in score
+
 \begin{equation}
  \begin{aligned}
  p(\br\mid\btheta)={}&\iint\prod_{i=1}^{N}
@@ -677,34 +575,73 @@ expectation maximization~\cite{Dempster1977}. The marginal likelihood of a hypot
  \end{aligned}
  \label{eq:soft}
 \end{equation}
-with the outlier density $p(\br_i)$ of either component. The scale is
-shared by all residuals, so the product does not factor over $\sigma$
-and the integral has no closed form. We evaluate it on a grid of
-$\log\sigma$, uniform under Jeffreys' prior and placed relative to the
-median residual so that it moves with the units, and on Beta-weighted
-cells of $\gamma$. Without a partition there is no complement to fit,
-so the outlier component is fitted once per hypothesis, to the upper
-tail of all residual coordinates; this assumes that the largest fraction
-$1-\eta$ of them are outliers. Where labels are needed, each is the
-posterior inlier probability averaged over the grid, thresholded at
-$\tfrac12$. Every ingredient is equivariant under a change of units,
-so \cref{prop:invariance} holds for this score as well;
-\cref{sec:complexity} gives its cost.
+The all-outlier term in the product is independent of $\sigma$.
+Consequently the integral under an unbounded Jeffreys prior diverges
+whenever that term is positive. The numerical score uses a finite grid
+uniform in $\log\sigma$, corresponding to a truncated log-uniform prior.
+Grid bounds are set relative to the median residual and scale with the
+residual units. We use Beta-weighted cells for $\gamma$ or evaluate at
+$\gamma=\tfrac12$. To classify observations, we average each conditional
+inlier probability using the normalized posterior grid weights and
+select observations with probability at least $\tfrac12$.
+
+\subsection{Properties}
+\label{sec:properties}
+
+\begin{proposition}[Invariance to residual units]
+\label{prop:invariance}
+Under Jeffreys' prior, multiplying all residuals by $c>0$ preserves the
+maximizing prefixes and the ranking of hypotheses of the same model class,
+provided admissibility is unchanged by a change of units.
+\end{proposition}
+\begin{proof}
+Residual order is unchanged and $\RSS_\cI$ scales by $c^2$.
+The quantile, excesses and fitted scale all scale by $c$, while the
+fitted shape is dimensionless. Hence $\ahat$ scales by $c$. The total
+change in \cref{eq:evpm-closed} is
+$-(\nu+n_Od_g)\log c=-(Nd_g-n_\theta)\log c$, common to every
+prefix and hypothesis.
+\end{proof}
+The same argument covers \cref{sec:gpd-component,sec:label-prior}: the
+generalized Pareto density of \cref{eq:gpd-density} scales by $1/c$,
+exactly like the uniform level, and the label term has no units.
+For the soft score, rescaling the finite grid multiplies the mixture likelihood by $c^{-Nd_g}$ at every cell, preserving the ranking. With an informative scale prior, $\beta_0$ must also be expressed in the new
+squared-distance units. The earlier score likewise requires conversion
+of its supplied width $a$; here the endpoint fit performs that
+conversion automatically.
+
+\paragraph{Quantile stability.}
+If excesses above $u_0$ follow a generalized Pareto law with parameters
+$(\xi,\omega_0)$, raising the threshold to $u$ within its support gives
+the same shape and scale $\omega_0+\xi(u-u_0)$~\cite{Coles2001}. For
+$\xi<0$, the new endpoint is still $u_0-\omega_0/\xi$. Thus $\eta$
+changes how much data enter the fit while preserving the population
+endpoint under the tail model. Finite-sample estimates can change:
+a higher threshold leaves fewer excesses, and a lower one may extend
+below the range where the approximation holds.
+
+\paragraph{Interpreting a selected partition.}
+At fixed width and scale, equating Gaussian and uniform densities gives
+the equal-density radius, when the logarithm is nonnegative,
+\begin{equation}
+ \tau=\hat s\sqrt{2d_g\log\!\left(\frac{\ahat}{\hat s}
+                         \sqrt{\frac{2}{\pi}}\right)},
+ \label{eq:implicit-threshold}
+\end{equation}
+where $\hat s^2=(\RSS_\cI+2\beta_0)/(\nu+2\alpha_0)$.
+This gives a reference radius within the uniform support for equal label priors. The discrete
+prefix decision in \cref{eq:evpm-profile} also accounts for the change
+in the fitted width between consecutive prefixes.
 
 \subsection{Complexity}
 \label{sec:complexity}
 
-\Cref{tab:complexity} lists the cost of scoring one hypothesis with
-$N$ observations. The profile-marginal score with a supplied width
-costs one sort of the distances and one sweep~\cite{Pritts2026}. With
-the inlier term a running sum of squares, the sweep is $\Theta(N)$, and
-the sort sets the cost: a least-significant-digit radix sort on the
-32-bit keys of the residuals, a fixed number of passes, makes it
-$\Theta(N)$ as well. The inlier component and the label prior keep that
-cost in every formulation here: the label term depends only on $n_I$.
-What changes is the outlier term.
+\Cref{tab:complexity} gives costs after residual computation. For a
+supplied uniform half-width, a fixed-pass radix sort of 32-bit residual
+keys and a sweep of prefix sums each cost $\Theta(N)$~\cite{Pritts2026}.
+The inlier probability contributes constant work per prefix.
 
-\paragraph{Hard labels, component I.}
+\paragraph{Uniform outliers with hard labels.}
 For $d_g=1$ the complement of the prefix $\cI_k$ is the suffix
 $z_{(k+1)},\ldots,z_{(N)}$ of the sorted distances, and its upper tail is
 a suffix of that suffix. The threshold $u$ is an order statistic, or the
@@ -730,40 +667,26 @@ $R=R_{\mathrm{left}}+R_{\mathrm{right}}+n_{\mathrm{left}}\,s_{\mathrm{right}}$,
 deletes a coordinate and returns the moments of the top $m$ in
 $O(\log(Nd_g))$.
 
-\paragraph{Hard labels, component II.}
+\paragraph{Generalized Pareto outliers with hard labels.}
 The outlier term $\sum_{i\in\cO}\log p(\br_i)$ depends on the shape and
 endpoint fitted to that complement, which change with every prefix, and
 $\log(1-z/\ahat)$ does not decompose into prefix sums. An exact sweep
 costs $\Theta(N^2d_g)$. Fitting the tail once per hypothesis, to the
 upper tail of all residual coordinates, makes $\log p(\br_i)$ a fixed
-per-observation term and restores a $\Theta(Nd_g)$ sweep. The shortcut
-gives up the guarantee that the best partition of each size is a
-prefix: with a density that decreases away from the model, moving a
-closer observation into the complement raises its outlier density.
+per-observation term and restores a $\Theta(Nd_g)$ sweep. This evaluates a different prefix objective because every prefix uses
+the same outlier density.
 
 \paragraph{Soft labels.}
 The tail is fitted once per hypothesis, in $\Theta(Nd_g)$ by selection
 and a radix sort of the excesses, and no sort of the distances is
 needed. The integral over $J$ cells of $\log\sigma$ and $M$ cells of
-$\gamma$ costs $\Theta(NJM)$, a factor $JM$ above the sweep. The cells
-are independent, so the grid parallelizes directly, and the posterior of
-$\log\sigma$ narrows as $N^{-1/2}$, so a grid centred on its mode can
-replace a fixed one.
+$\gamma$ costs $\Theta(NJM)$, a factor $JM$ above the sweep. Grid cells can be evaluated independently.
 
 \paragraph{Measured cost.}
-\Cref{tab:timing} times every score on the protocol of~\cite{Pritts2026}:
-one thread, the stored hypotheses of \TimingPairs{} PhotoTourism pairs in
-two density regimes, each score through the same pool-selection call. Per
-hypothesis, \stuUev costs \scoretiming{o1gamma12}{typical}{ratio} times
-\stuU at $\bar n=\scoretiming{regime}{typical}{navg}$ points, and
-\stuGPB fitted once per hypothesis \scoretiming{o2perhypothesisgammamarg}{typical}{ratio}
-times, against \scoretiming{gauexact}{typical}{ratio} for \gau and
-\scoretiming{magsacexact}{typical}{ratio} for \magsacpp. Refitting the
-generalized Pareto law for every prefix costs
-\scoretiming{o2perprefixgammamarg}{typical}{ratio} times (timed on
-\TimingReferencePairs{} pairs per regime); it is the exact reference for the
-per-hypothesis form, not a deployable score. The soft-label integral is not
-a pool scorer of the package and is not timed here.
+\Cref{tab:timing} compares hard-label scores and baselines using the single-threaded protocol of~\cite{Pritts2026}. All methods use the same pool-selection call on stored PhotoTourism hypotheses in two density regimes. The table reports absolute times and costs relative to \stuU,
+including \gau and \magsacpp for comparison. Per-prefix generalized
+Pareto fits were timed on \TimingReferencePairs{} pairs per regime.
+Soft-label quadrature has yet to be timed.
 
 \begin{table}[t]
  \centering
@@ -782,120 +705,24 @@ a pool scorer of the package and is not timed here.
  \caption{Cost of scoring one hypothesis with $N$ observations of
   codimension $d_g$, after the residuals are computed. Sorts are
   radix sorts on 32-bit keys. $J$, $M$: cells of $\log\sigma$ and of
-  $\gamma$ in the soft-label integral. ``Exact'': the score is evaluated
-  exactly over the prefixes of the sorted distances.}
+  $\gamma$ in the soft-label integral. GP denotes generalized Pareto. The last column indicates whether the
+  outlier density is refitted at each prefix.}
  \label{tab:complexity}
  \setlength{\tabcolsep}{3pt}
  \resizebox{\columnwidth}{!}{%
  \begin{tabular}{llll}
   \toprule
-  Labels & Outlier component & Cost per hypothesis & Exact \\
+  Labels & Outlier component & Cost per hypothesis & Prefix refit \\
   \midrule
-  hard & supplied $a$~\cite{Pritts2026} & $\Theta(N)$ & yes \\
-  hard & I, $d_g=1$ & $O(N\log N)$ & yes \\
-  hard & I, $d_g\geq2$ & $O(Nd_g\log(Nd_g))$ & yes \\
-  hard & II, fitted per prefix & $\Theta(N^2d_g)$ & yes \\
-  hard & II, fitted per hypothesis & $\Theta(Nd_g)$ & no \\
-  soft & I or II & $\Theta(Nd_g+NJM)$ & --- \\
+  hard & supplied $a$~\cite{Pritts2026} & $\Theta(N)$ & --- \\
+  hard & uniform, $d_g=1$ & $O(N\log N)$ & yes \\
+  hard & uniform, $d_g\geq2$ & $O(Nd_g\log(Nd_g))$ & yes \\
+  hard & GP, fitted per prefix & $\Theta(N^2d_g)$ & yes \\
+  hard & GP, fitted per hypothesis & $\Theta(Nd_g)$ & no \\
+  soft & uniform or GP & $\Theta(Nd_g+NJM)$ & --- \\
   \bottomrule
  \end{tabular}}
 \end{table}
-
-\subsection{Properties}
-\label{sec:properties}
-
-\begin{proposition}[Invariance to residual units]
-\label{prop:invariance}
-Under Jeffreys' prior, multiplying all residuals by $c>0$ preserves the
-maximizing prefixes and the ranking of hypotheses of the same model class,
-provided admissibility is unchanged by a change of units.
-\end{proposition}
-\begin{proof}
-Residual order is unchanged and $\RSS_\cI$ scales by $c^2$.
-The quantile, excesses and fitted scale all scale by $c$, while the
-fitted shape is dimensionless. Hence $\ahat$ scales by $c$. The total
-change in \cref{eq:evpm-closed} is
-$-(\nu+n_Od_g)\log c=-(Nd_g-n_\theta)\log c$, common to every
-prefix and hypothesis.
-\end{proof}
-The same argument covers \cref{sec:gpd-component,sec:label-prior}: the
-generalized Pareto density of \cref{eq:gpd-density} scales by $1/c$,
-exactly like the uniform level, and the label term has no units.
-With an informative prior, $\beta_0$ must also be expressed in the new
-squared-distance units. The earlier score likewise requires conversion
-of its supplied width $a$; here the endpoint fit performs that
-conversion automatically.
-
-\paragraph{Quantile stability.}
-If excesses above $u_0$ follow a generalized Pareto law with parameters
-$(\xi,\omega_0)$, raising the threshold to $u$ within its support gives
-the same shape and scale $\omega_0+\xi(u-u_0)$~\cite{Coles2001}. For
-$\xi<0$, the new endpoint is still $u_0-\omega_0/\xi$. Thus $\eta$
-changes how much data enter the fit while preserving the population
-endpoint under the tail model. Finite-sample estimates can change:
-a higher threshold leaves fewer excesses, and a lower one may extend
-below the range where the approximation holds.
-
-\paragraph{Interpreting a selected partition.}
-At fixed width and scale, equating Gaussian and uniform densities gives
-the equal-density radius, when the logarithm is nonnegative,
-\begin{equation}
- \tau=\hat s\sqrt{2d_g\log\!\left(\frac{\ahat}{\hat s}
-                         \sqrt{\frac{2}{\pi}}\right)},
- \label{eq:implicit-threshold}
-\end{equation}
-where $\hat s^2=(\RSS_\cI+2\beta_0)/(\nu+2\alpha_0)$.
-This gives a reference radius for the fitted components. The discrete
-prefix decision in \cref{eq:evpm-profile} also accounts for the change
-in the fitted width between consecutive prefixes.
-
-\paragraph{Which extremes: maxima, not minima.}
-\label{sec:why-maxima}
-The half-width $a$ is the upper endpoint of the outlier coordinates, so
-the upper tail estimates it directly. The minima are nevertheless
-tempting. The inlier/outlier decision is made near the model, where the
-relevant quantity is the outlier density close to zero, and the minima
-measure exactly that. For uniform outliers they also determine $a$:
-the minimum of a block of $b$ coordinates has expectation $a/(b+1)$, so
-$(b+1)$ times the mean of block minima is an unbiased estimate of $a$.
-
-This argument assumes that the complement contains only outliers. Inside
-the sweep it does not. A short prefix leaves most of the genuine inliers
-in its complement, and their small residuals become the block minima.
-The estimate $\ahat$ then collapses, and the outlier term
-$-n_Od_g\log(2\ahat)$ in \cref{eq:evpm-closed} rewards labelling nearly
-every observation an outlier. The estimate adapts to the observations
-it is meant to classify: each short prefix makes its own complement look
-dense, which in turn favors the short prefix. A margin beyond the
-partition boundary does not repair this, because the scale estimate
-$\hat s$ of a short prefix, and with it any margin proportional to
-$\hat s$, is itself small. Section~\ref{sec:synthetic} confirms the
-failure.
-
-The largest coordinates behave differently. They come from gross
-errors far from the model, remain in the complement for every prefix
-that excludes them, and do not change as the sweep passes through the
-inliers. The upper-tail estimate therefore cannot adapt to the
-partition it scores. The price is that it measures the far edge of the
-outlier distribution and assumes the density stays at the same level
-down to the model. The fitted shape tests this assumption: a uniform
-density has $\xi=-1$, whereas a density decreasing linearly to zero at a
-finite endpoint has $\xi=-1/2$. In the latter case the true density
-near zero is twice the uniform level $(2\ahat)^{-d_g}$, an error the
-score sees only through $\log 2$ per outlier coordinate. Tail shape
-alone does not identify the density near zero.
-
-\paragraph{Block maxima or peaks over threshold.}
-Extreme-value theory offers two estimators of the upper
-endpoint~\cite{Coles2001}. Block maxima fit a generalized extreme-value
-law to the largest value of each of several blocks. Peaks over
-threshold fit the generalized Pareto law of \cref{eq:gpd} to every value
-above a threshold. Both target the same endpoint. Peaks over threshold
-uses all large values rather than one per block, so it uses the tail
-more efficiently, and its one setting, the level $\eta$, is
-dimensionless; a block count also has no units, but splitting the
-complement into random blocks adds sampling variability. We use peaks
-over threshold and report the mean of block maxima as a baseline.
 
 \section{Experiments}
 \label{sec:experiments}
@@ -903,63 +730,53 @@ over threshold and report the mean of block maxima as a baseline.
 \subsection{Synthetic validation}
 \label{sec:synthetic}
 
-\paragraph{Generative model.}
-The experiment validates the score itself, not a geometric pipeline. It
-fixes one hypothesis, so there is no model to fit ($n_\theta=0$,
-$\nu=n_I$) and no ranking of competing hypotheses, and it uses scalar
-residuals ($d_g=1$). Each trial draws $N=\syncase{uniform}{N}$ residual distances: the
-inliers from $|\NN(0,1)|$, the outliers on $[0,A]$. The outliers vary over
-\SynNumCases{} settings: uniform with \syncase{uniform}{nin} inliers and $A=\syncase{uniform}{halfwidth}$; uniform with \syncase{uniform_3pct}{nin}
-inliers ($\syncase{uniform_3pct}{percent}\%$); uniform with $A=\syncase{uniform_A10}{halfwidth}$, where the two populations overlap
-heavily; a density decreasing linearly to zero at $A=\syncase{linear}{halfwidth}$; and a mixed
-setting in which each trial draws its own shape, uniform or linearly
-decaying, and its own extent, log-uniform on $[\syncase{mixed}{halfwidthmin},\syncase{mixed}{halfwidthmax}]$. Every method
-scores the same draws, \SynTrials{} trials per setting, with Jeffreys'
-prior on $\sigma^2$. We report the selected prefix length $k^*$ and the
-F1 score of the selected partition against the true labels.
+\paragraph{Design.}
+Each trial fixes one hypothesis and draws $N=\syncase{uniform}{N}$
+scalar residual magnitudes ($d_g=1$, $n_\theta=0$). Inliers follow
+$|\NN(0,1)|$. The reference setting has \syncase{uniform}{nin} inliers
+and uniform outliers on $[0,A]$, with $A=\syncase{uniform}{halfwidth}$.
+Three variants isolate rare inliers (\syncase{uniform_3pct}{percent}\%),
+heavy overlap ($A=\syncase{uniform_A10}{halfwidth}$), and a linearly
+decreasing outlier density ($A=\syncase{linear}{halfwidth}$). In the
+mixed setting, each trial draws a uniform or linearly decreasing shape
+and a log-uniform extent on
+$[\syncase{mixed}{halfwidthmin},\syncase{mixed}{halfwidthmax}]$.
+All methods use the same \SynTrials{} draws per setting. We report F1
+against the generated labels and the number selected, denoted $k^*$
+for both inference methods.
 
-\paragraph{Methods.}
-\emph{Known $a$} supplies the true extent $A$ of each trial.
-\emph{Calibrated $a$} is the best of \SynGridN{} log-spaced widths
-between 1 and 3000 by mean F1 over the very trials it is scored on; it
-is an in-sample optimum, so it bounds any cross-validated width from
-above and favors the baseline. The estimates from each prefix's
-complement are the mean of 20 block maxima or of 20 block minima, and
-peaks over threshold at $\eta\in\{0.8,0.9,0.95\}$. Each estimate is
-scored with outlier component I (\stuUev) and, for peaks over threshold,
-with outlier component II (\stuGP), under
-hard labels (\cref{sec:computation}) and under soft labels
-(\cref{sec:soft}, with the outlier component fitted to the upper tail of
-all residuals). Each is scored with the label prior fixed at
-$\gamma=\tfrac12$ and with $\gamma$ marginalized
-(\cref{sec:label-prior}). \Cref{tab:synthetic} reports $\eta=0.9$.
+\paragraph{Comparisons.}
+The known-width baseline uses each trial's $A$. The calibrated baseline
+selects one of \SynGridN{} log-spaced half-widths between \SynGridMin{} and \SynGridMax{}
+by maximizing mean F1 on the evaluation trials. It is an in-sample
+reference for that grid. We compare block estimates (\SynBlocks{} maxima or
+minima) and peaks over threshold ($\eta=0.8,0.9,0.95$). For the latter
+we compare both outlier components, hard and soft labels, and fixed
+($\gamma=\tfrac12$) and integrated mixing probabilities.
+\Cref{tab:synthetic} reports $\eta=0.9$.
 
 \begin{table*}[t]
  \centering
  \small
- \caption{Synthetic validation (\cref{sec:synthetic}): selected prefix
-  length $k^*$ (mean $\pm$ standard deviation over \SynTrials{} paired
-  trials) / F1 score of the selected partition. The true inlier count is
-  \syncase{uniform}{nin}, except \syncase{uniform_3pct}{nin} in the $\syncase{uniform_3pct}{percent}\%$ setting. Reference: the known width, and
-  the in-sample best width of a log-spaced grid (Cal.\ $a$), scored
-  with hard labels. \stuUev: the uniform outlier component with the
-  peaks-over-threshold width ($\eta=0.9$); \stuGP: the generalized Pareto
-  outlier component; ``-$\beta$'': the mixing parameter integrated out under
-  Beta$(\tfrac12,\tfrac12)$, otherwise $\gamma=\tfrac12$.}
+ \caption{Synthetic inlier classification over \SynTrials{} paired trials.
+  Each entry gives the number selected (mean $\pm$ standard deviation)
+  and mean F1. The true inlier count is \syncase{uniform}{nin}, except
+  for \syncase{uniform_3pct}{nin} in the rare-inlier setting.
+  Known and calibrated half-widths use hard labels.
+  Tail fits use $\eta=0.9$.}
  \label{tab:synthetic}
  \setlength{\tabcolsep}{3pt}
  \resizebox{\textwidth}{!}{\input{figures/tab_synthetic}}
 \end{table*}
 
-\paragraph{The endpoint estimate recovers the support.}
-With $\gamma=\tfrac12$, the extreme-value width performs as the known
-width does in every setting: in the uniform setting both select
+\paragraph{Endpoint estimation.}
+With $\gamma=\tfrac12$, the fitted and known half-widths give similar classifications. For example, in the uniform setting both select
 \syn{uniform}{half}{pot90-uniform}{k} observations on average, and
 across the \SynNumCases{} settings their F1 scores differ by at most
 \SynMaxGapKnownEV. Moving $\eta$ from 0.8 to 0.95 changes the F1 score by at
 most \SynMaxGapEta. The
 median fitted shapes are \syn{uniform}{half}{pot90-uniform}{shape} for
-uniform and \syn{linear}{half}{pot90-uniform}{shape} for linearly decaying
+uniform and \syn{linear}{half}{pot90-uniform}{shape} for linearly decreasing
 outliers, against the population values $-1$ and $-\tfrac12$. The block
 minima collapse in every setting to
 $k^*\approx\syn{uniform}{half}{block_min20-uniform}{k}$, as predicted in
@@ -967,57 +784,49 @@ $k^*\approx\syn{uniform}{half}{block_min20-uniform}{k}$, as predicted in
 preserved the selected partition in \SynInvIdentical{} of
 \SynInvTrials{} trials, for both components and every label prior.
 
-\paragraph{The true width is not the best width.}
-In every setting with a single extent, the calibrated width lies below
-the true extent and selects better partitions: in the uniform setting the best width is
-\syn{uniform}{half}{calibrated-uniform}{halfwidth} for $A=\syncase{uniform}{halfwidth}$. The failure is
-starkest at $\syncase{uniform_3pct}{percent}\%$ inliers, where the known width selects
-\syn{uniform_3pct}{half}{fixed-uniform}{k} observations for \syncase{uniform_3pct}{nin} true
-inliers (F1 \syn{uniform_3pct}{half}{fixed-uniform}{f1}) and only the
-calibrated width, \syn{uniform_3pct}{half}{calibrated-uniform}{halfwidth},
-recovers a useful partition (F1
-\syn{uniform_3pct}{half}{calibrated-uniform}{f1}). \Cref{eq:gamma-width}
-explains the gap. With $\gamma=\tfrac12$ and an inlier fraction of
-\syncase{uniform}{fraction}, the equivalent width is about
-\syncase{uniform}{equivwidth}, close to the calibrated
-\syn{uniform}{half}{calibrated-uniform}{halfwidth}; for linearly decaying
-outliers, whose density near the model is that of a uniform of
-half-width $A/2$, it is about \syncase{linear}{equivwidth}, against
-\syn{linear}{half}{calibrated-uniform}{halfwidth}. Calibrating the width mostly
-calibrates the mixing parameter.
+\paragraph{Calibration at fixed inlier probability.}
+With $\gamma=\tfrac12$, calibration selects a half-width below $A$ in
+every fixed-extent setting. The largest discrepancy occurs at
+$\syncase{uniform_3pct}{percent}\%$ inliers. The known half-width selects
+\syn{uniform_3pct}{half}{fixed-uniform}{k} observations for
+\syncase{uniform_3pct}{nin} true inliers (F1
+\syn{uniform_3pct}{half}{fixed-uniform}{f1}). The calibrated half-width
+of \syn{uniform_3pct}{half}{calibrated-uniform}{halfwidth} raises F1 to
+\syn{uniform_3pct}{half}{calibrated-uniform}{f1}. The density-level
+equivalence in \cref{eq:gamma-width} predicts much of this effect.
+In the reference setting it gives an effective half-width of
+\syncase{uniform}{equivwidth}, compared with the calibrated value of
+\syn{uniform}{half}{calibrated-uniform}{halfwidth}. For linearly
+decreasing outliers, matching the density at zero first gives a uniform
+half-width of $A/2$. Adjusting for the inlier probability then gives
+\syncase{linear}{equivwidth}, compared with
+\syn{linear}{half}{calibrated-uniform}{halfwidth}.
 
-\paragraph{Marginalizing the mixing parameter.}
-If the calibrated width compensates for $\gamma$, then integrating
-$\gamma$ out should return the calibrated width to the support and close
-the gap. It does in the uniform setting: the calibrated width becomes
+\paragraph{Integrating over the inlier probability.}
+With uniform outliers and an integrated inlier probability, the calibrated half-width is
 \syn{uniform}{marginal}{calibrated-uniform}{halfwidth} for $A=\syncase{uniform}{halfwidth}$, and the
-extreme-value width reaches F1
+estimated half-width reaches F1
 \syn{uniform}{marginal}{pot90-uniform}{f1} against the calibrated
-\syn{uniform}{marginal}{calibrated-uniform}{f1}. For linearly decaying
-outliers the calibrated width moves to
-\syn{linear}{marginal}{calibrated-uniform}{halfwidth}, the uniform level that
-matches the outlier density at the model, $2/A$. At $\syncase{uniform_3pct}{percent}\%$ inliers the F1
-score of the extreme-value width rises from
+\syn{uniform}{marginal}{calibrated-uniform}{f1}. For linearly decreasing
+outliers the calibrated half-width moves to
+\syn{linear}{marginal}{calibrated-uniform}{halfwidth}, close to the half-width $A/2$ that matches the density of the absolute outlier coordinate at zero, $2/A$. At $\syncase{uniform_3pct}{percent}\%$ inliers the F1
+score of the estimated half-width rises from
 \syn{uniform_3pct}{half}{pot90-uniform}{f1} to
 \syn{uniform_3pct}{marginal}{pot90-uniform}{f1}, but the partition now
 undershoots, at \syn{uniform_3pct}{marginal}{pot90-uniform}{k}
-observations for \syncase{uniform_3pct}{nin} inliers. Marginalizing fails when the populations
-overlap heavily: at $A=\syncase{uniform_A10}{halfwidth}$ the F1 score falls from
+observations for \syncase{uniform_3pct}{nin} inliers. Under heavy overlap, hard assignments become unstable. At $A=\syncase{uniform_A10}{halfwidth}$ the F1 score falls from
 \syn{uniform_A10}{half}{pot90-uniform}{f1} to
 \syn{uniform_A10}{marginal}{pot90-uniform}{f1}, and the standard
 deviation of $k^*$ grows to
-\syn{uniform_A10}{marginal}{pot90-uniform}{ksd}. With $\gamma$ free, a
-narrow Gaussian core plus outliers can explain part of a dense cloud;
-the fixed $\gamma=\tfrac12$ had acted as a regularizer against that.
-The mixed setting, which contains dense trials, also loses (F1
+\syn{uniform_A10}{marginal}{pot90-uniform}{ksd}. With $\gamma$ free, a narrow Gaussian can explain a small core of the dense cloud while the remaining observations receive outlier labels.
+Mean F1 also falls in the mixed setting (
 \syn{mixed}{half}{pot90-uniform}{f1} to
 \syn{mixed}{marginal}{pot90-uniform}{f1}). Under hard labels,
 profiling $\gamma$ selected the same partition as marginalizing it in
 \SynProfileSame{} of \SynProfilePairs{} paired cases.
 
-\paragraph{The extreme-value outlier component under hard labels.}
-The generalized Pareto component helps where the outliers thin out: for
-linearly decaying outliers its F1 score is
+\paragraph{Fitting outlier shape with hard labels.}
+For linearly decreasing outliers and fixed $\gamma=\tfrac12$, fitting the shape gives an F1 of
 \syn{linear}{half}{pot90-gpd}{f1}, against
 \syn{linear}{half}{pot90-uniform}{f1} for the uniform component. It
 ties in the uniform setting (\syn{uniform}{half}{pot90-gpd}{f1} against
@@ -1032,61 +841,32 @@ calibrated width (\syn{mixed}{half}{calibrated-uniform}{f1}): adapting
 to each trial helps, but only slightly.
 
 \paragraph{Soft labels.}
-Summing the labels out removes the collapse. With $\gamma$
-marginalized and outlier component I, the soft formulation matches the
-in-sample calibrated width in the uniform setting (F1
-\syn{uniform}{marginal}{soft90-uniform}{f1} against
-\syn{uniform}{half}{calibrated-uniform}{f1}), comes close to it at
-$\syncase{uniform_3pct}{percent}\%$ inliers (\syn{uniform_3pct}{marginal}{soft90-uniform}{f1}
-against \syn{uniform_3pct}{half}{calibrated-uniform}{f1}, where hard
-labels reach \syn{uniform_3pct}{marginal}{pot90-uniform}{f1}) and at
-$A=\syncase{uniform_A10}{halfwidth}$ (\syn{uniform_A10}{marginal}{soft90-uniform}{f1} against
-\syn{uniform_A10}{half}{calibrated-uniform}{f1}, where hard labels fall
-to \syn{uniform_A10}{marginal}{pot90-uniform}{f1}), with no width
-supplied and no setting tuned. A narrow inlier core can no longer claim
-part of a dense cloud, because every residual keeps a posterior
-probability of either label. Marginalizing $\gamma$ is essential here:
-with $\gamma=\tfrac12$ the soft formulation selects
-\syn{uniform_3pct}{half}{soft90-uniform}{k} observations at $\syncase{uniform_3pct}{percent}\%$
-inliers (F1 \syn{uniform_3pct}{half}{soft90-uniform}{f1}).
+Integrating over $\gamma$ and summing over labels improves mean F1
+relative to hard labels with the same prior in the heavy-overlap
+setting. For uniform outliers, F1 increases from
+\syn{uniform_A10}{marginal}{pot90-uniform}{f1} to
+\syn{uniform_A10}{marginal}{soft90-uniform}{f1}, compared with
+\syn{uniform_A10}{half}{calibrated-uniform}{f1} for the calibrated
+hard-label baseline. With rare inliers, the soft uniform model scores
+\syn{uniform_3pct}{marginal}{soft90-uniform}{f1} when $\gamma$ is
+integrated out and \syn{uniform_3pct}{half}{soft90-uniform}{f1} when
+$\gamma=\tfrac12$. These comparisons also reflect the change from
+per-prefix to per-hypothesis tail fitting.
 
-With outlier component II, the soft formulation gives the best result
-in the mixed setting, above the \gaussunif mixture at its in-sample
-best width. Its F1 score there is \syn{mixed}{marginal}{soft90-gpd}{f1},
-against \syn{mixed}{half}{calibrated-uniform}{f1} for the calibrated
-width and \syn{mixed}{marginal}{soft90-uniform}{f1} for the uniform
-component under the same inference, and the standard deviation of
-$k^*$ falls from \syn{mixed}{marginal}{soft90-uniform}{ksd} to
-\syn{mixed}{marginal}{soft90-gpd}{ksd}. For linearly decaying outliers
-it reaches \syn{linear}{marginal}{soft90-gpd}{f1}, against the
-calibrated \syn{linear}{half}{calibrated-uniform}{f1}. Its extra
-parameter still costs variance where inliers are few or overlap
-heavily (F1 \syn{uniform_3pct}{marginal}{soft90-gpd}{f1} at $\syncase{uniform_3pct}{percent}\%$
-inliers, \syn{uniform_A10}{marginal}{soft90-gpd}{f1} at $A=\syncase{uniform_A10}{halfwidth}$).
-
-\paragraph{Selecting a formulation.}
-With $\gamma$ integrated out, soft labels match or beat hard labels in
-every setting and with both outlier components. Against hard labels at
-$\gamma=\tfrac12$ they lose only at $A=\syncase{uniform_A10}{halfwidth}$
-(\stuUevB{} \syn{uniform_A10}{marginal}{soft90-uniform}{f1} against
-\syn{uniform_A10}{half}{pot90-uniform}{f1}, \stuGPB{}
-\syn{uniform_A10}{marginal}{soft90-gpd}{f1} against
-\syn{uniform_A10}{half}{pot90-gpd}{f1}) and with component~I in the mixed
-setting (\syn{mixed}{marginal}{soft90-uniform}{f1} against
-\syn{mixed}{half}{pot90-uniform}{f1}), and they avoid that prior's failure
-at $\syncase{uniform_3pct}{percent}\%$ inliers. Soft labels with $\gamma$ marginalized are
-the formulation we carry to real data. Between the
-outlier components the synthetic experiment does not decide: component
-I is the robust choice when inliers are few or overlap heavily,
-component II the better one when the outlier density thins out or
-varies between hypotheses. Real correspondences make the second case
-the common one, so the choice is left to the real pools.
-
-\paragraph{What the experiment does not test.}
-It holds the hypothesis fixed and uses scalar residuals with no fitted
-parameters. Ranking competing hypotheses, the cost of fitting
-$\btheta$, codimension $d_g=2$, and structured outliers are left to the
-real pools of \cref{sec:real}.
+When shape and extent vary across trials, the soft generalized Pareto
+model gives the highest mean F1, \syn{mixed}{marginal}{soft90-gpd}{f1}.
+The soft uniform model gives \syn{mixed}{marginal}{soft90-uniform}{f1}
+under the same prior, and the calibrated hard-label baseline gives
+\syn{mixed}{half}{calibrated-uniform}{f1}. The standard deviation of
+the selected count falls from \syn{mixed}{marginal}{soft90-uniform}{ksd}
+to \syn{mixed}{marginal}{soft90-gpd}{ksd} when the shape is fitted.
+The uniform component performs better when few inliers are available
+or the populations overlap heavily. We therefore retain both outlier
+components for the hypothesis-ranking experiment. The synthetic
+trials hold the hypothesis fixed and use scalar residuals with no fitted
+parameters; ranking competing hypotheses, the cost of fitting
+$\btheta$, codimension $d_g=2$ and structured outliers are left to the
+real pools.
 
 \subsection{Real-data evaluation protocol}
 \label{sec:real}
@@ -1102,20 +882,17 @@ with every method isolates model selection from sampling and from local
 optimization~\cite{Chum2003,Lebeda2012}, which a complete
 pipeline~\cite{Barath2025superansac} adds.
 
-The primary comparison keeps the Jeffreys inlier term fixed and varies
-only the outlier width: a cross-validated width, a width determined by
-image extent, or the fitted endpoint with one quantile level across all
-datasets. A further ablation uses the largest absolute coordinate in the complement,
-the maximum-likelihood half-width for the uniform cube at a fixed
-partition. It also eliminates the supplied width and isolates the
-contribution of fitting the upper tail. The external baselines are \acransac, \magsacpp{} and
-\simfitpp. The evaluation will report geometric error of the selected
-hypothesis, sensitivity to $\eta$ and $a$, and time per hypothesis
-including the tail fit. \heb provides a separate test of the uniform
-background assumption because correspondences on a competing plane
-can form structured outliers. Reporting the fitted shapes alongside
-endpoint-fit failures will distinguish departures from a uniform edge
-from cases in which the fit yields no usable finite width.
+Within the uniform model, we will compare a cross-validated half-width,
+an image-extent half-width, and a fitted endpoint at one quantile level
+across datasets. Using the largest coordinate magnitude as a fourth
+estimate isolates the contribution of extrapolating beyond the observed
+maximum. A second comparison will evaluate both soft-label outlier
+models under the same prior on $\gamma$. External baselines are
+\acransac, \magsacpp and \simfitpp. We will report the geometric error
+of the selected hypothesis, sensitivity to $\eta$ and $a$, and scoring
+time including the tail fit. On \heb, correspondences on competing
+planes provide a test with structured outliers. We will report fitted
+shapes and the frequency of endpoint fallbacks for each dataset.
 
 % Author check before submission: add real-data results only after scoring
 % the stored pools.
