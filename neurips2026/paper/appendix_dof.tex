@@ -1,0 +1,127 @@
+% =====================================================================
+%  Degrees-of-freedom correction: derivation (camera-ready; rebuttal to
+%  Reviewer P2b3, Question 1, and the AC's Action 1).  \input from the
+%  "Derivation of the Scale-Free Marginal Score" appendix.
+% =====================================================================
+\subsection{The Degrees-of-Freedom Correction}
+\label{sec:supp-dof}
+
+The score~\eqref{eq:score} uses $\nu = n_I\,d_g - n_\theta$ rather
+than $n_I\,d_g$, although the partition
+likelihood~\eqref{eq:joint-partition} is written for a fixed
+model~$\btheta$.  We now derive this correction and state the
+assumptions under which~\eqref{eq:score} is the exact log of a
+well-defined score.
+
+\paragraph{Setting.}
+A minimal sample~$\cS$, $|\cS| = m$, yields the candidate
+$\hat\btheta_\cS = f(\bx_\cS)$.  We assume an \emph{exact minimal
+solver}, $m\,d_g = n_\theta$ (true for every model in
+\Cref{tab:model-dims}), so that
+\begin{equation}
+	\br_i(\hat\btheta_\cS) = \bzero, \qquad i \in \cS,
+	\label{eq:dof-interp}
+\end{equation}
+with multi-root solvers handled one root at a time.  All residuals
+below are evaluated at~$\hat\btheta_\cS$.  A partition splits the
+observations into inliers $\cI \supseteq \cS$ and outliers~$\cO$;
+$\cR = \cI \setminus \cS$ are the $n_I - m$ non-sample inliers.
+Inlier residuals follow the Gaussian and outlier residuals the uniform
+component of~\eqref{eq:component-densities}.
+
+\paragraph{The score is a predictive likelihood.}
+Writing $\bx_{\setminus\cS}$ for the observations outside the sample,
+the score of a candidate and partition is
+\begin{equation}
+	\Lambda(\cS, \cI) = p(\bx_{\setminus\cS} \mid \bx_\cS, \cS, \cI).
+	\label{eq:dof-predictive}
+\end{equation}
+Because~\eqref{eq:dof-interp} forces the candidate to interpolate its
+own sample, no non-degenerate density can be assigned to~$\bx_\cS$
+under its own candidate, so conditioning on the sample is forced:
+$\Lambda$ is an out-of-sample predictive score, with the status of
+leave-$m$-out cross-validation, not a marginal evidence.
+
+\paragraph{Plug-in.}
+Replacing the posterior over~$\btheta$ by a point mass at the solver
+output, $p(\btheta \mid \bx_\cS, \sigma^2) \approx
+\delta_{\hat\btheta_\cS}(\btheta)$, while keeping a prior on the noise
+scale gives
+\begin{equation}
+	\Lambda(\cS, \cI) \approx \int_0^\infty
+	p(\bx_{\setminus\cS} \mid \hat\btheta_\cS, \sigma^2, \cI)\,
+	\pi(\sigma^2)\, d\sigma^2,
+	\label{eq:dof-plugin}
+\end{equation}
+which amounts to the working assumption
+$\br_i(\hat\btheta_\cS) \mid \sigma^2 \overset{\text{iid}}{\sim}
+\mathcal{N}(\bzero, \sigma^2 \mathbf{I}_{d_g})$ for $i \in \cR$.
+
+\paragraph{Conditioning out the sample.}
+Given~$\bx_\cS$, both $\hat\btheta_\cS$ and, by~\eqref{eq:dof-interp},
+$\br_\cS = \bzero$ are deterministic; only~$\br_\cR$ is random.  For
+every bounded~$g$,
+\begin{equation}
+	\mathbb{E}\bigl[g(\br_\cS, \br_\cR) \mid \bx_\cS, \sigma^2, \cI\bigr]
+	= \int g(\bzero, \br_\cR)\;
+	p(\br_\cR \mid \hat\btheta_\cS, \sigma^2, \cI)\, d\br_\cR .
+	\label{eq:dof-condition}
+\end{equation}
+The sample coordinates therefore enter with weight exactly one---not
+with the density value $(2\pi\sigma^2)^{-m d_g/2}$, since they were
+forced to zero by the fit rather than observed there---and contribute
+nothing to the residual sum of squares: $\RSS_\cI = \RSS_\cR$.
+
+\paragraph{Likelihood.}
+With $n_O = N - n_I$ outliers,
+\begin{equation}
+	p(\br_\cR, \br_\cO \mid \hat\btheta_\cS, \sigma^2, \cI)
+	= (2\pi\sigma^2)^{-\nu/2}
+	\exp\!\Bigl({-}\frac{\RSS_\cI}{2\sigma^2}\Bigr)\,
+	(2a)^{-n_O d_g},
+	\qquad
+	\nu = (n_I - m)\,d_g = n_I\,d_g - n_\theta,
+	\label{eq:dof-likelihood}
+\end{equation}
+using $m\,d_g = n_\theta$: exactly the $n_\theta$ Gaussian
+coordinates consumed by the fit are removed, while the RSS is
+unchanged.
+
+\paragraph{Marginalization.}
+With $\sigma^2 \sim \IG(\alpha_0, \beta_0)$, $\alpha_0, \beta_0 > 0$,
+the \invgamma integral~\eqref{eq:invgamma-integral} at
+$\alpha = \alpha_0 + \nu/2$, $\beta = \beta_0 + \RSS_\cI/2$ gives
+\begin{equation}
+	\Lambda(\cS, \cI)
+	= (2\pi)^{-\nu/2}\,(2a)^{-n_O d_g}\,
+	\frac{\beta_0^{\alpha_0}}{\Gamma(\alpha_0)}\,
+	\frac{\Gamma(\alpha_0 + \nu/2)}
+	{(\beta_0 + \RSS_\cI/2)^{\alpha_0 + \nu/2}},
+	\label{eq:dof-marginal}
+\end{equation}
+whose logarithm is~\eqref{eq:score} up to the prior normalizer
+$\beta_0^{\alpha_0}/\Gamma(\alpha_0)$, which is common to all
+partitions and candidates.  The score is finite for every partition:
+$\nu = 0$ gives the all-outlier baseline $(2a)^{-(N-m)d_g}$, and
+$\RSS_\cI \to 0$ stays bounded because $\beta_0 > 0$.  Letting
+$\alpha_0, \beta_0 \to 0$ and dropping the improper constant, again
+common to all partitions so that the ranking is preserved, recovers
+the Jeffreys form~\eqref{eq:score-jeffreys},
+\begin{equation}
+	\Lambda_J(\cS, \cI) \;\propto\;
+	\frac{\Gamma(\nu/2)}{(\pi\,\RSS_\cI)^{\nu/2}}\,(2a)^{-n_O d_g},
+	\qquad \nu > 0,\ \RSS_\cI > 0.
+\end{equation}
+
+\paragraph{Scope.}
+The argument requires exact minimal candidates.  When $d_g$ does not
+divide~$n_\theta$ (e.g.\ a homography with one distortion parameter,
+$n_\theta = 9$, $d_g = 2$), the minimal sample over-determines
+the model, its residuals are not all zero, and the interpolation
+step~\eqref{eq:dof-interp} fails.  After local
+optimization~\eqref{eq:dof-interp} no longer holds, $\RSS_\cI =
+\RSS_\cR$ fails with it, and the same count $\nu = n_I\,d_g -
+n_\theta$ follows instead from the classical projection argument for
+a least-squares fit on~$\cI$.  The correction is not \gric's
+model-complexity penalty~\cite{Torr2002}: $\nu$ counts the residual
+Gaussian evidence left after fitting (\Cref{sec:supp-torr}).

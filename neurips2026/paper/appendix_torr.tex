@@ -1,0 +1,62 @@
+% =====================================================================
+%  Relation to Torr's Bayesian framework, GRIC and MAGSAC++
+%  (camera-ready; rebuttal to Reviewer P2b3, Question 2, and Reviewer
+%  vKBs, "MAGSAC++ discussion"; the AC's Action 5).  \input at the end
+%  of the "Shekhovtsov's Unified Threshold Framework" appendix.
+% =====================================================================
+\subsection{Relation to Torr's Bayesian Framework, \gric, and \magsacpp}
+\label{sec:supp-torr}
+
+\paragraph{Torr's Bayesian manifold formulation.}
+Torr's Bayesian treatment of epipolar geometry and generic manifold
+fitting~\cite{Torr2002} already shows that marginalizing the latent
+noiseless correspondence removes the tangential error, leaving a
+Gaussian likelihood in the manifold codimension~$d_g$, together with a
+uniform outlier model.  This is the foundation our
+likelihood~\eqref{eq:component-densities} builds on.
+
+\paragraph{\gric.}
+\gric addresses \emph{model-class} selection: it approximates the
+evidence for manifolds of different dimensions and parameter counts
+using a fixed-scale \mapsac/\msac data term plus complexity penalties
+for the latent point coordinates and the global model parameters.  In
+our setting the model class is fixed, so these penalties are constant
+across hypotheses, while the data term still requires an externally
+specified~$\sigma$.  Our contribution is complementary: starting from
+the same codimension-based \gaussunif likelihood, we condition
+on the candidate and its minimal sample, profile over the inlier
+partition, and integrate~$\sigma^2$ exactly under an \invgamma
+prior.  \gric approximates model-class evidence; our score removes the
+inlier scale for within-class \ransac scoring.  Our $\nu = n_I\,d_g -
+n_\theta$ counts residual Gaussian evidence after fitting
+(\Cref{sec:supp-dof}); it is not \gric's complexity penalty.
+
+\paragraph{The \magsacpp likelihood.}
+\magsacpp~\cite{Barath2020} begins from a $\chi_4$ density because a
+two-view correspondence has four coordinates.  The residual, however,
+is a distance to the model manifold, so only the $d_g$ orthogonal
+constraint directions remain ($d_g = 1$ for essential and fundamental
+matrices, $d_g = 2$ for homographies): the relevant dimension is the
+model codimension, not the ambient observation dimension
+(\Cref{sec:supp-dims}).  More fundamentally, even $\chi_{d_g}$ is not
+an appropriate model-ranking likelihood.  It is the density of the
+\emph{radius} of a Gaussian residual vector and includes the volume
+factor $r^{d_g-1}$; because $r = r(\btheta)$ depends on the candidate,
+this is a parameter-dependent transformation of the observations, and
+for $d_g \geq 2$ it assigns zero density to an exact fit.  Our
+formulation instead starts from the Gaussian density of the
+$d_g$-dimensional residual vector itself: $d_g$ is the per-observation
+constraint dimension and $\nu$ the total residual evidence after
+fitting, and neither is used as the shape of a radial likelihood.
+
+\paragraph{Exact reparameterizations and a numerical equivalence.}
+The threshold reparameterizations of \ransac, \msac and \gau
+in~\cite{Shekhovtsov2025} are exact.  The reduction of \magsacpp to
+fixed-scale \gau ($\sigma \approx 0.96\,\tau$ at observation dimension
+$d = 4$)~\cite{Shekhovtsov2025} is a \emph{numerical} equivalence, not an
+identity.  Our conclusions do not rely on that
+approximation: our experiments run \magsacpp as defined in its paper
+and reference code, and it nevertheless tracks \msac and \gau in
+\Cref{fig:profile-grid,fig:sensitivity-grid}---in its optimum, its
+degradation under perturbation, and its dependence on validation-set
+size---which corroborates the equivalence empirically.

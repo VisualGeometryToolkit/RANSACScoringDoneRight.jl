@@ -50,7 +50,7 @@
 }
 
 @article{Torr2000,
-  author  = {Torr, Philip H. and Zisserman, Andrew},
+  author  = {Torr, Philip H. S. and Zisserman, Andrew},
   title   = {{MLESAC}: A New Robust Estimator with Application to
              Estimating Image Geometry},
   journal = CVIU,
@@ -61,10 +61,11 @@
 }
 
 @inproceedings{Barath2019,
-  author    = {Barath, Daniel and Noskova, Jana and Matas, Ji{\v{r}}{\'\i}},
+  author    = {Barath, Daniel and Matas, Ji{\v{r}}{\'\i} and Noskova, Jana},
   title     = {{MAGSAC}: Marginalizing Sample Consensus},
   booktitle = CVPR,
   year      = {2019},
+  pages = {10189--10197},
 }
 
 @article{Barath2021,
@@ -83,12 +84,13 @@
   title     = {{MAGSAC++}, a Fast, Reliable and Accurate Robust Estimator},
   booktitle = CVPR,
   year      = {2020},
+  pages = {1301--1309},
 }
 
 @article{Shekhovtsov2025,
   author  = {Shekhovtsov, Alexander},
   title   = {{RANSAC} Scoring Functions: Analysis and Reality Check},
-  journal = {Preprint, submitted to IJCV},
+  journal = {arXiv preprint arXiv:2512.19850},
   year    = {2025},
 }
 
@@ -171,6 +173,7 @@
   title     = {Fixing the Locally Optimized {RANSAC}},
   booktitle = BMVC,
   year      = {2012},
+  pages = {95.1--95.11},
 }
 
 % =====================================================================
@@ -234,6 +237,7 @@
   volume  = {129},
   number  = {2},
   year    = {2021},
+  pages = {517--547},
 }
 
 % =====================================================================
@@ -278,8 +282,9 @@
                Larsson, Viktor},
   title     = {Revisiting {Sampson} Approximations for Geometric
                Estimation Problems},
-  booktitle = ICCV,
+  booktitle = CVPR,
   year      = {2024},
+  pages = {4990--4998},
 }
 
 @inproceedings{Terekhov2023,
@@ -299,7 +304,7 @@
   author    = {Edstedt, Johan},
   title     = {Less Biased Noise Scale Estimation for
                Threshold-Robust {RANSAC}},
-  booktitle = CVPR,
+  booktitle = CVPRW,
   pages     = {2836--2845},
   year      = {2025},
 }
@@ -395,6 +400,7 @@
   author    = {Lindenberger, Philipp and Sarlin, Paul-Edouard and Pollefeys, Marc},
   booktitle = ICCV,
   year      = {2023},
+  pages = {17627--17638},
 }
 
 @inproceedings{Schoeps2017,
@@ -402,6 +408,7 @@
   author    = {Sch{\"o}ps, Thomas and Sch{\"o}nberger, Johannes L. and Galliani, Silvano and Sattler, Torsten and Schindler, Konrad and Pollefeys, Marc and Geiger, Andreas},
   booktitle = CVPR,
   year      = {2017},
+  pages = {2538--2547},
 }
 
 @inproceedings{ChumMatas2005,
@@ -439,7 +446,7 @@
 @article{Schoenberger2025stopping,
   author  = {Sch{\"o}nberger, Johannes L. and Larsson, Viktor and Pollefeys, Marc},
   title   = {Fixing the {RANSAC} Stopping Criterion},
-  journal = {arXiv:2503.07829},
+  journal = {arXiv preprint arXiv:2503.07829},
   year    = {2025},
 }
 
@@ -451,8 +458,107 @@
 }
 
 @misc{RansacTutorial2020,
-  title  = {Starter Kit and Benchmark Data},
-  key    = {{CVPR 2020} {RANSAC} Tutorial},
+  author = {Mishkin, Dmytro},
+  title  = {{RANSAC} 2020 Tutorial Starter Pack},
   year   = {2020},
   note   = {\url{https://github.com/ducha-aiki/ransac-tutorial-2020-data}},
+}
+
+@article{Barath2025superansac,
+  author  = {Barath, Daniel},
+  title   = {{SupeRANSAC}: One {RANSAC} to Rule Them All},
+  journal = {arXiv:2506.04803},
+  year    = {2025}
+}
+
+@misc{PoseLib,
+  author       = {Larsson, Viktor and contributors},
+  title        = {{PoseLib} -- Minimal Solvers for Camera Pose Estimation},
+  howpublished = {\url{https://github.com/PoseLib/PoseLib}},
+  year         = {2020}
+}
+
+% =====================================================================
+% Threshold-free and adaptive-scale robust estimation
+% =====================================================================
+
+@article{Moisan2004,
+  author  = {Moisan, Lionel and Stival, B{\'e}renger},
+  title   = {A Probabilistic Criterion to Detect Rigid Point Matches
+             Between Two Images and Estimate the Fundamental Matrix},
+  journal = IJCV,
+  volume  = {57},
+  number  = {3},
+  pages   = {201--218},
+  year    = {2004},
+}
+
+@article{Moisan2012,
+  author  = {Moisan, Lionel and Moulon, Pierre and Monasse, Pascal},
+  title   = {Automatic Homographic Registration of a Pair of Images,
+             with A Contrario Elimination of Outliers},
+  journal = {Image Processing On Line},
+  volume  = {2},
+  pages   = {56--73},
+  year    = {2012},
+}
+
+@inproceedings{Raguram2011,
+  author    = {Raguram, Rahul and Frahm, Jan-Michael},
+  title     = {{RECON}: Scale-Adaptive Robust Estimation via Residual
+               Consensus},
+  booktitle = ICCV,
+  pages     = {1299--1306},
+  year      = {2011},
+}
+
+@article{Wang2004,
+  author  = {Wang, Hanzi and Suter, David},
+  title   = {Robust Adaptive-Scale Parametric Model Estimation for
+             Computer Vision},
+  journal = PAMI,
+  volume  = {26},
+  number  = {11},
+  pages   = {1459--1474},
+  year    = {2004},
+}
+
+@article{Wang2010,
+  author  = {Wang, Hanzi and Mirota, Daniel and Hager, Gregory D.},
+  title   = {A Generalized Kernel Consensus-Based Robust Estimator},
+  journal = PAMI,
+  volume  = {32},
+  number  = {1},
+  pages   = {178--184},
+  year    = {2010},
+}
+
+@article{Sampson1982,
+  author  = {Sampson, Paul D.},
+  title   = {Fitting Conic Sections to ``Very Scattered'' Data: An
+             Iterative Refinement of the {Bookstein} Algorithm},
+  journal = {Computer Graphics and Image Processing},
+  volume  = {18},
+  number  = {1},
+  pages   = {97--108},
+  year    = {1982},
+}
+
+@inproceedings{Harker2006,
+  author    = {Harker, Matthew and O'Leary, Paul},
+  title     = {First Order Geometric Distance (The Myth of {Sampsonus})},
+  booktitle = {BMVC},
+  pages     = {87--96},
+  year      = {2006},
+}
+
+@article{Jeffreys1946,
+  author  = {Jeffreys, Harold},
+  title   = {An Invariant Form for the Prior Probability in Estimation
+             Problems},
+  journal = {Proceedings of the Royal Society of London. Series A},
+  volume  = {186},
+  number  = {1007},
+  pages   = {453--461},
+  year    = {1946},
 }
