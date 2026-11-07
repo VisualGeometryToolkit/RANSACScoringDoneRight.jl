@@ -36,14 +36,16 @@ the outliers~$\cO$ themselves by extreme value theory (\cref{sec:outlier}).
 The inlier scale is integrated out for each partition and the partition is
 then chosen:
 \begin{align}
-	S_{\mathrm{EV}}(\btheta, \cI) & = \log\int_0^\infty
+	S(\btheta, \cI) & = \log\int_0^\infty
 	p(\br \mid \btheta, \cI, \sigma)\,\pi(\sigma^2)\,d\sigma^2,
 	\label{eq:evpm}                                                  \\
-	S^*_{\mathrm{EV}}(\btheta)    & = \max_{\cI} S_{\mathrm{EV}}(\btheta, \cI),
+	S^*(\btheta)    & = \max_{\cI} S(\btheta, \cI),
 	\label{eq:evpm-profile}
 \end{align}
 with the conjugate prior $\pi(\sigma^2) = \IG(\alpha_0, \beta_0)$ or its
-non-informative Jeffreys limit.  Neither component carries a length set by
+non-informative Jeffreys limit.  $S^*$ is our score, the
+\emph{extreme-value profile-marginal score}; every method in
+\cref{sec:experiments} is compared against it.  Neither component carries a length set by
 hand: the inlier scale is marginalized, and the outlier support is
 estimated from the partition it describes.  The label prior is
 $\gamma = \tfrac12$, which makes the prior of every partition the constant
@@ -57,7 +59,7 @@ score~\cite{Pritts2026}, and the integral \cref{eq:evpm} has its closed
 form
 \begin{equation}
 	\begin{aligned}
-		S_{\mathrm{EV}}(\btheta, \cI)
+		S(\btheta, \cI)
 		 & = \log\Gamma\Bigl(\frac{\nu}{2} + \alpha_0\Bigr)
 		- \Bigl(\frac{\nu}{2} + \alpha_0\Bigr)
 		\log\Bigl(\frac{\RSS_\cI}{2} + \beta_0\Bigr) \\
@@ -77,7 +79,7 @@ profile-marginal score.
 
 As there, we maximize over the prefixes of the distance-sorted
 observations, so one sort and one linear sweep evaluate
-$S^*_{\mathrm{EV}}$.  Exchanging an inlier and an outlier that both lie
+$S^*$.  Exchanging an inlier and an outlier that both lie
 below the threshold~$u$ of \cref{sec:outlier} leaves the exceedances, and
 hence $\ahat$, unchanged, so the prefix argument of~\cite{Pritts2026}
 applies to every such exchange.
@@ -122,8 +124,8 @@ makes.
 \begin{proposition}[No length parameter]
 	\label{prop:invariance}
 	Under the Jeffreys prior, the partition that maximizes
-	$S_{\mathrm{EV}}(\btheta, \cdot)$, and the ranking of candidate models
-	by $S^*_{\mathrm{EV}}$, are invariant to rescaling all residuals by any
+	$S(\btheta, \cdot)$, and the ranking of candidate models
+	by $S^*$, are invariant to rescaling all residuals by any
 	$c > 0$.
 \end{proposition}
 \begin{proof}
