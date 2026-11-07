@@ -757,7 +757,9 @@ two density regimes, each score through the same pool-selection call. Per
 hypothesis, \stuUev costs \scoretiming{o1gamma12}{typical}{ratio} times
 \stuU at $\bar n=\scoretiming{regime}{typical}{navg}$ points, and
 \stuGPB fitted once per hypothesis \scoretiming{o2perhypothesisgammamarg}{typical}{ratio}
-times. Refitting the generalized Pareto law for every prefix costs
+times, against \scoretiming{gauexact}{typical}{ratio} for \gau and
+\scoretiming{magsacexact}{typical}{ratio} for \magsacpp. Refitting the
+generalized Pareto law for every prefix costs
 \scoretiming{o2perprefixgammamarg}{typical}{ratio} times (timed on
 \TimingReferencePairs{} pairs per regime); it is the exact reference for the
 per-hypothesis form, not a deployable score. The soft-label integral is not
@@ -771,7 +773,7 @@ a pool scorer of the package and is not timed here.
   first pairs; dense: the pairs with the most points), the minimum of three
   repetitions. $^\dagger$Timed on \TimingReferencePairs{} pairs per regime.}
  \label{tab:timing}
- \input{figures/tab_timing}
+ \resizebox{\columnwidth}{!}{\input{figures/tab_timing}}
 \end{table}
 
 \begin{table}[t]

@@ -86,7 +86,8 @@ function table()
     rows = read_tsv(TIMING)
     regimes = unique(r["regime"] for r in rows)
     scores = unique(r["score"] for r in rows)
-    navg = Dict(r["regime"] => r["n_avg"] for r in rows)
+    # the regimes' mean point counts are the full timed subsets' (not the references')
+    navg = Dict(r["regime"] => r["n_avg"] for r in rows if r["n_pairs"] == string(CFG["pool"]["npairs"]))
     us(s, g) = parse(Float64, only(filter(r -> r["score"] == s && r["regime"] == g, rows))["us_per_hyp"])
     d = CFG["render"]["digits"]
     mkpath(dirname(TABLE))
@@ -130,7 +131,7 @@ function macros()
         end
         for g in unique(r["regime"] for r in rows)
             println(io, "\\expandafter\\def\\csname timing@regime@", g, "@navg\\endcsname{",
-                    first(r["n_avg"] for r in rows if r["regime"] == g), "}")
+                    first(r["n_avg"] for r in rows if r["regime"] == g && r["n_pairs"] == string(CFG["pool"]["npairs"])), "}")
         end
         println(io, "\\newcommand{\\TimingPairs}{", CFG["pool"]["npairs"], "}")
         println(io, "\\newcommand{\\TimingReferencePairs}{", CFG["pool"]["reference_npairs"], "}")
