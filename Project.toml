@@ -27,15 +27,8 @@ Random = "1"
 SpecialFunctions = "2.9"
 StaticArrays = "1.9"
 Statistics = "1"
-VisualGeometryToolkitCore = "0.6"
+VisualGeometryToolkitCore = "0.7"
 julia = "1.12"
-
-# TEMPORARY, until the stack's 0.7 series is registered: the unreleased stack
-# from a checkout of its monorepo beside this one. Removed at the release.
-# (Compat stays "0.6": the monorepo's Core still carries version 0.6.0 until
-# its 0.7 bump; set it to "0.7" then.)
-[sources]
-VisualGeometryToolkitCore = {path = "../VisualGeometryToolkit.jl/VisualGeometryToolkitCore"}
 
 [workspace]
 projects = ["test", "docs", "neurips2026"]

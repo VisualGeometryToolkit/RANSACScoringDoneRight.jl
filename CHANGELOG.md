@@ -2,9 +2,8 @@
 
 ## 0.5.0 (unreleased)
 
-The VisualGeometryToolkit 0.7 stack (taken, until it registers, from the
-monorepo checkout through a temporary `[sources]` block; compat keeps
-VisualGeometryToolkitCore `"0.6"` until the monorepo's version fields are bumped).
+The VisualGeometryToolkit 0.7 stack, from General: VisualGeometryToolkitCore 0.7
+(neurips2026 also Estimation 0.7, Eval 0.6 and IO 0.7).
 
 ### Breaking
 
