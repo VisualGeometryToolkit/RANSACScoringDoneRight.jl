@@ -1,20 +1,16 @@
 % =====================================================================
-%  Deployment: remaining hyperparameter, supervision, runtime, complete
-%  pipelines (camera-ready).  Every number below is the one reported in
-%  the author rebuttal on OpenReview (24-25 Jul 2026); none is produced
-%  by a driver of this project yet (REPRODUCE.md has no row for them).
+%  F: scoring runtime (camera-ready; numbers reported in the author
+%  rebuttal on OpenReview, 24-25 Jul 2026). G: scale miscalibration — the
+%  two results of LocalOptimizationDoneRight (accv2026: supplement "Scoring
+%  under scale miscalibration" and Sec. "RANSAC"), its text nearly verbatim
+%  in this paper's terminology, without the Welsch and Geman--McClure
+%  scores; numbers figures/accv_numbers.tex, table figures/table_e2e.tex,
+%  panels figures/panel_sel_miscal{,_maa}.tex. H: local optimization and
+%  termination (rebuttal numbers). No driver of this project produces these
+%  (REPRODUCE.md has no row for them yet).
 % =====================================================================
-\section{Deployment: Runtime and Complete Pipelines}
+\section{Scoring Runtime}
 \label{sec:supp-deploy}
-
-The main experiments isolate the scoring function on fixed candidate
-pools.  This appendix collects the evidence needed to deploy it: its cost,
-its behavior inside a complete \ransac pipeline, and a comparison of
-its hyperparameter with a threshold through a common decision
-boundary.
-
-% ---------------------------------------------------------------------
-\subsection{Runtime}
 \label{sec:supp-deploy-runtime}
 
 \Cref{tab:runtime-hyp} reports single-threaded per-hypothesis
@@ -55,25 +51,244 @@ and local optimization, and the termination criterion determines how
 many times all of these costs are paid.  \Cref{sec:supp-deploy-e2e}
 therefore measures a complete pipeline.
 
+% =====================================================================
+\section{Scale Miscalibration}
+\label{sec:supp-miscal}
+
+The main experiments isolate the scoring function on fixed candidate
+pools with each method's hyperparameter tuned on the data. This section
+measures how the scores (\Cref{sec:supp-scoring}), and a complete \ransac
+pipeline built on ours (\Cref{sec:supp-deploy-e2e}), degrade when the
+user-supplied scale is wrong.
+
+\paragraph{Scale corruption.}
+Methods are tuned once at calibration. At test time, each user-supplied
+quantity expressed in residual units is multiplied by
+$\zeta\in[1/128,128]$ (deflation for $\zeta<1$, inflation for $\zeta>1$);
+dimensionless multipliers and scales recomputed from the selected partition
+are unchanged. Thus $\zeta$ measures sensitivity to external calibration
+rather than perturbing every internal variable identically.
+
+\paragraph{Metric.}
+Unlike the main experiments, which report the orientation error
+(\Cref{sec:eval-protocol}), this section reports the pose error, which also
+includes the translation direction. For relative pose, we evaluate the four
+essential-matrix decompositions and report the smallest maximum angular
+error~\cite{Jin2021}. We define
+mAA@$10^\circ$ as
+\begin{equation}
+	\begin{aligned}
+		\mathrm{mAA}@10^\circ
+		 & =\frac{1}{10^\circ}\int_0^{10^\circ}
+		P(e_{\mathrm{pose}}\le t)\,dt,                                 \\
+		\text{s.t.}\quad e_{\mathrm{pose}}
+		 & =\min_{j\in\{1,2,3,4\}}\max\bigl(e_R^{(j)},e_t^{(j)}\bigr).
+	\end{aligned}
+	\label{eq:maa}
+\end{equation}
+Here $e_R^{(j)}$ and $e_t^{(j)}$ are the rotation and
+translation-direction errors of decomposition~$j$. In~\eqref{eq:maa},
+$t$ is the pose-error threshold, and $P(e_{\mathrm{pose}}\le t)$ is the
+per-scene fraction of pairs whose pose error is at most~$t$. We compute
+mAA per scene and then average over scenes, with failed estimates
+contributing zero.
+
+\paragraph{Parameter mapping.}
+\label{sec:supp-scale-mapping}
+
+The shared scoring coordinate $q\in[1,3.3]$ and the validation reference
+scale~$\hat\sigma$, the square root of the median per-pair noise
+variance~$\hat\sigma_p^2$ (\Cref{sec:supp-prior-estimation}) over the
+validation pairs, determine each score's native residual-unit parameter;
+$q$ plays the role of the quantile in $\tau = q\sigma$ (\Cref{sec:intro}).
+\ransac, \msac, \simfitpp, and \gau use a threshold or cutoff
+$\tau=q\hat\sigma$. \magsacpp uses the upper noise-scale bound
+$\bar\sigma=q\hat\sigma$, not a residual cutoff. For the profile-marginal
+score, the outlier half-width is
+\begin{equation}
+	a(q;\hat\sigma,d_g)=\hat\sigma\sqrt{\frac{\pi}{2}}
+	\exp\!\left(\frac{q^2}{2d_g}\right),
+	\label{eq:native-scale-maps}
+\end{equation}
+which equates the isotropic Gaussian inlier density and uniform outlier
+density at residual norm $q\hat\sigma$ under equal assignment priors, the
+inverse of the implicit threshold~\eqref{eq:implicit-threshold}. This is a
+calibration map, not the exact boundary of the profile-marginal partition;
+generatively, $a$ remains an outlier-domain parameter.
+
+Replacing $\hat\sigma$ by $\zeta\hat\sigma$ at fixed $q^*$ multiplies each
+native parameter by~$\zeta$:
+\begin{equation}
+	\begin{aligned}
+		\tau(q^*;\zeta\hat\sigma)          & =\zeta\tau(q^*;\hat\sigma),             \\
+		\bar\sigma(q^*;\zeta\hat\sigma)    & =\zeta\bar\sigma(q^*;\hat\sigma),       \\
+		a(q^*;\zeta\hat\sigma,d_g)         & =\zeta a(q^*;\hat\sigma,d_g).
+	\end{aligned}
+	\label{eq:native-scale-corruption}
+\end{equation}
+The scoring-only experiment (\Cref{sec:supp-scoring}) applies the nearest
+evaluation-grid value to every test pair without retuning. Inverting the
+maps at the original reference scale~$\hat\sigma$ gives the equivalent
+coordinates
+\begin{equation}
+	q_{\tau}^{\prime}=q_{\bar\sigma}^{\prime}=\zeta q^*,
+	\qquad
+	(q_a^{\prime})^2=(q^*)^2+2d_g\log\zeta,
+	\label{eq:corrupted-cutoff}
+\end{equation}
+where $q_a^{\prime}$ is real only when the right-hand side is nonnegative.
+
 % ---------------------------------------------------------------------
-\subsection{Composition with Local Optimization and Termination}
+\subsection{Scoring}
+\label{sec:supp-scoring}
+
+This experiment evaluates how well each score selects a model under scale
+miscalibration, without local optimization: each score ranks the identical
+pool of minimal-sample hypotheses of each image pair, and the selected
+hypothesis is evaluated directly. Both experiments of this section use a
+separate set of \phototourism pools: the 21 scenes are split by scene, not by
+pair as in \Cref{sec:experiments}, into \PTValScenes{} validation and
+\PTTestScenes{} test scenes of $2\,200$ pairs each, with \rootsift
+correspondences capped at $4\,096$ and $4\,000$ minimal-sample hypotheses per
+pair. Ours is the
+profile-marginal score with the Jeffreys prior. Cross-validation uses only
+the shared scoring window $q\in[1,3.3]$, a dimensionless multiple of the
+validation reference scale~$\hat\sigma$ (\Cref{sec:supp-scale-mapping}). At
+test time the supplied scale is multiplied by $\zeta\in[1/128,128]$ with the
+tuned coordinate~$q^*$ held fixed; each score's parameter follows through
+its map (\Cref{sec:supp-scale-mapping}) and is used for all pairs without
+retuning. For the profile-marginal score, the affected parameter is the
+outlier half-width~$a$; the selected partition and its variance
+estimate~$\hat s^2$ remain data-dependent. \simfitpp~\cite{Edstedt2025} is
+\msac with a data-driven threshold: starting from an initial threshold, it
+alternates fitting on a random half of the correspondences with a
+bias-corrected median scale estimate on the other half and scores at the
+converged threshold; its initial threshold is cross-validated on the~$\tau$
+axis like the other threshold-based scores, and the estimate falls back to
+it when the iteration leaves the admissible range. Because that range is the
+reference's $0.25$--$8$\,px window, \simfitpp scores the pool's residuals
+re-expressed in pixels through the stored image normalizations; every other
+score works in the normalized frame, where all of its parameters are
+defined. The shaded confidence intervals in \cref{fig:supp-sel-miscal} use a
+scene-clustered BCa bootstrap~\cite{Efron1987}.
+
+\begin{figure}[ht]
+	\centering
+	\input{figures/sel_miscal_colors}%
+	\begin{subfigure}[t]{0.48\linewidth}
+		\centering
+		\caption{median pose error}
+		\input{figures/panel_sel_miscal}
+	\end{subfigure}\hfill
+	\begin{subfigure}[t]{0.48\linewidth}
+		\centering
+		\caption{mAA@$10^\circ$}
+		\input{figures/panel_sel_miscal_maa}
+	\end{subfigure}\\[3pt]
+	\pgfplotslegendfromname{selmiscallegend}
+	\caption{\textbf{Scoring under scale miscalibration, without local
+			optimization} (\phototourism essential matrices; \PTTestScenes{}
+		test and \PTValScenes{} validation scenes). We report (a) the
+		scene-averaged median pose error, with the axis clipped at $6^\circ$
+		so that the near-tied calibrated regime stays readable (the
+		threshold-based scores leave the panel under inflation and reach
+		$\SelThreshMedInflLo^\circ$--$\SelThreshMedInflHi^\circ$ at
+		$128\times$), and (b) mAA@$10^\circ$~\eqref{eq:maa} at the same
+		operating points, which are tuned on the median. The baselines are
+		\ransac~\cite{Fischler1981}, \msac~\cite{Torr1998},
+		\magsacpp~\cite{Barath2020}, \gau~\cite{Shekhovtsov2025}, and
+		\simfitpp~\cite{Edstedt2025}, which re-estimates the inlier threshold
+		per pair from held-out residuals of the hypothesis selected on a
+		random half of the correspondences.}
+	\label{fig:supp-sel-miscal}
+\end{figure}
+
+At calibration ($\zeta=1$) the scores are nearly tied
+(\cref{fig:supp-sel-miscal}): the profile-marginal score and \simfitpp reach
+median errors of $\SelStuMedCal^\circ$ and $\SelSimfitMedCal^\circ$ and mAA
+of $\SelStuMAACal$ and $\SelSimfitMAACal$. At $128\times$ inflation, the
+profile-marginal score reaches a median error of $\SelStuMedInfl^\circ$ and
+$\SelStuMAAInfl$ mAA, while \simfitpp reaches $\SelSimfitMedInfl^\circ$ and
+$\SelSimfitMAAInfl$ mAA; the other threshold-based scores have median
+errors of $\SelThreshMedInflLo^\circ$--$\SelThreshMedInflHi^\circ$ and at
+most $\SelThreshMAAInfl$ mAA. The profile-marginal score is thus
+substantially more stable under scale corruption. This reflects both its
+data-dependent partition selection and scale estimation; by
+\eqref{eq:corrupted-cutoff}, the equivalent coordinate of the half-width also
+changes only with~$\log\zeta$, $(q_a')^2 = (q^*)^2 + 2d_g\log\zeta$, and the
+experiment does not isolate these effects. Re-estimating the threshold per pair (\simfitpp) does not
+remove the dependence on the supplied scale: at $128\times$ inflation its
+median error of $\SelSimfitMedInfl^\circ$ is close to that of the other
+threshold-based scores, against $\SelStuMedInfl^\circ$ for the
+profile-marginal score.
+
+These pools hold more hypotheses than the scores need: the budget of 1000
+minimal samples per pair used in \Cref{sec:experiments} suffices for every
+scorer: on 8\,800 \phototourism pairs with about
+4\,000 \rootsift correspondences each, from four held-out scenes, all scorers tie at correct calibration
+(mAA@$10^\circ$ 0.534--0.542, median error $2.80^\circ$--$2.96^\circ$),
+and under $32\times$ miscalibration ours retains 0.466 mAA and
+$4.60^\circ$ while the baselines fall to 0.10--0.14 mAA and
+$20^\circ$--$25^\circ$.
+
+
+% ---------------------------------------------------------------------
+\subsection{End-to-End \ransac}
+\label{sec:supp-deploy-e2e}
+
+The deployed pipeline (Ours) combines the profile-marginal score with
+local optimization whose loss width is anchored to the selected partition
+(\Cref{sec:supp-deploy-lo}). We compare it with
+\superansac~\cite{Barath2025superansac}, including sampling and adaptive
+termination, on the \PTTestScenes{} \phototourism test scenes
+(\Cref{tab:e2e}). Both are tuned at calibration; at test time, $\zeta$
+multiplies each system's residual-unit parameter. At calibration, ours
+reduces the median pose error from $\EtoESRMed^\circ$ to
+$\EtoEOursMed^\circ$ and raises mAA@$10^\circ$ from $\EtoESRMAA$ to
+$\EtoEOursMAA$. Under corruption, our median error stays within
+$\EtoEOursRange^\circ$, whereas \superansac's reaches $\EtoESRRangeHi^\circ$
+under deflation and $\EtoESRInflMed^\circ$ at $128\times$ inflation. We
+postulate that the calibrated gain has the same origin: a threshold tuned
+on validation pairs is effectively miscalibrated for test pairs whose noise
+scale lies outside the validation distribution, whereas partition anchoring
+estimates the scale per pair.
+
+\begin{table}[ht]
+	\centering
+	\small
+	\setlength{\tabcolsep}{4pt}
+	\caption{\textbf{RANSAC under scale miscalibration.}
+		Scene-averaged median pose error and mAA@$10^\circ$ on the
+		\PTTestScenes{} \phototourism test scenes; median wall time per pair,
+		single-threaded, on a stratified sample of \EtoETimePairs{} pairs per
+		scene (median of \EtoETimeRepeats{} repeats); both systems tuned at
+		$\zeta=1$, \superansac at its validated maximum noise level with at
+		most $10\,000$ trials. Bold marks the better system per column.}
+	\label{tab:e2e}
+	\input{figures/table_e2e}
+\end{table}
+
+% =====================================================================
+\section{Local Optimization and Termination}
 \label{sec:supp-deploy-lo}
 
 The \sortsweep supplies every quantity the downstream components
 of \ransac need: the selected support~$\cI^\star$, its cutoff
 $\tau^\star = \delta_{(k^\star)}$, the inlier ratio $\hat w = k^\star/N$,
 and the variance estimate~$\hat s^2$ of \Cref{sec:score}.
-Standard confidence-based termination uses
+Standard confidence-based termination stops after
 \begin{equation}
-	K = \frac{\log(1-p)}{\log(1-\hat w^{\,m})},
+	K = \frac{\log(1-p)}{\log(1-\hat w^{\,m})}
 \end{equation}
-and local optimization uses either~$\tau^\star$ or a
+minimal samples, for a confidence~$p$ that an all-inlier sample has been
+drawn, and local optimization uses either~$\tau^\star$ or a
 partition-anchored width $\lambda\hat s$, with only the
 dimensionless~$\lambda$ cross-validated.  No calibrated residual
 threshold is required at test time.
 
 \Cref{tab:lo-anchor} isolates this effect with the same \poselib
-truncated Levenberg--Marquardt optimizer~\cite{PoseLib}.  The fixed
+truncated-least-squares Levenberg--Marquardt optimizer (TLS-LM)~\cite{PoseLib},
+on the \phototourism pools of \Cref{sec:supp-miscal}.  The fixed
 variant uses a calibrated threshold~$\tau_{\mathrm{ref}}$, perturbed
 at test time by~$\zeta$; the anchored variant re-estimates
 $\tau = \lambda\hat s$ for each hypothesis.  Both are tuned at
@@ -82,7 +297,7 @@ $\zeta = 1$.
 \begin{table}[ht]
 	\centering
 	\caption{Local optimization with a fixed versus a partition-anchored
-		width.  Median pose error [deg] over 11 test scenes; $\zeta$
+		width.  Median pose error [deg] over the 11 \phototourism test scenes; $\zeta$
 		multiplies the calibrated residual unit at test time.}
 	\label{tab:lo-anchor}
 	\smallskip
@@ -95,133 +310,3 @@ $\zeta = 1$.
 		\bottomrule
 	\end{tabular}
 \end{table}
-
-% ---------------------------------------------------------------------
-\subsection{A Complete \ransac Pipeline}
-\label{sec:supp-deploy-e2e}
-
-We compare our full estimator, the profile-marginal score with the
-selected partition calibrating local optimization at test time,
-with source-built \superansac~\cite{Barath2025superansac}.
-In the tested configuration \superansac uses \prosac sampling, \sprt
-verification, terminal local optimization, final least-squares
-polishing and its default \magsacpp scoring, so the baseline is a
-highly engineered public estimator, not a plain-threshold pipeline.
-Its \texttt{inlier\_threshold} specifies the \magsacpp scale
-bound~$\bar\sigma$, equivalently $\tau = q\bar\sigma$, and is perturbed by~$\zeta$ in the same
-role-faithful manner as in the scoring experiment.
-
-Both methods use matched termination settings (minimum 100 and
-maximum 10\,000 iterations, confidence 0.999).  We evaluate 11
-\phototourism test scenes with 50 \rootsift pairs per scene and
-approximately 4\,000 correspondences per pair; both methods are tuned
-once at $\zeta = 1$ on 10 disjoint validation scenes, and $\zeta$
-perturbs only their residual-unit hyperparameters at test time.
-Accuracy is reported as median pose error and as
-\begin{equation}
-	\mathrm{mAA}@10^\circ = \frac{1}{S}\sum_{s=1}^{S}\frac{1}{N_s}
-	\sum_{i=1}^{N_s}\max\bigl(0,\, 1 - e_{si}/10^\circ\bigr),
-	\label{eq:maa}
-\end{equation}
-where $e_{si} = \max(\Delta R_{si}, \Delta t_{si})$ is the pose error
-of pair~$i$ in scene~$s$; scenes are weighted equally and failures
-contribute zero~\cite{Jin2021}.
-
-\begin{table}[ht]
-	\centering
-	\caption{End-to-end comparison with \superansac on \phototourism
-		(11 test scenes, 50 pairs each) under test-time
-		miscalibration~$\zeta$.}
-	\label{tab:e2e}
-	\smallskip
-	\begin{tabular}{llrrrrr}
-		\toprule
-		                                   &            & \multicolumn{5}{c}{$\zeta$}                         \\
-		\cmidrule(l){3-7}
-		Metric                             & Method     & $1/16$ & $1$   & $4$   & $16$  & $128$            \\
-		\midrule
-		\multirow{2}{*}{median error [deg] $\downarrow$}
-		                                   & Ours       & 2.62   & 1.56  & 1.76  & 2.61  & 6.25             \\
-		                                   & \superansac & 55.7   & 2.48  & 5.13  & 12.4  & 42.5             \\
-		\midrule
-		\multirow{2}{*}{mAA@$10^\circ$ $\uparrow$}
-		                                   & Ours       & 0.611  & 0.697 & 0.665 & 0.610 & 0.500            \\
-		                                   & \superansac & 0.245  & 0.636 & 0.527 & 0.309 & 0.082            \\
-		\midrule
-		\multirow{2}{*}{time per pair [ms]}
-		                                   & Ours       & 1042   & 156   & 119   & 67    & 41               \\
-		                                   & \superansac & 92     & 117   & 181   & 273   & 386              \\
-		\bottomrule
-	\end{tabular}
-\end{table}
-
-At correct calibration ours improves both accuracy metrics ($1.56^\circ$
-versus $2.48^\circ$ median error, 0.697 versus 0.636 mAA) at
-$1.3\times$ the wall-clock time.  Under miscalibration ours remains
-more accurate at every~$\zeta$ and becomes faster for $\zeta \geq 4$:
-scoring quality and termination matter more than isolated
-per-hypothesis cost.  The trend matches the scoring-only results:
-\magsacpp degrades substantially when its scale bound is miscalibrated.
-
-% ---------------------------------------------------------------------
-\subsection{Miscalibration Through a Common Decision Boundary}
-\label{sec:supp-deploy-common}
-
-The Profile experiment (\Cref{sec:profile}) perturbs each method's
-native hyperparameter, and $\tau$ and~$a$ have different statistical
-roles.  We therefore also compare the methods through a common induced
-decision boundary.  Let $q$ be the boundary radius in units of an assumed inlier
-scale~$\hat\sigma$.  Threshold-based scores use $\tau = q\hat\sigma$,
-while inverting the implicit threshold~\eqref{eq:implicit-threshold}
-gives
-\begin{equation}
-	a(q, \hat\sigma) = \sqrt{\pi/2}\;\hat\sigma\,
-	\exp\!\bigl(q^2/(2d_g)\bigr).
-\end{equation}
-Both maps are linear in~$\hat\sigma$.  Each method is tuned over the
-same dimensionless $q$-grid at correct
-calibration and then frozen; test-time miscalibration changes only
-the common scale, $\hat\sigma \to \zeta\hat\sigma$, inducing
-$\tau \to \zeta\tau$ and $a \to \zeta a$.  Every method thus receives
-the same multiplicative calibration error in its own
-parameterization.  The mapping is used only for this controlled
-comparison: generatively, $a$ remains an outlier-domain parameter.
-The experiment uses identical hypothesis pools, no local
-optimization, and 22\,000 test pairs from 11 scenes disjoint from
-tuning; mAA is~\eqref{eq:maa}.
-
-\begin{table}[ht]
-	\centering
-	\caption{Scoring-only miscalibration through a common decision
-		boundary (22\,000 test pairs, 11 scenes).  Columns give~$\zeta$.}
-	\label{tab:common-boundary}
-	\smallskip
-	\setlength{\tabcolsep}{4.5pt}
-	\begin{tabular}{lrrrrrr@{\hspace{14pt}}rrrrrr}
-		\toprule
-		         & \multicolumn{6}{c}{scene-averaged median error [deg] $\downarrow$} & \multicolumn{6}{c}{mAA@$10^\circ$ $\uparrow$} \\
-		\cmidrule(lr){2-7}\cmidrule(l){8-13}
-		Score    & $\frac1{16}$ & 1   & 4   & 16   & 64   & 128  & $\frac1{16}$ & 1    & 4    & 16   & 64   & 128  \\
-		\midrule
-		Ours     & 2.9 & 2.3 & 2.6 & 3.6  & 6.3  & 7.9  & 0.58 & 0.62 & 0.61 & 0.56 & 0.49 & 0.45 \\
-		\msac     & 4.6 & 2.3 & 4.1 & 13.4 & 32.1 & 39.3 & 0.50 & 0.62 & 0.51 & 0.24 & 0.07 & 0.04 \\
-		\ransac   & 4.9 & 2.5 & 5.8 & 18.8 & 39.3 & 46.7 & 0.49 & 0.61 & 0.42 & 0.14 & 0.04 & 0.03 \\
-		\magsacpp & 4.9 & 2.3 & 3.4 & 10.4 & 27.8 & 36.0 & 0.49 & 0.62 & 0.55 & 0.30 & 0.09 & 0.05 \\
-		\gau      & 4.2 & 2.4 & 4.4 & 14.1 & 32.2 & 38.7 & 0.52 & 0.62 & 0.50 & 0.23 & 0.07 & 0.04 \\
-		\bottomrule
-	\end{tabular}
-\end{table}
-
-All methods tie at correct calibration (0.61--0.62 mAA) but separate
-under both deflation and inflation of the scale.  At $\zeta = 16$ our
-score retains 0.56 mAA versus 0.14--0.30 for the baselines; at
-$\zeta = 128$ it retains 0.45 versus 0.03--0.05.  Threshold-based
-scores consume the corrupted scale directly as their inlier boundary,
-whereas our score re-estimates the inlier scale for each hypothesis,
-exposing only its outlier model to the perturbation.  The hypothesis budget of 1000 minimal samples per pair
-suffices for every scorer: on 8\,800 \phototourism pairs with about
-4\,000 \rootsift correspondences each, from four held-out scenes, all scorers tie at correct calibration
-(mAA@$10^\circ$ 0.534--0.542, median error $2.80^\circ$--$2.96^\circ$),
-and under $32\times$ miscalibration ours retains 0.466 mAA and
-$4.60^\circ$ while the baselines fall to 0.10--0.14 mAA and
-$20^\circ$--$25^\circ$.
