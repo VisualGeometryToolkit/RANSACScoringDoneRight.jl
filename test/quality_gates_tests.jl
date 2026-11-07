@@ -51,8 +51,7 @@
     # Piracy: RANSAC and MSAC are VisualGeometryToolkitCore's baseline scorers, and
     # this package adds their GRID methods (VGC's baseline_scorers.jl header):
     # `LossWidthScoring` is a Union that includes them, so the loss-width
-    # family's methods (`best_pool_model` at a loss width, `pool_model_score`,
-    # the grid kernels) are on VGC's types. That is by design, not piracy — VGC
+    # family's methods (the grid kernels, `_support_sq`) are on VGC's types. That is by design, not piracy — VGC
     # owns the scorer and leaves its WIDTH-FREE grid family to this package
     # (the threshold scorers stay on VGC's generic pool selection) — so the two
     # are treated as RSDR's own here.

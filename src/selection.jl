@@ -62,8 +62,8 @@ end
 # shared by every column); for every initial guess `simfitpp_select`
 # re-estimates the loss width (the reference's pixel bounds untouched) and
 # selects the MSAC argmax at the estimate. Only the initial guess crosses
-# frames, through the pair's mean pool-frame-per-pixel scale
-# (`residual_unit_scale`). `rng_of(fingerprint, t)` is the caller's generator
+# frames, through the pair's pool-frame-per-pixel scale (VisualGeometryToolkitCore's
+# `pool_pixel_scale`). `rng_of(fingerprint, t)` is the caller's generator
 # per (pair content, column) — `fingerprint = (num_points, num_models,
 # gt_variance)` — so the grid is thread-schedule independent.
 function select_on_grid!(idxs::AbstractMatrix{Int32}, ::Type, cfg::SimFitPP, grid::AbstractVector, staged;
@@ -73,7 +73,7 @@ function select_on_grid!(idxs::AbstractMatrix{Int32}, ::Type, cfg::SimFitPP, gri
     Threads.@threads for p in eachindex(pairs)
         pair = pairs[p]
         Dpx = pixel_residuals(pair)
-        s = residual_unit_scale(pair)
+        s = pool_pixel_scale(pair)
         fp = (num_points(pair), num_models(pair), pair.gt_variance)   # the pair's content fingerprint
         @inbounds for t in 1:T
             j, _, _ = simfitpp_select(Dpx, grid[t] / s, cfg; rng = rng_of(fp, t))

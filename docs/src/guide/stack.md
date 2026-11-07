@@ -34,7 +34,8 @@ implements `select_on_grid!` over its device kernels. The families are the
 marginal, the width-free loss-width families, [`LossSpec`](@ref),
 `ScaleMarginal` and [`SimFitPP`](@ref). VisualGeometryToolkitCore's
 `best_pool_model(scoring, pair, R)` serves any scorer at its width; this
-package adds the method for its width-free loss-width families.
+package's loss-width families take it at a loss width,
+`with_width(F(dg), LossWidth(w))`, through their `score!`.
 
 Problems implement VisualGeometryToolkitCore's `AbstractConstraintProblem`:
 `data_size`, `codimension`, `minimal_sample_size` and
@@ -63,7 +64,7 @@ the light pool records (VisualGeometryToolkitCore's `PoolPair`) and their
 residual matrices. One verb, [`grid_evaluate`](@ref), evaluates a grid and
 dispatches on the scoring:
 
-- `grid_evaluate([S,] loss_width_scoring(:msac, dg), staged, loss_widths; aggregation)`
+- `grid_evaluate([S,] loss_width_scoring("msac", dg), staged, loss_widths; aggregation)`
   evaluates the loss-width baselines. These are RANSAC, MSAC, GaU (MLESAC) and
   MAGSAC++, plus the Welsch, smooth-TLS and Geman–McClure losses. Each scores
   through one per-residual scalar, `residual_quality(scoring, d², loss_width)`.
@@ -124,18 +125,18 @@ pools). The pair method of `simfitpp_select` runs on it, so
 `initial_loss_width_px`, the bounds and the returned loss width are all in
 pixels. To work in the pool frame's unit instead, call the matrix method on the
 pair's residual matrix with bounds in that unit.
-[`residual_unit_scale`](@ref)`(pair)`, the mean pool-frame-per-pixel scale, is a
-convention for soft quantities only, such as an initial guess taken from a grid
-in the pool frame's unit.
+VisualGeometryToolkitCore's `Pools.pool_pixel_scale(pair)`, the larger of the
+two views' pool-frame-per-pixel scales, carries a pixel quantity into the pool
+frame; SIMFIT++'s grid uses it for its initial guess only.
 
 ## Scoring and tuning vocabulary
 
 This package holds the vocabulary and the per-pair machinery. That is the
-per-pair selection over a pool record and its residual matrix
-([`best_pool_model`](@ref) for the width-free loss-width families,
-[`pool_model_score`](@ref), [`precompute_pair`](@ref)) and the
-KernelAbstractions grids above. A scoring at its width is its own
-pool-selection handle.
+scoring families' tag registry ([`SCORING_TAGS`](@ref)), the `score!` of its
+loss-width families at a loss width (which VisualGeometryToolkitCore's
+`best_pool_model` and VisualGeometryToolkitEval's sample-budget engine select
+with), [`precompute_pair`](@ref) and the KernelAbstractions grids above. A
+scoring at its width is its own pool-selection handle.
 
 Other layers live elsewhere. The prior-spec layer that fits `IGPrior` from
 validation data (`PriorSpec`, `fit_prior`) is VisualGeometryToolkitEval's
@@ -172,7 +173,7 @@ On top of that, this package names the following quantities.
 | `d_g` / `dg` | the constraint codimension |
 | `inlier_prior` / `inlier_posterior` | the scalar mixing proportion π and the per-point `P(inlier \| r)` |
 
-A name that contains `scale` returns a linear scale (`residual_unit_scale`).
+A name that contains `scale` returns a linear scale (`pool_pixel_scale`).
 A name for a squared quantity says so (`unbiased_median_variance`, `s_hat_sq`,
 `sq_loss_width`). The one exception is `fit_scale`, which is named for the
 `fit` contract; its docstring states first that it returns the square.

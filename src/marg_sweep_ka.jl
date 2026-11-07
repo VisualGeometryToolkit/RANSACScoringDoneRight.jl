@@ -149,7 +149,7 @@ end
 # keyword constructors' one form), with `m`'s Z̃ domain.
 function _marg_quad_tables(m::ScaleMarginal{K}, prior_loss_width_grid, NG::Int) where {K}
     T = length(prior_loss_width_grid)
-    margs = [_centred_marginal(K, m.alpha0, Float64(w), m.outlier_halfwidth)
+    margs = [_centred_marginal(K, m.prior.alpha0, Float64(w), m.outlier_halfwidth)
              for w in prior_loss_width_grid]
     specs = [loss_spec(m; NG) for m in margs]
     i0 = [_marg_lattice_start(m.t0, NG) for m in margs]

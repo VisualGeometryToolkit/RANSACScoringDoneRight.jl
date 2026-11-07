@@ -1,7 +1,7 @@
 # A NaN or ±Inf residual is an OUTLIER on every scoring path.
 #
 # The exact host scorers (the per-pair `score_magsac`/`score_gau`/`score_msac`,
-# now `best_pool_model(scoring, pair, loss_width)`; `_fill_grid_exact!`), the host
+# now `best_pool_model(scoring, pair, D)` at a loss width; `_fill_grid_exact!`), the host
 # histogram (`bin_residuals_stereo`) and the RANSAC/MSAC device kernels always
 # treated it so. Two paths did not:
 #   * the MAGSAC++ lookup-table scorer (since deleted) SKIPPED it — zero loss,
@@ -19,7 +19,7 @@
         stage_ig_shared_from_pairs, Exact, LogBinned,
         histogram_pm_score_kernel!, exact_pm_score_kernel!, _build_score_weight_matrix,
         _support_sq
-    using VisualGeometryToolkitCore: best_pool_model   # the 4-argument method is this package's
+    using VisualGeometryToolkitCore: best_pool_model, with_width, LossWidth
 
     # One pair whose M models share their residuals except that model j has
     # 3(j−1) of its INLIERS replaced by `bad(j)`. Model 1 keeps every inlier, so it
@@ -47,7 +47,8 @@
             for loss_width in _NF_LOSS_WIDTHS, sc in (RansacScoring(), MsacScoring(), MlesacScoring(),
                                       MagsacScoring(), WelschCostScoring(),
                                       SmoothTLSScoring(), GemanScoring())
-                @test best_pool_model(sc, pair_nf..., loss_width) == best_pool_model(sc, pair_far..., loss_width) == 1
+                at = with_width(sc, LossWidth(loss_width))
+                @test best_pool_model(at, pair_nf...) == best_pool_model(at, pair_far...) == 1
             end
         end
 

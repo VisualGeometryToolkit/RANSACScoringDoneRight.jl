@@ -11,9 +11,14 @@ No function here opens a file; pool IO belongs to VisualGeometryToolkitEval.
 
 ## Per-pair model selection
 
+One pair's selection is VisualGeometryToolkitCore's
+[`best_pool_model`](@extref VisualGeometryToolkitCore.best_pool_model)`(scoring, pair, R)`
+for a scorer at its width: the Student-t marginal, or a loss-width family at a
+loss width, `with_width(F(dg), LossWidth(w))` — this package's families score
+through their `score!`:
+
 ```@docs
-best_pool_model
-pool_model_score
+score!(::Nothing, ::RANSACScoringDoneRight._OwnAtLossWidth, ::AbstractVector, ::AbstractVector, ::Int)
 precompute_pair
 ```
 
@@ -84,6 +89,5 @@ SimFitPP
 simfitpp_loss_width
 simfitpp_select
 unbiased_median_variance
-residual_unit_scale
 with_residual_unit
 ```

@@ -20,9 +20,9 @@
 #
 # Usage:
 #   staged = stage_ig_shared_from_pairs(pairs, residuals; backend)
-#   errs = grid_evaluate(loss_width_scoring(:magsac, codimension(PT)),
+#   errs = grid_evaluate(loss_width_scoring("magsac", codimension(PT)),
 #                        staged, loss_widths)                       # Float32, LogBinned(200)
-#   errs = grid_evaluate(Float64, loss_width_scoring(:msac, dg), staged,
+#   errs = grid_evaluate(Float64, loss_width_scoring("msac", dg), staged,
 #                        loss_widths; aggregation = Exact())
 
 # (`_ka_softplus` lived here, byte-identical to `_softplus` in
@@ -218,8 +218,8 @@ end
 # -----------------------------------------------------------------------------
 # Threshold-scoring families (D): singleton types replacing the `method::Symbol`
 # + if/elseif kernel selection. `grid_evaluate` dispatches on these via
-# `residual_quality` and `_support_sq` below; Symbol-based callers convert at the boundary with
-# `loss_width_scoring(:ransac, dg)`.
+# `residual_quality` and `_support_sq` below; a config's tag converts at the boundary with
+# `loss_width_scoring("ransac", dg)` (the tags are `SCORING_TAGS`).
 # -----------------------------------------------------------------------------
 # The loss-width-swept scorings, split by whether a mixture sits underneath (the two
 # branches and the traits are declared in scoring.jl).
@@ -255,48 +255,75 @@ end
 # `MsacScoring`, with their `residual_quality`); this package adds their grid
 # methods and the paper baselines below.
 
+# Each family has VisualGeometryToolkitCore's two forms of `RansacScoring{DG, T}` /
+# `MsacScoring{DG, T}`: WIDTH-FREE (`T = Nothing`, `F()`, `F(dg)`, `F(problem)`),
+# the grid family a loss width is swept over, and AT A LOSS WIDTH
+# (`F(dg; threshold = w)`, `T = Float64`, or `with_width(F(dg), LossWidth(w))`),
+# a scorer of the scoring contract's `score!` — the form VisualGeometryToolkitCore's
+# `best_pool_model` and VisualGeometryToolkitEval's sample-budget engine select with.
+
 """
-    MlesacScoring{DG}()
+    MlesacScoring{DG, T}
 
 MLESAC (GaU) at codimension `DG`: the Gaussian-uniform log-density at a fixed
-scale, normalised to 1 at `d = 0` (see [`residual_quality`](@extref VisualGeometryToolkitCore.residual_quality)). Symbol name
-`:mlesac`.
+scale, normalised to 1 at `d = 0` (see [`residual_quality`](@extref VisualGeometryToolkitCore.residual_quality)). Tag
+`"mlesac"` ([`SCORING_TAGS`](@ref)). `MlesacScoring()`, `MlesacScoring(dg)`,
+`MlesacScoring(problem)`: the width-free grid family; `MlesacScoring(dg; threshold = w)`:
+the scorer at loss width `w`.
 """
-struct MlesacScoring{DG}     <: GauScoring end
+struct MlesacScoring{DG, T} <: GauScoring
+    threshold::T
+    MlesacScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
+end
 
 """
-    MagsacScoring{DG}()
+    MagsacScoring{DG, T}
 
 MAGSAC++ at codimension `DG`: the σ-marginalised quality, zero from the cutoff
 on; its loss width is that cutoff, `_MAGSAC_SCALE_MULTIPLE·σ_max` (see
-[`residual_quality`](@extref VisualGeometryToolkitCore.residual_quality)). Symbol name `:magsac`.
+[`residual_quality`](@extref VisualGeometryToolkitCore.residual_quality)). Tag `"magsac"`;
+the forms of [`MlesacScoring`](@ref).
 """
-struct MagsacScoring{DG}     <: GauScoring end
+struct MagsacScoring{DG, T} <: GauScoring
+    threshold::T
+    MagsacScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
+end
 
 """
-    WelschCostScoring{DG}()
+    WelschCostScoring{DG, T}
 
 The Welsch cost as a loss-width score at codimension `DG`: `1 − ρ/w²` with
-VisualGeometryToolkitCore's Welsch `ρ`, no mixture underneath. Symbol name `:welsch_cost`.
+VisualGeometryToolkitCore's Welsch `ρ`, no mixture underneath. Tag `"welsch_cost"`;
+the forms of [`MlesacScoring`](@ref).
 """
-struct WelschCostScoring{DG} <: LossCostScoring end
+struct WelschCostScoring{DG, T} <: LossCostScoring
+    threshold::T
+    WelschCostScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
+end
 
 """
-    SmoothTLSScoring{DG}()
+    SmoothTLSScoring{DG, T}
 
 The smooth truncated-least-squares cost as a loss-width score at codimension
-`DG`: `1 − ρ/w²` with VisualGeometryToolkitCore's smooth-TLS `ρ`. Symbol name
-`:smooth_tls`.
+`DG`: `1 − ρ/w²` with VisualGeometryToolkitCore's smooth-TLS `ρ`. Tag
+`"smooth_tls"`; the forms of [`MlesacScoring`](@ref).
 """
-struct SmoothTLSScoring{DG}  <: LossCostScoring end
+struct SmoothTLSScoring{DG, T} <: LossCostScoring
+    threshold::T
+    SmoothTLSScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
+end
 
 """
-    GemanScoring{DG}()
+    GemanScoring{DG, T}
 
 The Geman–McClure cost as a loss-width score at codimension `DG`: `1 − ρ/w²`
-with VisualGeometryToolkitCore's Geman–McClure `ρ`. Symbol name `:geman`.
+with VisualGeometryToolkitCore's Geman–McClure `ρ`. Tag `"geman"`; the forms of
+[`MlesacScoring`](@ref).
 """
-struct GemanScoring{DG}      <: LossCostScoring end
+struct GemanScoring{DG, T} <: LossCostScoring
+    threshold::T
+    GemanScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
+end
 
 """
     LossWidthScoring{DG}
@@ -317,31 +344,32 @@ const LossWidthScoring{DG} = Union{RansacScoring{DG}, MsacScoring{DG}, MlesacSco
 const _OwnLossWidthScoring{DG} = Union{MlesacScoring{DG}, MagsacScoring{DG}, WelschCostScoring{DG},
                                        SmoothTLSScoring{DG}, GemanScoring{DG}}
 
+# The same five at a loss width: the scorers of `score!` (scoring_eval_common.jl).
+const _OwnAtLossWidth = Union{MlesacScoring{<:Any, Float64}, MagsacScoring{<:Any, Float64},
+                              WelschCostScoring{<:Any, Float64}, SmoothTLSScoring{<:Any, Float64},
+                              GemanScoring{<:Any, Float64}}
+
 codimension(::_OwnLossWidthScoring{DG}) where {DG} = DG
 
-# The seven families and their Symbol names, stated ONCE. The constructors below
-# and `_family_type` are both generated from this, so adding a family is one row
-# rather than several transcriptions of the same list kept in step by hand.
-const _SCORING_FAMILIES = ((:ransac, RansacScoring), (:msac, MsacScoring),
-                           (:mlesac, MlesacScoring), (:magsac, MagsacScoring),
-                           (:welsch_cost, WelschCostScoring), (:smooth_tls, SmoothTLSScoring),
-                           (:geman, GemanScoring))
-# The constructors of the families this package owns (RANSAC's and MSAC's are
-# VisualGeometryToolkitCore's, with the same forms).
-const _OWN_SCORING_FAMILIES = _SCORING_FAMILIES[3:end]
-
-# Bare `T()` is codim 1 (see above); `T(problem)` takes it from the problem,
-# exactly as `StudentTUniformScoring(problem, a)` does.
-for (_, T) in _OWN_SCORING_FAMILIES
-    # `nameof`: the table stores the TYPE, and a bare `RansacScoring` as a value
-    # is the UnionAll `RansacScoring{DG} where DG`. That is right on the RHS but
-    # is not a legal function NAME, so the left-hand side needs the symbol.
-    Tn = nameof(T)
+# The constructors, VisualGeometryToolkitCore's forms of `RansacScoring`/`MsacScoring`:
+# bare `F()` is codim 1 (see above); `F(problem)` takes it from the problem,
+# exactly as `StudentTUniformScoring(problem, a)` does; `threshold` is the loss
+# width of the scorer form. `with_width` builds that form from a template.
+for S in (:MlesacScoring, :MagsacScoring, :WelschCostScoring, :SmoothTLSScoring, :GemanScoring)
     @eval begin
-        $Tn() = $Tn{1}()
-        $Tn(dg::Integer) = $Tn{Int(dg)}()
-        $Tn(problem::AbstractConstraintProblem) = $Tn{codimension(problem)}()
+        $S{DG}() where {DG} = $S{DG, Nothing}(nothing)
+        $S() = $S{1}()
+        $S(dg::Integer; threshold::Union{Nothing, Real} = nothing) = _at_loss_width($S{Int(dg)}, threshold)
+        $S(problem::AbstractConstraintProblem; threshold::Union{Nothing, Real} = nothing) =
+            _at_loss_width($S{codimension(problem)}, threshold)
+        with_width(::$S{DG}, w::LossWidth{NTuple{2, Float64}}) where {DG} =
+            $S(DG; threshold = VgtkCore.loss_width(w))
     end
+end
+_at_loss_width(::Type{S}, ::Nothing) where {S} = S{Nothing}(nothing)
+function _at_loss_width(::Type{S}, w::Real) where {S}
+    (isfinite(w) && w > 0) || throw(ArgumentError("$(nameof(S)): threshold must be positive and finite, got $w"))
+    return S{Float64}(Float64(w))
 end
 
 # Where these sit in the elimination table (scoring.jl): RANSAC and MSAC profile
@@ -383,41 +411,33 @@ loss_shape(::SmoothTLSScoring)  = VgtkCore.SmoothTLSShape()
 #  has no accessor here: nothing consumes one, and accessors are added only where
 #  something does. The arithmetic is VGC's: `loss_width(deploy(shape, ŝ²; codim))`.)
 
-# The Symbol vocabulary, generated from `_SCORING_FAMILIES`. `_family_type` maps
-# to the TYPE, not to an instance, which is what lets the codimension overload
-# construct directly: `typeof(loss_width_scoring(Val(s))).name.wrapper(dg)` used to
-# build a throwaway instance and reach into `DataType.name.wrapper` —
-# undocumented internals — to recover a name the table already spells out.
-# (The inverse direction, `family_symbol`, is gone: nothing read it.)
-for (sym, T) in _SCORING_FAMILIES
-    @eval _family_type(::Val{$(QuoteNode(sym))}) = $T
-end
-_family_type(::Val{X}) where {X} =
-    error("loss_width_scoring: unknown method :$X " *
-          "(expected :ransac/:msac/:mlesac/:magsac/:welsch_cost/:smooth_tls/:geman)")
-
 """
-    loss_width_scoring(method::Symbol) -> LossWidthScoring
-    loss_width_scoring(method::Symbol, dg::Integer) -> LossWidthScoring
-    loss_width_scoring(method::Symbol, problem) -> LossWidthScoring
+    loss_width_scoring(tag) -> LossWidthScoring
+    loss_width_scoring(tag, dg::Integer) -> LossWidthScoring
+    loss_width_scoring(tag, problem) -> LossWidthScoring
+    loss_width_scoring(tag, ::Type{<:AbstractConstraintProblem}) -> LossWidthScoring
 
-The [`LossWidthScoring`](@ref) member a Symbol names, at a codimension.
+The width-free [`LossWidthScoring`](@ref) family a tag of [`SCORING_TAGS`](@ref)
+names, at a codimension: `"ransac"`, `"msac"`, `"mlesac"`, `"magsac"`,
+`"welsch_cost"`, `"smooth_tls"` or `"geman"`. A retired tag (`"gau"`) is an
+`ArgumentError` naming its successor, and a tag of a family that takes no loss
+width (`"student_t_uniform"`, `"sim_fit_pp"`) is refused. The codimension is
+`dg`, or `codimension(problem)`; bare, it is 1.
 
-The Symbols are `:ransac`, `:msac`, `:mlesac`, `:magsac`, `:welsch_cost`,
-`:smooth_tls` and `:geman` (the tag rule: the type's name without `Scoring`,
-snake_cased). The codimension is `dg`, or `codimension(problem)`; bare, it
-is 1.
-
-Supply the codimension whenever the problem has one other than 1: the Symbol
+Supply the codimension whenever the problem has one other than 1: the tag
 vocabulary must not be a back door that silently re-defaults `DG`.
-
-It returns a member of the `LossWidthScoring` union, and is named for it.
 """
-loss_width_scoring(v::Val) = _family_type(v)()
-loss_width_scoring(s::Symbol) = loss_width_scoring(Val(s))
-loss_width_scoring(s::Symbol, dg::Integer) = _family_type(Val(s))(dg)
-loss_width_scoring(s::Symbol, problem::AbstractConstraintProblem) =
-    loss_width_scoring(s, codimension(problem))
+function loss_width_scoring(tag::AbstractString, dg::Integer = 1)
+    S = SCORING_TAGS[tag]
+    (S isa Type && S <: LossWidthScoring) || throw(ArgumentError(
+        "loss_width_scoring: tag \"$tag\" names $S, which takes no loss width; the loss-width tags are " *
+            join(("\"$t\"" for (t, F) in SCORING_TAGS if F isa Type && F <: LossWidthScoring), ", ")))
+    return S(dg)
+end
+loss_width_scoring(tag::AbstractString, problem::AbstractConstraintProblem) =
+    loss_width_scoring(tag, codimension(problem))
+loss_width_scoring(tag::AbstractString, ::Type{P}) where {P <: AbstractConstraintProblem} =
+    loss_width_scoring(tag, codimension(P))
 
 # =============================================================================
 # The per-residual QUALITY — one scalar per family, of the SQUARED residual d²

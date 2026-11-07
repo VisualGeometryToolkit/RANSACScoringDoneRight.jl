@@ -192,7 +192,7 @@ grid.
 function loss_spec(m::ScaleMarginal{K}; NG::Int=_MARG_NG) where {K}
     shape = K()
     i0 = _marg_lattice_start(m.t0, NG)
-    return _loss_spec(shape, IGPrior(m.alpha0, m.beta0), _default_depth(shape), m.outlier_halfwidth,
+    return _loss_spec(shape, m.prior, _default_depth(shape), m.outlier_halfwidth,
                       _marg_lattice(i0:(i0 + NG - 1), NG))
 end
 

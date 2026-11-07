@@ -8,10 +8,10 @@
     using StaticArrays, LinearAlgebra
     using RANSACScoringDoneRight
     using RANSACScoringDoneRight: SimFitPP, unbiased_median_variance, simfitpp_loss_width,
-                                  simfitpp_select, with_residual_unit, residual_unit_scale,
+                                  simfitpp_select, with_residual_unit,
                                   _msac_best_over
     using VisualGeometryToolkitCore.Pools: PoolPair, pool_normalization, pool_frame_calibrations,
-                                    calibration_matrices, pixel_residuals
+                                    calibration_matrices, pixel_residuals, pool_pixel_scale
     using VisualGeometryToolkitCore
 
     @testset "unbiased_median_variance (UnbiasedMed)" begin
@@ -102,7 +102,7 @@
         D = _synthetic_pool(rng; σ = 0.8)
         n, K = size(D)
         pair = identity_pool(D; sample_indices = zeros(Int, 5, K))
-        @test residual_unit_scale(pair) == 1.0
+        @test pool_pixel_scale(pair) == 1.0
         # identity maps: the pool frame IS the pixel frame, so the matrix method
         # on the stored residuals runs at the reference's pixel bounds
         j, loss_width, ok = simfitpp_select(D, 1.0; rng = MersenneTwister(2))
@@ -148,9 +148,9 @@
         @test simfitpp_select(pair, 3.0; rng = MersenneTwister(3)) ==
               simfitpp_select(pixel_residuals(pair), 3.0; rng = MersenneTwister(3))
         # the pool frame's unit stays available through the matrix method
-        c = with_residual_unit(SimFitPP(), residual_unit_scale(pair))
+        c = with_residual_unit(SimFitPP(), pool_pixel_scale(pair))
         @test first(simfitpp_select(Dc, 0.01, c; rng = MersenneTwister(3))) in 0:K
-        @test residual_unit_scale(pair) == s
+        @test pool_pixel_scale(pair) == s
         # the pool's normalization and pool-frame calibrations (VisualGeometryToolkitCore's)
         T1c, T2c = sim(s, -0.9, -0.7), sim(s, -0.95, -0.65)
         pc = mk(T1c, T2c)

@@ -34,7 +34,8 @@ two granularities:
 - **one hypothesis**: [`score_residuals!`](@ref) (from residuals) or
   [`score_sq_residuals!`](@ref) (from a problem and a model) returns the score
   and the inlier count of the best partition;
-- **a pool of hypotheses**: [`best_pool_model`](@ref) selects the best stored
+- **a pool of hypotheses**: VisualGeometryToolkitCore's
+  [`best_pool_model`](@extref VisualGeometryToolkitCore.best_pool_model) selects the best stored
   model of one benchmark pair, and [`grid_evaluate`](@ref) does so for every
   pair of a staged pool at every width of a grid, which is what tuning and the
   paper's evaluation consume.
@@ -56,12 +57,14 @@ own types.
   `consensus_order`, `inlier_threshold`, `scale_prior`, `outlier_halfwidth`,
   `check_workspace` and `with_width`/`width_axis`; its `{Predictive}` form adds
   `is_predictive` and `scored_model`. Any RANSAC written against the contract,
-  VisualGeometryToolkitEstimation's among them, runs it unchanged.
+  VisualGeometryToolkitEstimation's among them, runs it unchanged. The
+  loss-width families at a loss width implement `score!` (with
+  `with_width`/`width_axis`), what pool selection reads.
 - **Pool selection.** Every grid family here declares one staging
   (`selection_staging`, `stage_selection`: [`stage_ig_shared_from_pairs`](@ref)
   shared by all of them) and implements `select_on_grid!` with its device
   kernels. VisualGeometryToolkitCore's generic `select_on_grid!` and
-  [`best_pool_model`](@ref) serve any other scorer at its width.
+  `best_pool_model` serve any scorer at its width.
 
 ## The scorers
 

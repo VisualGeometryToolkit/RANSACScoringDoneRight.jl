@@ -15,10 +15,10 @@
     using KernelAbstractions
     using RANSACScoringDoneRight
     using RANSACScoringDoneRight: stage_ig_shared_from_pairs, loss_spec, Exact, LossSpec, pair_chunk_budget,
-        simfitpp_select, residual_unit_scale
+        simfitpp_select
     using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, IGPrior, WelschShape,
         FundMat, sampson_distance, select_on_grid!, selection_staging, stage_selection
-    using VisualGeometryToolkitCore.Pools: PoolPair, pixel_residuals
+    using VisualGeometryToolkitCore.Pools: PoolPair, pixel_residuals, pool_pixel_scale
     import VisualGeometryToolkitCore as VGC
 
     struct _SGProblem <: AbstractConstraintProblem end
@@ -120,7 +120,7 @@
         cfg = SimFitPP()
         rng_of(fp, t) = MersenneTwister(hash((fp, t)))
         got = _select(cfg, grid, spairs, sRs; rng_of)
-        want = [Int32(first(simfitpp_select(pixel_residuals(p), grid[t] / residual_unit_scale(p), cfg;
+        want = [Int32(first(simfitpp_select(pixel_residuals(p), grid[t] / pool_pixel_scale(p), cfg;
                                             rng = rng_of((VGC.Pools.num_points(p), VGC.Pools.num_models(p), p.gt_variance), t))))
                 for p in spairs, t in eachindex(grid)]
         @test got == want

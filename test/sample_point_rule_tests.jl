@@ -7,8 +7,8 @@
 #     (`score_sq_residuals!`) at model_dof = m score exactly what they score on
 #     the n − m remaining points at model_dof = 0 — ν = dg·(k − m) and the
 #     outlier count n − k agree term by term;
-#   * a loss-width family's pool score (`pool_model_score`, hence `best_pool_model`, the
-#     Exact grid and the typed pool scorers) is Σ over the remaining points plus
+#   * a loss-width family's pool score at a loss width (its `score!`, hence
+#     `best_pool_model`, and the Exact grid) is Σ over the remaining points plus
 #     the model-independent constant m·q(0), so the sample points never change a
 #     ranking;
 #   * in every scorer the stored values at the sample indices are ignored.
@@ -20,7 +20,7 @@
     using RANSACScoringDoneRight: alloc_scoring_workspace,
         score_residuals!, score_sq_residuals!
     using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, IGPrior, RansacScoring, MsacScoring,
-        residual_quality, best_pool_model
+        residual_quality, best_pool_model, with_width, LossWidth
     const _SP = VGC
 
     # A scalar-constraint problem: rᵢ = xᵢ − 0.6θ₁ − 0.8θ₂.
@@ -82,10 +82,10 @@
             for j in 1:M
                 others = setdiff(1:n, SI[:, j])
                 ref = sum(i -> (d = D[i, j]; isfinite(d) ? residual_quality(sc, Float64(d * d), loss_width) : 0.0), others)
-                @test pool_model_score(sc, pair, D, j, loss_width) - m * q0 ≈ ref rtol = 1e-12 atol = 1e-12
-                @test pool_model_score(sc, pair_j, Dj, j, loss_width) ≈ pool_model_score(sc, pair, D, j, loss_width) rtol = 1e-12
+                @test model_score(sc, pair, D, j, loss_width) - m * q0 ≈ ref rtol = 1e-12 atol = 1e-12
+                @test model_score(sc, pair_j, Dj, j, loss_width) ≈ model_score(sc, pair, D, j, loss_width) rtol = 1e-12
             end
-            @test best_pool_model(sc, pair_j, Dj, loss_width) == best_pool_model(sc, pair, D, loss_width)
+            @test best_pool_model(with_width(sc, LossWidth(loss_width)), pair_j, Dj) == best_pool_model(with_width(sc, LossWidth(loss_width)), pair, D)
         end
         sm = StudentTUniformScoring(m, halfwidth)
         @test best_pool_model(sm, pair_j, Dj) == best_pool_model(sm, pair, D)

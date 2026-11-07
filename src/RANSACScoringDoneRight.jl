@@ -73,7 +73,12 @@ using VisualGeometryToolkitCore:
 # `Pools` module): RSDR's pool scorers take the light `PoolPair` together with
 # its residual matrix, and read the record only through these. `pixel_residuals`
 # is the pool's one exit to pixels (the pair's image-plane Sampson residuals).
-using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_imc, pixel_residuals
+using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_imc, pixel_residuals,
+    # the record's residual-matrix contract, the one pool argmax, and the one
+    # pixel → pool-frame scale
+    check_residual_matrix, best_model_index, pool_pixel_scale
+# The scoring families' tag registry, merged with this package's (native_widths.jl).
+using VisualGeometryToolkitCore: TagRegistry
 # The width axes, their native maps and the native-axis conversions are
 # VisualGeometryToolkitCore's; this package states the axis of its grid families.
 using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth
@@ -93,8 +98,9 @@ import VisualGeometryToolkitCore: AbstractScoring, loss_shape, codimension, scor
     scored_model, scale_prior, outlier_halfwidth, check_workspace, with_width, width_axis, minimal_sample_size,
     residual_quality, scoring_workspace,
     # the pool-selection contract (VisualGeometryToolkitCore robust/pool_selection.jl):
-    # the grid-family form of best_pool_model and the staged grid selection
-    best_pool_model, selection_staging, stage_selection, select_on_grid!
+    # the staged grid selection (a scorer at its width selects through
+    # VisualGeometryToolkitCore's `best_pool_model`, by `score!`)
+    selection_staging, stage_selection, select_on_grid!
 
 # -----------------------------------------------------------------------------
 # Exports
@@ -123,19 +129,20 @@ export grid_evaluate
 export LossWidthScoring
 export MlesacScoring, MagsacScoring
 export WelschCostScoring, SmoothTLSScoring, GemanScoring
-# `loss_width_scoring(tag[, dg])` builds a `LossWidthScoring` member by its tag.
+# `loss_width_scoring(tag[, dg])` builds a `LossWidthScoring` member by its tag
+# of `SCORING_TAGS`, the scoring families' registry (VisualGeometryToolkitCore's merged
+# with this package's).
 export loss_width_scoring
+public SCORING_TAGS
 
-# Per-pair model selection over a width-free loss-width family
-# (scoring_eval_common.jl; a scorer AT its width selects through
-# VisualGeometryToolkitCore's `best_pool_model`), and the staged grid selection of
-# every grid family (selection.jl, VisualGeometryToolkitCore's `select_on_grid!`).
-export WelschMarginal,
-    pool_model_score   # one stored model's loss-width-family score (the per-model term of best_pool_model)
+# A loss-width family at its width selects through VisualGeometryToolkitCore's
+# `best_pool_model` (its `score!`, scoring_eval_common.jl); the staged grid
+# selection of every grid family is selection.jl's (VisualGeometryToolkitCore's
+# `select_on_grid!`).
+export WelschMarginal
 public pair_chunk_budget
 # SIMFIT++ (simfitpp.jl): loss-width estimation from held-out residuals + the pool adapter
-export SimFitPP, unbiased_median_variance, simfitpp_loss_width, simfitpp_select,
-    residual_unit_scale
+export SimFitPP, unbiased_median_variance, simfitpp_loss_width, simfitpp_select
 # The SIMFIT++ bounds in another residual unit (`simfitpp_select`'s matrix method).
 public with_residual_unit
 # The two aggregations of the loss-width grid (public; generic names)

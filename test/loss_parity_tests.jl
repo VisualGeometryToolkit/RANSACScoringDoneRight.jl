@@ -68,7 +68,7 @@
             @test abs(q.tnodes[1] - (m.t0 - _R._MARG_L)) <= h / 2 + 1e-12
             @test q.tnodes[end] - q.tnodes[1] ≈ 2 * _R._MARG_L
             @test round(q.tnodes[1] / h) * h ≈ q.tnodes[1] atol = 1e-12
-            @test q.base ≈ m.alpha0 .* q.tnodes .+ m.beta0 ./ q.sq_loss_width_nodes rtol = 1e-14
+            @test q.base ≈ m.prior.alpha0 .* q.tnodes .+ m.prior.beta0 ./ q.sq_loss_width_nodes rtol = 1e-14
             S = fill(-Inf, 1, 1, 1)
             _R.marg_evidence_kernel!(be)(S, sq_r, Int64[0, n], Int32[n], Int32[1],
                 q.sq_loss_width_nodes, q.logZnodes, q.base, q.ltw, Int32[0], zeros(NG, 1), spec.Δ,

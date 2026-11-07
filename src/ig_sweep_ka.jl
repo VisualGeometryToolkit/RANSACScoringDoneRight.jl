@@ -184,7 +184,7 @@ function stage_ig_shared_from_pairs(pairs::AbstractVector{<:PoolPair},
                                     backend = KernelAbstractions.CPU())
     length(pairs) == length(residuals) || throw(DimensionMismatch(
         "stage_ig_shared_from_pairs: $(length(pairs)) pairs and $(length(residuals)) residual matrices"))
-    foreach(_check_residuals, pairs, residuals)
+    foreach(check_residual_matrix, pairs, residuals)
     P = length(pairs)
     # Lay out the flat buffer from per-pair SIZES (cheap, no sort) so the sorted
     # matrices never accumulate. Staging then builds the flat one pair at a time

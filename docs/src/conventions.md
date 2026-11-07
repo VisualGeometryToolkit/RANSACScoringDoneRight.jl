@@ -17,8 +17,8 @@ correspondences and models in **`NormalizedImageFrame`**: image centre, scaled
 by HALF the image diagonal, so the image corners lie at unit radius. The
 record's residual matrix is not part of it: a pool's residuals are a separate
 `num_points × num_models` Float32 matrix in the same unit, and every pool
-scorer here takes the record AND its matrix — `best_pool_model(scoring, pair,
-R, …)`, `pool_model_score`, `precompute_pair(pair, R)`,
+scorer here takes the record AND its matrix — VisualGeometryToolkitCore's
+`best_pool_model(scoring, pair, R)`, `precompute_pair(pair, R)`,
 `stage_ig_shared_from_pairs(pairs, residuals)`. No scorer opens a file.
 
 The exception exists because the pool is shared STORAGE, not an estimator's
@@ -39,9 +39,10 @@ What the rule then demands of this package:
   normalization's sides (`inv(D) ∘ M ∘ S`). It never reads the stored residual
   matrix, so it does not depend on that matrix's residual kind — tangent
   Sampson for an essential pool, image-plane Sampson for F and H.
-  [`residual_unit_scale`](@ref) is a CONVENTION, not a conversion — the two
-  images are scaled independently, so no single scalar relates the frames; use
-  it for a soft initial guess and never for anything a bound gates.
+  VisualGeometryToolkitCore's `Pools.pool_pixel_scale` (the larger of the two
+  views' pixel → pool-frame scales) is the one scalar crossing; the two images
+  are scaled independently, so no scalar relates the frames per point. SIMFIT++
+  uses it for a soft initial guess only, never for anything a bound gates.
 
 [`simfitpp_select`](@ref) on a pool record is the deliberate exception to the
 exception: it is pixels in, pixels out, running on `pixel_residuals` so that

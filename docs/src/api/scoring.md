@@ -52,10 +52,13 @@ scored_model(::StudentTUniformScoring{Predictive}, ::Any, ::Any, ::Any)
 ## Loss-width scorings
 
 The baselines of the paper (RANSAC, MSAC, GaU/MLESAC, MAGSAC++) and three
-robust costs, each a singleton type carrying its codimension and scored through
-one per-residual scalar, VisualGeometryToolkitCore's `residual_quality`. RANSAC and
-MSAC are VisualGeometryToolkitCore's baseline scorers (`RansacScoring`, `MsacScoring`);
-this package adds their grid methods.
+robust costs, each a type carrying its codimension and scored through one
+per-residual scalar, VisualGeometryToolkitCore's `residual_quality`. Each has
+VisualGeometryToolkitCore's two forms of `RansacScoring`/`MsacScoring`: width-free
+(`F(dg)`, the grid family) and at a loss width (`F(dg; threshold = w)`, or
+`with_width(F(dg), LossWidth(w))`), which selects by `score!`. RANSAC and MSAC
+are VisualGeometryToolkitCore's baseline scorers; this package adds their grid
+methods.
 
 ```@docs
 LossWidthScoring
@@ -65,4 +68,5 @@ WelschCostScoring
 SmoothTLSScoring
 GemanScoring
 loss_width_scoring
+SCORING_TAGS
 ```

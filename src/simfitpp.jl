@@ -57,7 +57,7 @@ end
 
 The same configuration with the loss-width bounds expressed in another residual
 unit. `min_loss_width`/`max_loss_width` are multiplied by `unit_scale` (e.g.
-`residual_unit_scale(pair)` to carry the reference's pixel bounds into a
+VisualGeometryToolkitCore's `Pools.pool_pixel_scale(pair)` to carry the reference's pixel bounds into a
 pool stored in the pool frame).
 """
 with_residual_unit(cfg::SimFitPP, unit_scale::Real) =
@@ -154,29 +154,18 @@ end
 # Hypothesis-pool adapter
 # -----------------------------------------------------------------------------
 
-# The MSAC-best pool model over the rows `rows` — the pool argmax
-# (`_best_model`) of MSAC's quality summed over those rows (`_loss_width_column_score`),
-# both scoring_eval_common.jl's: 0 for an empty pool. Squared in the matrix's own
-# precision, as every pool scorer squares (it squared in Float64 until
-# 2026-09-30).
+# The MSAC-best pool model over the rows `rows` — VisualGeometryToolkitCore's pool
+# argmax (`Pools.best_model_index`) of MSAC's quality summed over those rows
+# (`_loss_width_sum!`, scoring_eval_common.jl): 0 for an empty pool. Squared in
+# the matrix's own precision, as every pool scorer squares (it squared in
+# Float64 until 2026-09-30).
 _msac_best_over(distances::AbstractMatrix, rows, loss_width::Real) =
-    _best_model(j -> _loss_width_column_score(MsacScoring(), distances, j, rows, Float64(loss_width)),
-                size(distances, 2))
+    best_model_index(j -> _loss_width_sum!(nothing, MsacScoring(), view(distances, :, j), rows, Float64(loss_width)),
+                     size(distances, 2))
 
-"""
-    residual_unit_scale(pair::PoolPair) -> Float64
-
-Pool-frame residual units per pixel for the pair: the mean isotropic scale of
-the two pool-frame maps (pixel → `NormalizedImageFrame`). A CONVENTION, not an
-exact conversion — the pool frame scales the two images independently and the
-Sampson denominator mixes both images' gradients, so no single scalar relates
-the two frames per point. Use it only for soft quantities (an initial
-loss-width guess from a pool-frame-unit grid); anything the bounds gate must
-run on VisualGeometryToolkitCore's `Pools.pixel_residuals`.
-"""
-function residual_unit_scale(pair::PoolPair)
-    return (pair.source_map[1, 1] + pair.destination_map[1, 1]) / 2
-end
+# (`residual_unit_scale(pair)`, the MEAN of the two pool-frame maps' scales, is
+#  deleted: VisualGeometryToolkitCore's `Pools.pool_pixel_scale(pair)` is the one
+#  pixel → pool-frame scale, the LARGER of the two views'.)
 
 """
     simfitpp_select(residuals::AbstractMatrix, initial_loss_width, cfg = SimFitPP();

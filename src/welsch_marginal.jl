@@ -33,14 +33,10 @@
 # ONE parametric spec for every scale-marginal family: the loss shape is the
 # type parameter, so `WelschMarginal`/`SmoothTLSMarginal` are aliases, and the
 # only per-family code is the keyword constructors. The shape math is
-# VisualGeometryToolkitCore's.
-# `alpha0`/`beta0`, exactly as `IGPrior` spells the SAME two IG hyperparameters.
-# They were `α`/`β` here and `alpha0`/`beta0` there — one pair of quantities
-# under two spellings, one struct apart, with the constructors already taking
-# them as `α₀`/`β₀`.
+# VisualGeometryToolkitCore's, and so is the prior: the field is its `IGPrior`, never
+# a loose `alpha0`/`beta0` pair restating it (`m.prior.alpha0`, `m.prior.beta0`).
 struct ScaleMarginal{K<:AbstractLossShape}
-    alpha0::Float64
-    beta0::Float64
+    prior::IGPrior               # the IG prior on the squared loss width
     outlier_halfwidth::Float64   # the Z̃ domain half-width
     t0::Float64                  # centre of the scale domain t0 ± _MARG_L, log(prior-centre²)
 end
@@ -65,7 +61,7 @@ function ScaleMarginal{K}(α₀::Real, β₀::Real; outlier_halfwidth::Real,
     # after a squared width: both branches below are already inside a `log`.
     t0_centre = t0 !== nothing ? Float64(t0) :
               (α₀ > 0 && β₀ > 0 ? log(β₀ / (α₀ + 1)) : log((outlier_halfwidth / 4)^2))
-    return ScaleMarginal{K}(Float64(α₀), Float64(β₀), Float64(outlier_halfwidth), t0_centre)
+    return ScaleMarginal{K}(IGPrior(Float64(α₀), Float64(β₀)), Float64(outlier_halfwidth), t0_centre)
 end
 
 # The prior-centre form of every family: `2·alpha0` pseudo-observations at

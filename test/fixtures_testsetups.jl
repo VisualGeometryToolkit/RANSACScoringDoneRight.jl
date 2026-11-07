@@ -8,8 +8,24 @@
 @testsetup module PoolFixtures
     using Random
     using StaticArrays, LinearAlgebra
-    using VisualGeometryToolkitCore.Pools: PoolPair
-    export I3, identity_pool, mixture_residuals
+    using VisualGeometryToolkitCore.Pools: PoolPair, num_points
+    import VisualGeometryToolkitCore as VGC
+    export I3, identity_pool, mixture_residuals, model_score
+
+    """
+        model_score(scoring, pair, D, j, loss_width) -> Float64
+
+    The score of pool model `j` under a width-free loss-width family at
+    `loss_width`: the scoring contract's `score!` of `with_width(scoring,
+    LossWidth(loss_width))` on the model's residual column, its minimal sample
+    entering at zero residual — what `best_pool_model` maximises.
+    """
+    function model_score(scoring, pair::PoolPair, D::AbstractMatrix, j::Integer, loss_width::Real)
+        sc = VGC.with_width(scoring, VGC.LossWidth(loss_width))
+        n = num_points(pair)
+        return VGC.score!(VGC.scoring_workspace(sc, n, VGC.codimension(sc)), sc, Vector{Float64}(undef, n),
+                          view(D, 1:n, j), n; sample = view(pair.sample_indices, :, j))
+    end
 
     const I3 = SMatrix{3,3,Float64,9}(I)
     const _KC = SMatrix{3,3,Float64,9}(400.0, 0.0, 0.0, 0.0, 400.0, 0.0, 320.0, 240.0, 1.0)

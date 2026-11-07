@@ -4,7 +4,8 @@
 # consensus_order a permutation; the derived consensus set and scale inferred;
 # the bounded-sum early exit tie-safe) on StudentTUniformScoring — model-certain,
 # codimension 1 and 2, with and without a minimal sample — and on MSAC/RANSAC at
-# a threshold. Then the loop MSAC score IS the pool score, bit for bit.
+# a threshold. Then every loss-width family at a loss width (MSAC, RANSAC and this
+# package's) scores by the one summed quality, bit for bit.
 
 @testitem "scoring_contract" setup = [PoolFixtures] begin
     using Test, Random
@@ -12,7 +13,6 @@
     using VisualGeometryToolkitCore: test_scoring_contract, scoring_workspace, score!, inlier_count,
         consensus_order, MsacScoring, RansacScoring
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: pool_model_score
 
     rng = MersenneTwister(41)
     n = 60
@@ -39,21 +39,42 @@
         end
     end
 
-    # The loop scorer's score on one model's residual column is the pool score of
-    # that model, bitwise: Σ residual_quality in index order, the minimal
-    # sample's points entering at zero residual.
-    @testset "loop MSAC == pool_model_score(MsacScoring(), …), bitwise" begin
+    # Every loss-width family at a loss width scores one model's residual column
+    # by the same arithmetic, bitwise: Σ residual_quality in index order (a
+    # non-finite residual an outlier, quality 0), then the minimal sample's
+    # points corrected to zero residual — VisualGeometryToolkitCore's MSAC/RANSAC
+    # `score!` and this package's families' alike.
+    function _summed_quality(sc, col, smp, τ)
+        q(d) = (d2 = Float64(d * d); isfinite(d2) ? VGC.residual_quality(sc, d2, τ) : 0.0)
+        s = 0.0
+        for d in col
+            s += q(d)
+        end
+        for i in smp
+            s += VGC.residual_quality(sc, 0.0, τ) - q(col[i])
+        end
+        return s
+    end
+    @testset "every family's score! is the summed quality, bitwise" begin
         for M in (1, 6), τ in (0.3, 1.0, 4.0)
             D = mixture_residuals(rng, 120, M)
             D[5, 1] = NaN32
             S = reduce(hcat, [sort(randperm(rng, 120)[1:5]) for _ in 1:M])
-            pair = identity_pool(D; sample_indices = S, errors_r = zeros(M), errors_t = zeros(M))
+            for F in (MsacScoring, RansacScoring, MlesacScoring, MagsacScoring,
+                      WelschCostScoring, SmoothTLSScoring, GemanScoring)
+                sc = F(1; threshold = τ)
+                W = scoring_workspace(sc, 120, 1)
+                scores = zeros(120)
+                for j in 1:M
+                    col = D[:, j]
+                    @test score!(W, sc, scores, col, 120; sample = S[:, j]) === _summed_quality(sc, col, S[:, j], τ)
+                end
+            end
             sc = MsacScoring(1; threshold = τ)
             W = scoring_workspace(sc, 120, 1)
-            scores = zeros(120)
             for j in 1:M
                 col = D[:, j]
-                @test score!(W, sc, scores, col, 120; sample = S[:, j]) === pool_model_score(MsacScoring(), pair, D, j, τ)
+                score!(W, sc, zeros(120), col, 120; sample = S[:, j])
                 k = inlier_count(sc, W)
                 @test Set(consensus_order(sc, W)[1:k]) ==
                       Set(i for i in 1:120 if i in S[:, j] || (isfinite(col[i]) && Float64(col[i] * col[i]) < τ^2))

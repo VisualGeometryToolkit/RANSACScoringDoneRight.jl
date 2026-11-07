@@ -1,154 +1,108 @@
 #!/usr/bin/env julia
 # =============================================================================
-# scoring_eval_common.jl — per-pair model selection + shared eval plumbing
+# scoring_eval_common.jl — the loss-width families at a loss width on the
+# scoring contract, and the per-pair staging precompute
 #
 # Contains:
-#   - `best_pool_model(scoring, pair, R, loss_width)`: the index of a pair's
-#     best stored model under a width-free loss-width family at a loss width
-#     (the 3-argument form — a scorer AT its width — is VisualGeometryToolkitCore's,
-#     generic over `score!`)
+#   - `score!` of this package's loss-width families AT a loss width
+#     (`MlesacScoring(dg; threshold = w)`, …, or `with_width(F, LossWidth(w))`):
+#     what VisualGeometryToolkitCore's `best_pool_model(scoring, pair, R)` and
+#     VisualGeometryToolkitEval's sample-budget engine select with (RANSAC's and MSAC's
+#     `score!` are VisualGeometryToolkitCore's, the same arithmetic);
 #   - the per-pair staging precompute (PrecomputedPair)
 # Every function here takes the light pool record (VisualGeometryToolkitCore's
 # `PoolPair`) together with its residual matrix `R` (num_points × num_models,
 # Float32, NormalizedImageFrame units): the record no longer carries the
-# residuals, and no scorer opens a file.
+# residuals, and no scorer opens a file. The record's residual-matrix contract
+# and the pool argmax are VisualGeometryToolkitCore's (`Pools.check_residual_matrix`,
+# `Pools.best_model_index`).
 # The JLD2/sidecar HARNESS (SceneEval + scene IO, coarse-range sidecar
 # lookups) moved to the evaluation engine (src/evaluation/) with the rest
 # of the eval subsystem — 2026-07-18 (now VisualGeometryToolkitEval)
 # =============================================================================
 
-# StudentTUniformScoring, ScoringWorkspace, score_residuals!, codimension are defined
-# in this package. The concrete problem types
-# (HomographyProblem/FundMatProblem/EssentialProblem) live in the consumer and
-# are given as the leading `problem_type` argument where one is needed.
 # (loss_width_sweep_ka.jl — `LossWidthScoring`, `residual_quality` — is included
 # by the module before this file.)
 
 # =============================================================================
-# Per-pair model selection — the index of a pair's best stored model
+# A loss-width family's score at a loss width
 #
-# ONE CPU loop per scoring kind, over the SAME per-residual quantity the grids
-# evaluate:
-#   * a loss-width family (`LossWidthScoring`): Σᵢ residual_quality(scoring, dᵢ², loss_width) — the
-#     scalar of the KernelAbstractions Exact/LogBinned kernels
-#     (loss_width_sweep_ka.jl), fed exactly as staging (`precompute_pair`) feeds them:
-#     d² squared in the pool's precision, a non-finite residual an outlier
-#     (skipped), the model's minimal-sample points exact inliers (d² = 0);
-#   * the marginal (`StudentTUniformScoring`): the sort-and-sweep `score_residuals!`.
-# It IS the exact scorer on one pair, kept on the CPU: staging one pair (a sort
-# of every column) plus a kernel launch cost 7–39× this loop for RANSAC/MSAC and
-# 2.2× for the marginal at n = 300 (benchmark 2026-09-22, KA.CPU() on 32
-# threads against this single-threaded loop), and callers already thread over
-# pairs. It replaced score_ransac/score_msac/score_gau/score_magsac, which each
-# restated its family's formula, and score_marginal.
+# ONE CPU loop over the SAME per-residual quantity the grids evaluate:
+# Σᵢ residual_quality(scoring, dᵢ², loss_width) — the scalar of the
+# KernelAbstractions Exact/LogBinned kernels (loss_width_sweep_ka.jl), fed
+# exactly as staging (`precompute_pair`) feeds them: d² squared in the
+# residuals' precision, a non-finite residual an outlier (quality 0), the
+# model's minimal-sample points exact inliers (d² = 0). It is the exact scorer on
+# one pair, kept on the CPU: staging one pair (a sort of every column) plus a
+# kernel launch cost 7–39× this loop for RANSAC/MSAC at n = 300 (benchmark
+# 2026-09-22, KA.CPU() on 32 threads against this single-threaded loop), and
+# callers already thread over pairs.
 #
 # CONTRACTS, one for the whole stack:
-#   * the loss width is supplied linear, never squared, for every family —
-#     `score_msac` took its square, the only one that did;
-#   * the NO-MODEL SENTINEL IS 0, never a valid index, so indexing with it
-#     throws instead of silently selecting model 1 (the old per-pair functions
-#     returned 1). A loss-width family returns 0 only for a pair with no models; the
-#     marginal also when no model scores finitely;
-#   * ties go to the lowest index;
-#   * RANSAC's inlier test is strict, d² < loss_width² on the pool-precision squares —
-#     the grids' test.
+#   * the loss width is supplied linear, never squared, for every family;
+#   * the no-model sentinel of a pool argmax is 0, never a valid index
+#     (VisualGeometryToolkitCore's `Pools.best_model_index`: the first strict best,
+#     a non-finite score never wins);
+#   * RANSAC's inlier test is strict, d² < loss_width² on the pool-precision
+#     squares — the grids' test.
 # =============================================================================
 
-"""
-    pool_model_score(scoring::LossWidthScoring, pair::PoolPair, R, j, loss_width[, q0]) -> Float64
-
-Score of the stored pool model `j` of `pair` under a loss-width family (`MsacScoring`,
-`RansacScoring`, `MagsacScoring`, the loss scorings) at `loss_width`.
-It is `Σᵢ residual_quality(scoring, dᵢ², loss_width)` over the model's column of the
-pair's residual matrix `R` (`num_points(pair) × num_models(pair)`, Float32, in
-`NormalizedImageFrame` units — the pool frame's, as is `loss_width`). The ONE
-per-model loss-width score: [`best_pool_model`](@ref) is its argmax, the Exact grid
-([`grid_evaluate`](@ref) with `Exact()`) computes the same value, and a running-best
-selector over a pool calls it per `(pair, j)` rather than re-summing the quality.
-
-The stack's minimal-sample rule, the same in every scorer: the model's
-minimal-sample points (`pair.sample_indices[:, j]`) are fit exactly by
-construction and carry no information, so they enter at ZERO residual whatever
-was stored for them — here each contributes the constant `q0 =
-residual_quality(scoring, 0, loss_width)`, identical for every model of the pool, so the
-ranking is that of the non-sample points alone. (The marginal scorers zero the
-same entries and subtract the model's `m` dof in the partition evidence,
-`ν = dg·(k − m)`.) A non-finite stored d is an outlier (quality 0); finiteness
-is tested before squaring, so a finite d whose square overflows also scores 0.
-An invalid sample index throws. `q0` is an optional precomputed cache.
-"""
-@inline function pool_model_score(scoring::LossWidthScoring, pair::PoolPair, R::AbstractMatrix{Float32},
-                                   j::Int, loss_width::Float64,
-                                   q0::Float64 = residual_quality(scoring, 0.0, loss_width))
-    s = _loss_width_column_score(scoring, R, j, 1:num_points(pair), loss_width)
-    for i in view(pair.sample_indices, :, j)
-        d = R[i, j]
-        s += q0 - (isfinite(d) ? residual_quality(scoring, Float64(d * d), loss_width) : 0.0)
-    end
-    return s
+# Σ residual_quality(scoring, dᵢ², loss_width) over the indices `rows` of the
+# residual vector `d`, d² squared in `d`'s own precision (the staging contract),
+# a non-finite d² an outlier (quality 0, VisualGeometryToolkitCore's rule: a finite d
+# whose square overflows too); each point's quality into `scores` (or not, for
+# `nothing`). The one such sum: every at-width family's `score!` and SIMFIT++'s
+# MSAC-best over a train split (simfitpp.jl).
+@inline function _quality(scoring, d, loss_width::Float64)
+    d2 = Float64(d * d)
+    return isfinite(d2) ? residual_quality(scoring, d2, loss_width) : 0.0
 end
-pool_model_score(scoring::LossWidthScoring, pair::PoolPair, R::AbstractMatrix{Float32}, j::Integer,
-                 loss_width::Real) =
-    pool_model_score(scoring, pair, R, Int(j), Float64(loss_width))
-
-# One model column's loss-width-family score over the rows `rows` of a residual matrix:
-# Σ residual_quality(scoring, dᵢ², loss_width), d² squared in the matrix's own precision
-# (the staging contract), a non-finite d skipped as an outlier. The one such
-# sum: every pool model's score above, and SIMFIT++'s MSAC-best over a train
-# split (simfitpp.jl).
-@inline function _loss_width_column_score(scoring::LossWidthScoring, D::AbstractMatrix, j::Int, rows,
-                                   loss_width::Float64)
+@inline function _loss_width_sum!(scores, scoring::LossWidthScoring, d::AbstractVector, rows,
+                                  loss_width::Float64)
     s = 0.0
     @inbounds for i in rows
-        d = D[i, j]
-        isfinite(d) && (s += residual_quality(scoring, Float64(d * d), loss_width))
+        q = _quality(scoring, d[i], loss_width)
+        scores === nothing || (scores[i] = q)
+        s += q
     end
     return s
 end
 
-# The index of the best of models 1:M under `score(j)`: the FIRST strictly best,
-# `0` when none scores above −Inf (the no-model sentinel). A NaN score never
-# wins. The one pool argmax — every `best_pool_model` and SIMFIT++'s.
-@inline function _best_model(score::F, M::Integer) where {F}
-    best_j = 0; best = -Inf
-    for j in 1:M
-        s = score(j)
-        s > best && (best = s; best_j = j)
+# The scoring contract of a family at a loss width — pool selection: `score!`
+# only (its score is all a pool argmax and a running-best selector read). It
+# holds no consensus set, so it has no `inlier_count`/`consensus_order` and no
+# workspace (`nothing`); RANSAC's and MSAC's loop scorers are
+# VisualGeometryToolkitCore's.
+scoring_workspace(::_OwnAtLossWidth, _n::Int, _d_g::Int) = nothing
+
+"""
+    score!(nothing, scoring, scores, residuals, n; sample = nothing, bound = -Inf) -> Float64
+
+The score of one model under a loss-width family AT its loss width `w`
+(`MlesacScoring(dg; threshold = w)`, `MagsacScoring`, the loss costs; or
+`with_width(F(dg), LossWidth(w))`): `Σᵢ residual_quality(scoring, dᵢ², w)` over
+`residuals[1:n]`, each point's quality into `scores`. The workspace is
+`nothing` (`scoring_workspace` of these scorers).
+
+The stack's minimal-sample rule, the same in every scorer: the model's
+minimal-sample points (`sample`) are fit exactly by construction and carry no
+information, so they enter at ZERO residual whatever was stored for them — each
+contributes the constant `residual_quality(scoring, 0, w)`. A non-finite stored
+d is an outlier (quality 0), and so is a finite d whose square overflows. An
+invalid sample index throws. `bound` is accepted and never used (no early exit).
+"""
+function score!(::Nothing, scoring::_OwnAtLossWidth, scores::AbstractVector, residuals::AbstractVector,
+                n::Int; sample = nothing, bound::Float64 = -Inf)
+    w = scoring.threshold
+    s = _loss_width_sum!(scores, scoring, residuals, 1:n, w)
+    if sample !== nothing
+        q0 = residual_quality(scoring, 0.0, w)
+        for i in sample   # bounds-checked: an invalid sample index throws (a handful of reads)
+            s += q0 - _quality(scoring, residuals[i], w)
+            scores[i] = q0
+        end
     end
-    return best_j
-end
-
-# A pair's residual matrix is `num_points × num_models`: its rows index the
-# pair's correspondences and its columns the stored models. Checked at every
-# scorer entry, so a matrix of another pair is refused rather than read.
-function _check_residuals(pair::PoolPair, R::AbstractMatrix)
-    size(R) == (num_points(pair), num_models(pair)) || throw(DimensionMismatch(
-        "residual matrix of size $(size(R)) for a pool pair of $(num_points(pair)) points " *
-        "and $(num_models(pair)) models (expected num_points × num_models)"))
-    return nothing
-end
-
-"""
-    best_pool_model(scoring::LossWidthScoring, pair::PoolPair, R, loss_width::Real) -> Int
-
-The index of the best-scoring stored model of `pair` under a loss-width scoring.
-
-`scoring` is a width-free loss-width family, evaluated at `loss_width`, on the
-pair's residual matrix `R` (`num_points(pair) × num_models(pair)`, Float32,
-`NormalizedImageFrame` units; `loss_width` is in that unit too): per model
-`Σᵢ residual_quality(scoring, dᵢ², loss_width)` ([`pool_model_score`](@ref)),
-exactly the Exact grid's ([`grid_evaluate`](@ref)) per-model score on this one
-pair. `0` means no model (the pair stores none, or none scores above `-Inf`;
-a NaN score never wins; ties go to the first); a
-matrix of another shape is a `DimensionMismatch`. A scorer at its width (`MsacScoring(dg; threshold = w)`,
-a `StudentTUniformScoring`) goes through VisualGeometryToolkitCore's 3-argument
-`best_pool_model(scoring, pair, R)` — the same arithmetic, through `score!`.
-"""
-function best_pool_model(scoring::LossWidthScoring, pair::PoolPair, R::AbstractMatrix{Float32},
-                         loss_width::Real)
-    _check_residuals(pair, R)
-    width = Float64(loss_width); q0 = residual_quality(scoring, 0.0, width)
-    return _best_model(j -> pool_model_score(scoring, pair, R, j, width, q0), num_models(pair))
+    return s
 end
 
 # log(1 + eˣ), stable over the whole range, is LogExpFunctions' `log1pexp` (a
@@ -156,6 +110,14 @@ end
 # GaU's argument never exceeds ½; `mixture_nll` (VisualGeometryToolkitCore's) needs
 # the whole range.
 const _SOFTPLUS_HALF = log1pexp(0.5)      # MLESAC's quality normaliser (loss_width_sweep_ka.jl)
+
+# (`pool_model_score` and the 4-argument `best_pool_model(scoring, pair, R,
+#  loss_width)` — a width-free family evaluated at a loss width — are deleted:
+#  a family AT its loss width has `score!` (above), so VisualGeometryToolkitCore's
+#  `best_pool_model(with_width(scoring, LossWidth(w)), pair, R)` is the one pool
+#  selection, through the same arithmetic. The local pool argmax `_best_model`
+#  and shape check `_check_residuals` are VisualGeometryToolkitCore's
+#  `Pools.best_model_index` and `Pools.check_residual_matrix`.)
 
 # (`evaluate_at` — the single-loss-width, threaded counterpart of
 #  `grid_evaluate` — is deleted: no caller in RSDR, RVG, VisualGeometryToolkitEval or LODR. A
@@ -211,7 +173,7 @@ out-of-range index THROWS, as in every other scorer) and sorted; the selection
 error `pool_imc` is kept per model.
 """
 function precompute_pair(pair::PoolPair, R::AbstractMatrix{Float32})
-    _check_residuals(pair, R)
+    check_residual_matrix(pair, R)
     n = num_points(pair); M = num_models(pair)
     sorted_sq = Matrix{Float32}(undef, n, M)
     for j in 1:M
