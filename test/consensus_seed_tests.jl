@@ -10,7 +10,7 @@
     using Random: MersenneTwister
     import VisualGeometryToolkitCore as VGC
     using VisualGeometryToolkitCore: IGPrior, score!, inlier_count, consensus_order, consensus_s2, scale_prior,
-        partition_student_t, partition_rss, PosteriorWeightState, s_hat_sq, student_t_dof, sq_residuals,
+        partition_student_t, partition_rss, PosteriorWeightState, s_hat_sq, student_t_dof, sq_distances,
         inlier_prior, posterior_weights!, posterior_inlier_probs!, inlier_threshold, ScoreBuffers,
         GauInlier, decision_threshold, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth
     using RANSACScoringDoneRight
@@ -45,7 +45,7 @@
                                        log_two_outlier_halfwidth = log(2 * halfwidth), codimension = 2)
             ν, s2 = partition_student_t(prior, partition_rss(order, r, k), k; model_dof, codimension = 2)
             @test s_hat_sq(pws) === s2 && student_t_dof(pws) === ν
-            @test sq_residuals(pws) == r .^ 2
+            @test sq_distances(pws) == r .^ 2
             @test inlier_prior(pws) === 0.5
             @test consensus_s2(s, r, order, k; model_dof, d_g = 2) === s2
 

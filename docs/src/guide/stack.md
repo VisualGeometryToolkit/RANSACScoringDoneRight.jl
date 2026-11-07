@@ -158,7 +158,7 @@ dimensionless multiple of the scale at which a width sits, `s2` is the noise
 variance, `loss_width` is a loss's scale parameter and `sq_loss_width` is its
 square (`scale_multiple² · s2` for a deployed loss). VisualGeometryToolkitCore
 writes the squared residual as `s` in `ρ(shape, s, sq_loss_width)`. This
-package writes it `sq_r` or `sq_residuals`, never `s`.
+package writes it `sq_r` or `sq_distances`, never `s`.
 
 On top of that, this package names the following quantities.
 

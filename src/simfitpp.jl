@@ -203,7 +203,7 @@ function simfitpp_select(D::AbstractMatrix, initial_loss_width::Real, cfg::SimFi
     n = size(D, 1)
     (n == 0 || size(D, 2) == 0) && return (0, Float64(initial_loss_width), false)
     fit(loss_width, train) = (j = _msac_best_over(D, train, loss_width); j == 0 ? nothing : j)
-    residuals_sq(j, val) = square_residuals!(Vector{Float64}(undef, length(val)),
+    residuals_sq(j, val) = square_distances!(Vector{Float64}(undef, length(val)),
                                              view(D, val, j), length(val))
     loss_width, success = simfitpp_loss_width(fit, residuals_sq, n, initial_loss_width, cfg;
                                      num_previous_est, rng)

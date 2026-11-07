@@ -121,8 +121,8 @@ _alpha0(p::IGPrior) = p.alpha0
 # `scored_model` (the scoring contract) wraps after a minimal solve; the
 # model-certain scorer never wraps → zero overhead.
 #
-# All residuals!() implementations return whitened residuals such that
-# ‖rᵢ‖² = Mahalanobis distance. The two score! methods:
+# Every problem's `mahalanobis_distances!` returns the norms of its whitened
+# residuals, ‖rᵢ‖² the squared Mahalanobis distance. The two score! methods:
 #
 #   model::M (certain)     → scores[i] = rᵢ²,         penalties[i] = 0
 #   model::Uncertain{M}   → scores[i] = rᵢᵀ Ṽᵢ⁻¹ rᵢ, penalties[i] = log|Ṽᵢ|
@@ -139,7 +139,7 @@ _alpha0(p::IGPrior) = p.alpha0
 # in sweep! as −½ Σᵢ∈I ℓᵢ to prevent this.
 # -----------------------------------------------------------------------------
 #
-# (Removed: MeasurementCovariance trait — all residuals! return whitened r, so
+# (Removed: MeasurementCovariance trait — every residual is whitened, so
 #  the Isotropic/Heteroscedastic axis was redundant. See git log for history.)
 
 # -----------------------------------------------------------------------------
@@ -369,7 +369,7 @@ function score_sq_residuals!(sws::ScoringWorkspace, q::AbstractVector{T}, s::Stu
     @inbounds for i in 1:n
         # squared norm of the whitened residual itself, not of its norm — no
         # sqrt round trip for a vector constraint
-        q[i] = sq_norm(whitened_constraint_residual(problem, model, i))
+        q[i] = sq_norm(whitened_residual(problem, model, i))
     end
     @inbounds for i in n+1:length(q)
         q[i] = typemax(T)
@@ -409,7 +409,7 @@ function score_residuals!(sws::ScoringWorkspace, q::AbstractVector{T}, s::Studen
                           residuals::AbstractVector{<:Real},
                           n::Int;
                           sample_idx::Union{Nothing,AbstractVector{Int}}=nothing) where T
-    square_residuals!(q, residuals, n)
+    square_distances!(q, residuals, n)
     @inbounds for i in n+1:length(q)
         q[i] = typemax(T)
     end
@@ -456,8 +456,10 @@ model carries it. Fills `q[i]` with the predictive squared residual
 `sample_idx` (or `nothing`): the minimal sample's points, which satisfy their
 constraints exactly — their `q` and penalty are set to zero, as `q` is in
 [`score_residuals!`](@ref). When `residuals` is supplied it receives each
-point's [`whitened_residual`](@extref VisualGeometryToolkitCore.whitened_residual) from the same constraint evaluation — signed
-for a scalar constraint, exactly what `residuals!` writes.
+point's Mahalanobis distance, the norm of its
+[`whitened_residual`](@extref VisualGeometryToolkitCore.whitened_residual) from the same
+constraint evaluation (`≥ 0`), exactly what
+[`mahalanobis_distances!`](@extref VisualGeometryToolkitCore.mahalanobis_distances!) writes.
 
 Returns `(S, k)`: sweep score and optimal inlier count.
 """
@@ -468,7 +470,7 @@ function score_sq_residuals!(sws::ScoringWorkspace, q::AbstractVector{T},
                              residuals::Union{Nothing,AbstractVector{<:Real}} = nothing) where T
     @inbounds for i in 1:n
         rᵢ, ∂θgᵢ_w = whitened_constraint_rows(problem, model, i)
-        residuals === nothing || (residuals[i] = whitened_distance(rᵢ))
+        residuals === nothing || (residuals[i] = norm(rᵢ))   # the distance, never the signed residual
         q[i], sws.penalties[i] = _predictive_score_penalty(rᵢ, ∂θgᵢ_w, Σ̃_θ)
         # sort_key = q (unit-scale Mahalanobis). The historical raw-r²
         # key ("block high-leverage infiltration") is RETIRED: with

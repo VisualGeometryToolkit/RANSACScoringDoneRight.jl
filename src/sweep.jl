@@ -588,7 +588,7 @@ function sweep!(perm::Vector{Int}, lg_table::Vector{Float64},
 end
 
 """
-    sweep!(sws::ScoringWorkspace, sq_residuals, n;
+    sweep!(sws::ScoringWorkspace, sq_distances, n;
            model_dof, log_two_outlier_halfwidth, codimension=1) -> (S*, k*)
 
 The sort-and-sweep on a bare `ScoringWorkspace`, for callers without a `StudentTUniformScoring`.
@@ -606,11 +606,11 @@ extension's host-side seeding loop. Both of these share one `sws` across many ca
 
 Forwarder — no sweep loop of its own.
 """
-sweep!(sws::ScoringWorkspace, sq_residuals::AbstractVector{T}, n::Int;
+sweep!(sws::ScoringWorkspace, sq_distances::AbstractVector{T}, n::Int;
        model_dof::Int, log_two_outlier_halfwidth::Float64,
        codimension::Int=1) where T =
     sweep!(sws.perm, sws.lg_table, model_dof, log_two_outlier_halfwidth, codimension,
-           sq_residuals, n; scratch=sws.scratch, scale_prior=sws.scale_prior,
+           sq_distances, n; scratch=sws.scratch, scale_prior=sws.scale_prior,
            radix=sws.radix)
 
 

@@ -96,20 +96,20 @@ function _quad_tables(shape::AbstractLossShape, Δ::Float64, tnodes::Vector{Floa
 end
 
 """
-    loss_scale_bounds(sq_residuals, n; pad=4.0) -> (t_lo, t_hi)
+    loss_scale_bounds(sq_distances, n; pad=4.0) -> (t_lo, t_hi)
 
 Data-driven grid bounds on `t = log sq_loss_width` for a redescending-loss sweep
-over squared residuals `sq_residuals[1:n]`.  The scale-posterior peak for
+over squared residuals `sq_distances[1:n]`.  The scale-posterior peak for
 partition k lands near `sq_loss_width ≈ RSS_k/(k−m)`, which ranges from ≈ the
 tightest residual scale (small k) to ≈ the all-point scale (k=n); the returned
 `[t_lo, t_hi]` brackets that range with `pad` decades (natural-log) of margin on
 each side so the trapezoid grid covers every k's peak.  Supply to
 `loss_spec(...; t_lo, t_hi)`.
 """
-function loss_scale_bounds(sq_residuals::AbstractVector{Float64}, n::Int; pad::Float64=4.0)
+function loss_scale_bounds(sq_distances::AbstractVector{Float64}, n::Int; pad::Float64=4.0)
     min_sq_loss_width = Inf; max_sq_loss_width = 0.0
     @inbounds for i in 1:n
-        x = sq_residuals[i]
+        x = sq_distances[i]
         (isfinite(x) && x > 0) || continue
         x < min_sq_loss_width && (min_sq_loss_width = x)
         x > max_sq_loss_width && (max_sq_loss_width = x)
@@ -170,7 +170,7 @@ Build a depth-`Δ` quadrature-marginal spec for the loss `shape` under IG scale
 `prior`. Z̃ is normalised over the FIXED domain `[0, r_max]` (the declared
 outlier support `POOL_FRAME_R_MAX`, in the pool frame's half-diagonal unit), so
 the outlier half-width is decoupled from the quadrature.  `[t_lo, t_hi]` are the
-log-scale grid bounds (use `loss_scale_bounds(sq_residuals, n)`).
+log-scale grid bounds (use `loss_scale_bounds(sq_distances, n)`).
 """
 function loss_spec(shape::AbstractLossShape, prior::IGPrior; Δ::Real,
                    r_max::Real=POOL_FRAME_R_MAX, t_lo::Real, t_hi::Real,

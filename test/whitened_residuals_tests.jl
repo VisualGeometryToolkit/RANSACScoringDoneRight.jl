@@ -1,8 +1,9 @@
 # The scorers read the problem protocol's whitened residuals: a DEGENERATE
 # measurement (VisualGeometryToolkitCore's one Sampson degeneracy rule — residual 0
 # when the constraint vanishes, ±Inf otherwise) reaches the sweep as an outlier,
-# and the covariance-given predictive scorer reports the SAME signed residuals
-# `residuals!` writes. The protocol itself (`whitened_residual`,
+# and the covariance-given predictive scorer reports the SAME distances
+# `mahalanobis_distances!` writes (`≥ 0`; it wrote the signed residual until
+# 0.5.0). The protocol itself (`whitened_residual`, `mahalanobis_distance`,
 # `residual_context`, the rounding scale) is VisualGeometryToolkitCore's and is tested
 # there (constraint_problem_tests.jl).
 
@@ -65,12 +66,13 @@
         @test !(5 in sweep_order(swp)[1:kp])
     end
 
-    @testset "the predictive scorer reports residuals!'s signed residuals" begin
+    @testset "the predictive scorer reports mahalanobis_distances!'s distances" begin
         n = 8
         cds = [_scalar((-1.0)^i * 0.05 * i, (0.6, 0.8)) for i in 1:n]
         p = _CDProblem(cds)
-        r = zeros(n); VGC.residuals!(r, p, nothing)
-        @test any(<(0), r)                               # signed, not a norm
+        r = zeros(n); VGC.mahalanobis_distances!(r, p, nothing)
+        @test all(>=(0), r)                              # a distance, never the signed residual
+        @test r == abs.([VGC.whitened_residual(p, nothing, i) for i in 1:n])
         sp = StudentTUniformScoring{Predictive}(2, 5.0)
         swp = alloc_scoring_workspace(n, 1, sp); qp = zeros(n); rp = zeros(n)
         Σ̃ = VGC.solver_covariance(p, nothing, [1, 2])

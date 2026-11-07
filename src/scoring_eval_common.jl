@@ -216,7 +216,7 @@ function precompute_pair(pair::PoolPair, R::AbstractMatrix{Float32})
     sorted_sq = Matrix{Float32}(undef, n, M)
     for j in 1:M
         col = view(sorted_sq, 1:n, j)
-        square_residuals!(col, view(R, 1:n, j), n)   # in the residuals' own precision
+        square_distances!(col, view(R, 1:n, j), n)   # in the residuals' own precision
         zero_sample!(col, view(pair.sample_indices, :, j))
         sort!(col)
     end

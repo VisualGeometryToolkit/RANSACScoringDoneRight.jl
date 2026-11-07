@@ -24,7 +24,7 @@ import VisualGeometryToolkitCore as VgtkCore
 # `s2` the noise VARIANCE, `loss_width` a loss's scale parameter and
 # `sq_loss_width` its square (`scale_multiple^2 * s2` for a deployed loss).
 # Note VGC's `ρ(shape, s, sq_loss_width)` spells the squared RESIDUAL `s`; this
-# package spells it `sq_r`/`sq_residuals` and never `s`. On top of that RSDR
+# package spells it `sq_r`/`sq_distances` and never `s`. On top of that RSDR
 # owns one layer of its own: `outlier_halfwidth` the half-width of the uniform
 # outlier support, `decision_threshold` the residual at which the MAP rule
 # flips (`decision_threshold`/`decision_width` are the ONE map between them — a
@@ -41,7 +41,7 @@ import VisualGeometryToolkitCore as VgtkCore
 # A bare `using VisualGeometryToolkitCore` once sat in a pool-record file and pulled
 # VGC's whole export list into this namespace — its `m` and `mm` are the metre
 # and millimetre UNITS, and several local variables here share those names.
-using LinearAlgebra: I, det, dot
+using LinearAlgebra: I, det, dot, norm
 using StaticArrays: SMatrix, SVector, StaticMatrix, StaticVector
 using SpecialFunctions: loggamma, gamma, gamma_inc
 using LogExpFunctions: log1pexp # log(1 + eˣ) (MLESAC's quality)
@@ -60,7 +60,7 @@ using KernelAbstractions: KernelAbstractions, @kernel, @index, @Const
 # not public, and CUDA.jl 5.11 does not extend it: on CUDA it frees nothing.)
 using GPUArrays: GPUArrays
 
-# VisualGeometryToolkitCore's `whitened_constraint_residual` / `whitened_constraint_rows`
+# VisualGeometryToolkitCore's `whitened_residual` / `whitened_constraint_rows`
 # (a problem's point, by `(problem, model, i)`) are the ONE whitening and degeneracy
 # rule of the residual path: this package computes no Sampson residual of its own.
 using VisualGeometryToolkitCore: VisualGeometryToolkitCore, Uncertain, CovMat, geom
@@ -83,10 +83,9 @@ using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth
 # RSDR implements the scoring contract for its own scorers and adds its grid
 # algorithms and paper baselines; it re-exports nothing VGC owns.
 using VisualGeometryToolkitCore: AbstractConstraintProblem, data_size,
-    solver_covariance, provides_solver_covariance, sq_norm, whitened_constraint_residual,
-    whitened_constraint_rows,
-    whitened_distance, IGPrior, JeffreysPrior,
-    square_residuals!, zero_sample!, GauInlier, decision_threshold,
+    solver_covariance, provides_solver_covariance, sq_norm, whitened_residual,
+    whitened_constraint_rows, IGPrior, JeffreysPrior,
+    square_distances!, zero_sample!, GauInlier, decision_threshold,
     truncated_log_normaliser, consensus_s2, ScoreBuffers, residuals,
     scoring_workspace, RansacScoring, MsacScoring
 import VisualGeometryToolkitCore: AbstractScoring, loss_shape, codimension, score!,
