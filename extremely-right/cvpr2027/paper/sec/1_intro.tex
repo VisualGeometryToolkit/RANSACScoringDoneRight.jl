@@ -25,7 +25,10 @@ threshold, the exceedances of almost any distribution follow a generalized
 Pareto distribution~\cite{Pickands1975,Balkema1974}, whose endpoint is the
 boundary of the support; we fit it by peaks over
 threshold~\cite{Coles2001,Hosking1987}, with the threshold set as a
-quantile of the complement.  The score contains no parameter with units of
+quantile of the complement, and the fitted distribution becomes the outlier
+component of the mixture.  To our knowledge, this is the first \ransac score
+that incorporates an extreme value distribution into the geometric
+likelihood itself.  The score contains no parameter with units of
 length, no threshold, no inlier scale and no outlier width, and its
 ranking of models is invariant to the units of the residuals.  Its one
 remaining choice is a dimensionless quantile, fixed once for all data, to
@@ -34,10 +37,11 @@ does not depend on the threshold.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-	\item A \ransac score that fully parameterizes the \gaussunif mixture from
-	      the data: the inlier scale is marginalized and the outlier support is
-	      estimated by peaks over threshold on the complement that profiling
-	      over partitions supplies.
+	\item The first \ransac score, to our knowledge, with an extreme value
+	      distribution in its geometric likelihood.  It fully parameterizes the
+	      \gaussunif mixture from the data: the inlier scale is marginalized and
+	      the outlier support is estimated by peaks over threshold on the
+	      complement that profiling over partitions supplies.
 	\item A proof that its ranking of models is invariant to the units of the
 	      residuals, and an argument from threshold stability that its one
 	      remaining choice, the threshold quantile, does not change what is
@@ -102,9 +106,12 @@ for correct matches and an extreme value distribution for incorrect ones,
 fitted once per image pair and before any model exists.  It turns this
 mixture into a confidence per correspondence that guides \emph{sampling},
 so that good hypotheses are generated sooner; the score that ranks them,
-and its inlier threshold, are unchanged.  We model the \emph{geometric
-residuals} of each candidate model and change the \emph{score}, not the
-sampler.  Our fit is recomputed for every candidate and every split, from
+and its inlier threshold, are unchanged.  This is a much weaker use of extreme value theory than ours: a
+descriptor-level model decides only which correspondences are sampled, and
+it cannot affect which model is selected.  We model the \emph{geometric
+residuals} of each candidate model, and the extreme value distribution
+enters the \emph{likelihood} that scores it, as a component of the mixture;
+we change the score, not the sampler.  Our fit is recomputed for every candidate and every split, from
 the complement that profiling supplies, and it removes the last
 residual-unit parameter of the score.  It needs no matching scores, so it
 applies unchanged to learned matchers and to any problem with residuals.

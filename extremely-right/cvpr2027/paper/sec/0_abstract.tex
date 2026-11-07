@@ -11,7 +11,11 @@
 	split also tells us, for every candidate model, which points are outliers,
 	and the farthest of them show how far the outliers reach. We estimate this
 	reach with extreme value theory, from the outlier distances that exceed a
-	high quantile. The result is the first truly threshold-free \ransac: it
+	high quantile, and build the resulting extreme value distribution
+	directly into the geometric likelihood of each candidate model. To our
+	knowledge, this is the first use of extreme value theory in the
+	geometric likelihood of a \ransac score; earlier work applied it only to
+	descriptor matching scores, to guide which correspondences are sampled. The result is the first truly threshold-free \ransac: it
 	has no threshold, no inlier noise level and no outlier width, and changing
 	the units of the residuals does not change which model it selects. Its
 	only remaining setting is a quantile, which has no units, is fixed once
