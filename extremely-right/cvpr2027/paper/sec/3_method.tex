@@ -1,0 +1,208 @@
+% =====================================================================
+\section{Problem Formulation}
+\label{sec:method}
+% =====================================================================
+
+\subsection{The profile-marginal score}
+\label{sec:pm}
+
+Consider $N$ observations $\bx_i \in \Reals^d$ and a candidate geometric
+model~$\btheta$ with $n_\theta$ degrees of freedom.  Each observation
+imposes $d_g$ scalar constraints on~$\btheta$, where $d_g$ is the
+codimension of the model manifold, and a minimal sample has
+$m = \lceil n_\theta/d_g \rceil$ observations.  As in~\cite{Pritts2026},
+the residual $\br_i \in \Reals^{d_g}$ of an inlier is the whitened
+constraint, approximately $\NN(\bzero, \sigma^2\bI_{d_g})$ with unknown
+inlier scale~$\sigma$, and $\delta_i = \|\br_i\|$ is its distance to the
+model.  Outlier residuals are uniform on $[-a,a]^{d_g}$.
+
+A partition of the observations into inliers $\cI$ and outliers
+$\cO = \{1,\ldots,N\}\setminus\cI$, with $n_I = |\cI|$ and $n_O = |\cO|$,
+then has the likelihood
+\begin{equation}
+	p(\br \mid \btheta, \cI, \sigma, a)
+	= \prod_{i\in\cI} \NN(\br_i; \bzero, \sigma^2\bI_{d_g})
+	\prod_{i\in\cO} (2a)^{-d_g}.
+	\label{eq:partition-likelihood}
+\end{equation}
+With the non-informative label prior $\gamma = \tfrac12$, the prior of a
+partition is the constant $2^{-N}$ and drops out.  Rather than eliminating
+the labels at a fixed scale, the profile-marginal score eliminates the
+scale for each fixed partition, under a conjugate prior
+$\pi(\sigma^2) = \IG(\alpha_0, \beta_0)$, and then maximizes over
+partitions:
+\begin{align}
+	S(\btheta, \cI) & = \log\int_0^\infty
+	p(\br \mid \btheta, \cI, \sigma, a)\,\pi(\sigma^2)\,d\sigma^2,
+	\label{eq:pm}                                                  \\
+	S^*(\btheta)    & = \max_{\cI} S(\btheta, \cI).
+	\label{eq:pm-profile}
+\end{align}
+\emph{Profile} refers to the maximization over the discrete partition,
+\emph{marginal} to the integration over the continuous scale.  The integral
+has the closed form~\cite{Pritts2026}
+\begin{equation}
+	\begin{aligned}
+		S(\btheta, \cI)
+		 & = \log\Gamma\Bigl(\frac{\nu}{2} + \alpha_0\Bigr)
+		- \Bigl(\frac{\nu}{2} + \alpha_0\Bigr)
+		\log\Bigl(\frac{\RSS_\cI}{2} + \beta_0\Bigr) \\
+		 & \quad - \frac{\nu}{2}\log(2\pi) - n_O\,d_g\log(2a),
+	\end{aligned}
+	\label{eq:pm-closed}
+\end{equation}
+where $\RSS_\cI = \sum_{i\in\cI}\delta_i^2$ and
+$\nu = n_I d_g - n_\theta$ counts the residual coordinates left after the
+$n_\theta$ consumed by fitting~$\btheta$.  The non-informative Jeffreys
+prior $\pi(\sigma^2) \propto 1/\sigma^2$ is the limit
+$(\alpha_0, \beta_0) \to (0, 0)$; it requires $\nu > 0$, i.e.\ at least
+one inlier beyond the minimal sample.  For a fixed~$\btheta$ the best
+partition is a prefix of the distance-sorted observations, so one sort
+and one linear sweep evaluate~$S^*$.  In the Jeffreys limit,
+\cref{eq:pm-closed} has two lengths: the residual sum of squares, which
+comes from the data, and the outlier half-width~$a$, which does not.
+
+\subsection{The outlier half-width is a nuisance}
+\label{sec:nuisance}
+
+The half-width~$a$ enters only the last term of \cref{eq:pm-closed}, the
+cost $d_g\log(2a)$ of each outlier, but it decides where the selected
+partition ends.  The boundary of the optimal partition is the implicit
+threshold~\cite{Pritts2026}
+\begin{equation}
+	\tau^* = \hat s\,\sqrt{2\,d_g\log\bigl(a\sqrt{2/\pi}/\hat s\bigr)},
+	\label{eq:implicit-threshold}
+\end{equation}
+where $\hat s$ is the partition's estimate of~$\sigma$.  The score is
+robust to~$a$ because $\tau^*$ depends on it only logarithmically, but $a$
+is still a length: rescaling the residuals by~$c$ without rescaling~$a$
+changes $\tau^*/\hat s$, and hence the selected partition and the ranking
+of models.  Its value depends on the residual type, on the normalization
+of the image coordinates and on the image size, and it is cross-validated
+on annotated data like a threshold.
+
+\subsection{The complement and its upper tail}
+\label{sec:pot}
+
+For a partition~$\cI$, profiling supplies the complement~$\cO$ of putative
+outliers.  Under the model, every coordinate of an outlier residual is
+uniform on $[-a, a]$, so the pooled absolute coordinates
+\begin{equation}
+	\cZ(\cO) = \bigl\{\, |r_{ij}| : i \in \cO,\ j = 1,\ldots,d_g \,\bigr\}
+	\label{eq:pooled}
+\end{equation}
+are $n_O d_g$ draws from a distribution on $[0, a]$ whose upper endpoint is
+the half-width.  Estimating~$a$ is thus estimating the endpoint of a
+distribution from its upper tail, the problem extreme value theory solves.
+
+\paragraph{Peaks over threshold.}
+For a threshold~$u$, the exceedances $y = z - u$ of the values $z > u$
+follow, for almost any distribution and $u$ high enough, a generalized
+Pareto distribution~\cite{Pickands1975,Balkema1974}
+\begin{equation}
+	P(Y \le y) = 1 - \Bigl(1 + \frac{\xi\,y}{\beta}\Bigr)^{-1/\xi},
+	\label{eq:gpd}
+\end{equation}
+with scale $\beta > 0$ and shape~$\xi$.  A bounded support, as for outlier
+residuals inside the image, has $\xi < 0$ and the endpoint
+$u + \beta/|\xi|$; a uniform tail has $\xi = -1$.  We set the threshold to
+a quantile of the complement, $u = Q_q(\cZ(\cO))$, fit $(\xi, \beta)$ to
+the exceedances by probability-weighted moments~\cite{Hosking1987}, and
+estimate the half-width by the endpoint
+\begin{equation}
+	\ahat(\cO) = u + \frac{\hat\beta}{|\hat\xi|}.
+	\label{eq:endpoint}
+\end{equation}
+The quantile $q$, for example $0.9$, is the only choice the estimate makes.
+
+\subsection{The extreme-value profile-marginal score}
+\label{sec:evpm}
+
+Replacing the fixed half-width by its estimate from the complement gives,
+for each partition, the mixture likelihood \cref{eq:partition-likelihood}
+with the inlier scale marginalized and the outlier support estimated:
+\begin{equation}
+	S_{\mathrm{EV}}(\btheta, \cI) = S(\btheta, \cI)\big|_{a = \ahat(\cO)},
+	\qquad
+	S^*_{\mathrm{EV}}(\btheta) = \max_\cI S_{\mathrm{EV}}(\btheta, \cI),
+	\label{eq:evpm}
+\end{equation}
+that is, \cref{eq:pm-closed} with the outlier cost
+$-n_O d_g\log\bigl(2\,\ahat(\cO)\bigr)$.  The inlier and outlier components now compete on equal terms: both
+are fitted to the partition they describe.  We profile over the same
+distance-sorted prefixes as~\cite{Pritts2026}.  This is the natural
+restriction: exchanging an inlier and an outlier that both lie below the
+threshold~$u$ leaves the exceedances, and hence $\ahat$, unchanged, so the
+prefix argument of~\cite{Pritts2026} applies to every such exchange.
+
+\subsection{Properties}
+\label{sec:properties}
+
+\begin{proposition}[No length parameter]
+	\label{prop:invariance}
+	Under the Jeffreys prior, the partition that maximizes
+	$S_{\mathrm{EV}}(\btheta, \cdot)$, and the ranking of candidate models
+	by $S^*_{\mathrm{EV}}$, are invariant to rescaling all residuals by any
+	$c > 0$.
+\end{proposition}
+\begin{proof}
+	Rescaling multiplies $\RSS_\cI$ by $c^2$.  The quantile~$u$, the
+	exceedances and the fitted scale $\hat\beta$ scale with~$c$ and the
+	shape $\hat\xi$ does not, so $\ahat(\cO)$ scales with~$c$.  In the Jeffreys
+	limit of \cref{eq:evpm}, the second term changes by $-\nu\log c$ and
+	the last by $-n_O d_g\log c$, a total of
+	$-(n_I d_g - n_\theta + n_O d_g)\log c = -(N d_g - n_\theta)\log c$,
+	which is the same for every partition and every candidate.
+\end{proof}
+With an informative prior, $\beta_0$ has units of length squared; it is
+invariant in the same sense when, as in~\cite{Pritts2026}, it is fitted by
+empirical Bayes to residuals in the same units.  The fixed-half-width
+score~\cref{eq:pm-closed} has no such property: its last term does not
+change with~$c$, so the shift $-\nu\log c$ differs between partitions.
+
+\paragraph{Insensitivity to the threshold quantile.}
+The quantile~$q$ replaces the half-width~$a$ as the score's one choice, but
+the two are not alike.  The half-width is a length that sets the outlier
+cost directly.  The quantile is dimensionless, and it does not change
+what is estimated: if the exceedances over~$u_0$ are generalized Pareto
+with parameters $(\xi, \beta_0)$, then those over any $u > u_0$ are
+generalized Pareto with $(\xi, \beta_0 + \xi(u - u_0))$~\cite{Coles2001},
+and the endpoint $u + (\beta_0 + \xi(u - u_0))/|\xi| = u_0 + \beta_0/|\xi|$
+does not depend on~$u$.  Raising~$q$ only trades bias for variance: fewer
+exceedances, a noisier fit, the same endpoint.  \Cref{sec:synthetic}
+confirms that the selected partition is unchanged across
+$q \in [0.8, 0.95]$.
+
+\paragraph{The tail shape as a diagnostic.}
+The fitted shape~$\hat\xi$ tests the outlier half of the model at no extra
+cost.  A value near~$-1$ means that the far outliers are uniform up to an
+edge, as \cref{eq:partition-likelihood} assumes; a clearly larger value,
+such as $-\tfrac12$ for a density that falls linearly to zero, signals that
+the outliers thin out and that the endpoint overstates the outlier density
+near the model.
+
+\paragraph{Why the upper tail and not the minima.}
+\label{sec:why-maxima}
+The minima of the complement are the extremes nearest the model, and an
+estimate built from them, for example from the minima of random blocks of
+the complement, seems attractive: it measures the outlier density where the
+inlier/outlier decision is made.  It fails.  For a short prefix the
+complement still contains the true inliers, its minima are inlier
+distances, the estimated half-width collapses, and the outlier cost
+$-n_O d_g\log(2\ahat)$ rewards labelling every point an outlier; the score
+selects its smallest feasible partition (\cref{sec:synthetic}).  The upper
+tail is formed by the gross outliers far from the model, which do not move
+as the sweep passes through the inliers, so the estimate cannot adapt to
+the points it classifies.
+
+\subsection{Computation}
+\label{sec:computation}
+
+The sweep visits the prefixes in increasing size, so the complement only
+loses its smallest values.  The exceedances over a quantile of the
+complement change by at most a few values per step, and the
+probability-weighted moments, which are rank-weighted sums, can be updated
+with them.  \TODO{state and verify the incremental update and its cost;
+alternatively fit the tail once per model to the top fraction of all
+residual coordinates, which are outliers for every sensible prefix, and
+check that this matches the per-prefix fit}

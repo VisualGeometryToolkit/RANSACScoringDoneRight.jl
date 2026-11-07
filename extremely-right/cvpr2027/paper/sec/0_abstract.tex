@@ -1,0 +1,21 @@
+\begin{abstract}
+	The most widely used \ransac variants score a candidate model by summing
+	per-point scores that fall to zero beyond a threshold, and that threshold
+	must be tuned to the noise level of the inliers. Recent work removed it by
+	reversing the usual order of inference: for each split of the data into
+	inliers and outliers, the noise level is integrated out in closed form, and
+	the best split is then chosen. One setting with units of distance remained:
+	the width of the region over which the outliers are spread. We remove it as
+	well. Choosing the best split also tells us, for every candidate model,
+	which points are outliers, and the farthest of them show how far the
+	outliers reach. We estimate this reach with extreme value theory, by
+	fitting the distribution of the outlier distances that exceed a high
+	quantile. The resulting score is the first \ransac score that needs no
+	threshold, no inlier noise level and no outlier width: changing the units of
+	the residuals does not change which model it selects. Its one remaining
+	setting is a quantile, which has no units and to which the score is nearly
+	insensitive. Unlike earlier uses of extreme value theory in \ransac, which
+	model descriptor matching scores to guide sampling, we model the geometric
+	residuals of each candidate to score it. \TODO{one sentence of real-data
+	results}
+\end{abstract}
