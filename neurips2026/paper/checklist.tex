@@ -31,7 +31,7 @@
 \item {\bf Claims}
     \item[] Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
     \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: Claims made are grounded in the provided theory and validated extensively on existing data and benchmarks.
+    \item[] Justification: The claims in the abstract and introduction are derived in \Cref{sec:partition,sec:scoring} (the profile-marginal score, its closed form, its implicit threshold and its cost) and validated on nearly $70\,000$ image pairs in \Cref{sec:experiments}; the scope (inlier-scale-free, not hyperparameter-free) is stated in the introduction and the Limitations paragraph of \Cref{sec:conclusion}.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the abstract and introduction do not include the claims made in the paper.
@@ -43,7 +43,7 @@
 \item {\bf Limitations}
     \item[] Question: Does the paper discuss the limitations of the work performed by the authors?
     \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: \Cref{sec:datasets} and \Cref{sec:supp-datasets} discuss the \heb plane-assignment caveat in the ground truth, and \Cref{sec:sensitivity-expt} reports the data-scarce regime in which the result depends on the prior.
+    \item[] Justification: The Limitations paragraph of \Cref{sec:conclusion} states the remaining hyperparameter~$a$, the need for annotated data by the informative variants, the reduced reliability of Jeffreys for small inlier sets (flagged by~$\nu^\star$), structured outliers, and the restriction to two-view geometry and mostly fixed candidate pools; \Cref{sec:sensitivity-expt} and \Cref{sec:supp-datasets} detail the data-scarce \heb regime and its ground-truth caveat.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper has no limitation while the answer \answerNo{} means that the paper has limitations, but those are not discussed in the paper. 
@@ -59,7 +59,7 @@
 \item {\bf Theory assumptions and proofs}
     \item[] Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof?
     \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: Assumptions and derivations are provided. Where necessary further detail is given in the supplemental material.
+    \item[] Justification: \Cref{sec:partition,sec:scoring} state the assumptions (the \gaussunif mixture, isotropic Gaussian residuals to first order, a conjugate \invgamma prior, and a plug-in candidate from an exact minimal solver); \Cref{sec:supp-score-deriv} derives the closed form, \Cref{sec:supp-dof} the degrees-of-freedom correction and its scope, and \Cref{sec:implicit-threshold} the implicit threshold.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not include theoretical results. 
@@ -73,7 +73,7 @@
     \item {\bf Experimental result reproducibility}
     \item[] Question: Does the paper fully disclose all the information needed to reproduce the main experimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper (regardless of whether the code and data are provided or not)?
     \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: Experiments and utilized datasets are detailed in section \ref{sec:experiments}.
+    \item[] Justification: \Cref{sec:experiments} gives the evaluation protocol, \Cref{sec:supp-prior-estimation} the prior estimators, \Cref{sec:supp-datasets} the datasets, and the reproduction project with the configurations of record is available at \url{https://ransacscoringdoneright.github.io}.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not include experiments.
@@ -110,7 +110,7 @@
 \item {\bf Experimental setting/details}
     \item[] Question: Does the paper specify all the training and test details (e.g., data splits, hyperparameters, how they were chosen, type of optimizer) necessary to understand the results?
     \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: Experiments are described in section \ref{sec:experiments} with further detail in the appendix.
+    \item[] Justification: \Cref{sec:eval-protocol} gives the hyperparameter grids, validation and test splits and hypothesis budgets; \Cref{sec:supp-prior-estimation,sec:supp-datasets,sec:supp-deploy} give the remaining details.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not include experiments.
@@ -121,7 +121,7 @@
 \item {\bf Experiment statistical significance}
     \item[] Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?
     \item[] Answer: \answerYes{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: Experiments are conducted over large datasets and statistical measures are provided where applicable. 
+    \item[] Justification: \Cref{fig:profile-grid} shows 95\% bootstrap confidence intervals on the median error, and \Cref{fig:sensitivity-grid} reports the mean and standard deviation of the test error over bootstrap draws of the validation set. 
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not include experiments.
@@ -138,7 +138,7 @@
 \item {\bf Experiments compute resources}
     \item[] Question: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments?
     \item[] Answer: \answerNo{} % Replace by \answerYes{}, \answerNo{}, or \answerNA{}.
-    \item[] Justification: The calculation of the actual score is computationally very cheap. Running the experiments does not require specific compute resources, although they can be sped up significantly by heavy parallelization.
+    \item[] Justification: \Cref{sec:supp-deploy} reports single-threaded per-hypothesis and end-to-end timings, but not the hardware or the total compute of the study; the score itself is cheap, and the experiments need no special resources, though they parallelize well.
     \item[] Guidelines:
     \begin{itemize}
         \item The answer \answerNA{} means that the paper does not include experiments.
