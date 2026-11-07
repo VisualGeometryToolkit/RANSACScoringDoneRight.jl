@@ -7,22 +7,34 @@
 \label{sec:pm}
 
 Consider $N$ observations $\bx_i \in \Reals^d$ and a candidate geometric
-model~$\btheta$ with $n_\theta$ degrees of freedom.  Each observation
-imposes $d_g$ scalar constraints on~$\btheta$, where $d_g$ is the
-codimension of the model manifold, and a minimal sample has
+model~$\btheta$ with $n_\theta$ degrees of freedom.  Noise-free observations lie on the model manifold
+$\cM_{\btheta} = \{\bx : \bg(\bx, \btheta) = \bzero\}$ of codimension~$d_g$,
+so each observation imposes $d_g$ scalar constraints on~$\btheta$, and a
+minimal sample has
 $m = \lceil n_\theta/d_g \rceil$ observations.  As in~\cite{Pritts2026},
 the residual $\br_i \in \Reals^{d_g}$ of an inlier is the whitened
 constraint, approximately $\NN(\bzero, \sigma^2\bI_{d_g})$ with unknown
 inlier scale~$\sigma$, and $\delta_i = \|\br_i\|$ is its distance to the
-model.  Outlier residuals are uniform on $[-a,a]^{d_g}$.
-
-A partition of the observations into inliers $\cI$ and outliers
-$\cO = \{1,\ldots,N\}\setminus\cI$, with $n_I = |\cI|$ and $n_O = |\cO|$,
-then has the likelihood
+model.  In the \gaussunif mixture~\cite{Torr2000,Shekhovtsov2025}, a
+latent label $z_i \in \{0,1\}$ marks observation~$i$ as inlier or outlier,
+and
 \begin{equation}
-	p(\br \mid \btheta, \cI, \sigma, a)
-	= \prod_{i\in\cI} \NN(\br_i; \bzero, \sigma^2\bI_{d_g})
-	\prod_{i\in\cO} (2a)^{-d_g}.
+	p(\br_i \mid z_i, \btheta, \sigma) = \begin{cases}
+		\pin(\br_i;\sigma) & z_i = 1, \\
+		\pout              & z_i = 0,
+	\end{cases}
+	\label{eq:component-densities}
+\end{equation}
+with $\pin(\br_i;\sigma) = (2\pi\sigma^2)^{-d_g/2}
+e^{-\|\br_i\|^2/2\sigma^2}$ and $\pout = (2a)^{-d_g}$:
+a Gaussian inlier density and a uniform outlier density on
+$[-a,a]^{d_g}$.  The half-width~$a$ has the same units as~$\sigma$.
+Grouping the labels into a partition, with inliers $\cI$, outliers
+$\cO = \{1,\ldots,N\}\setminus\cI$, $n_I = |\cI|$ and $n_O = |\cO|$, gives
+the partition-conditioned likelihood
+\begin{equation}
+	p(\br \mid \btheta, \cI, \sigma)
+	= \prod_{i\in\cI} \pin(\br_i;\sigma) \cdot \pout^{\,n_O}.
 	\label{eq:partition-likelihood}
 \end{equation}
 With the non-informative label prior $\gamma = \tfrac12$, the prior of a
@@ -33,13 +45,14 @@ $\pi(\sigma^2) = \IG(\alpha_0, \beta_0)$, and then maximizes over
 partitions:
 \begin{align}
 	S(\btheta, \cI) & = \log\int_0^\infty
-	p(\br \mid \btheta, \cI, \sigma, a)\,\pi(\sigma^2)\,d\sigma^2,
+	p(\br \mid \btheta, \cI, \sigma)\,\pi(\sigma^2)\,d\sigma^2,
 	\label{eq:pm}                                                  \\
 	S^*(\btheta)    & = \max_{\cI} S(\btheta, \cI).
 	\label{eq:pm-profile}
 \end{align}
-\emph{Profile} refers to the maximization over the discrete partition,
-\emph{marginal} to the integration over the continuous scale.  The integral
+$S$ is the \emph{scale-marginalized log-likelihood} of a partition and
+$S^*$ the \emph{profile-marginal score}: profile over the discrete
+partition, marginal over the continuous scale.  The integral
 has the closed form~\cite{Pritts2026}
 \begin{equation}
 	\begin{aligned}
@@ -73,7 +86,8 @@ threshold~\cite{Pritts2026}
 	\tau^* = \hat s\,\sqrt{2\,d_g\log\bigl(a\sqrt{2/\pi}/\hat s\bigr)},
 	\label{eq:implicit-threshold}
 \end{equation}
-where $\hat s$ is the partition's estimate of~$\sigma$.  The score is
+where $\hat s^2 = (2\beta_0 + \RSS_{\cI^*})/(2\alpha_0 + \nu)$ is the
+variance estimate of the optimal partition~$\cI^*$~\cite{Pritts2026}.  The score is
 robust to~$a$ because $\tau^*$ depends on it only logarithmically, but $a$
 is still a length: rescaling the residuals by~$c$ without rescaling~$a$
 changes $\tau^*/\hat s$, and hence the selected partition and the ranking
@@ -100,20 +114,21 @@ For a threshold~$u$, the exceedances $y = z - u$ of the values $z > u$
 follow, for almost any distribution and $u$ high enough, a generalized
 Pareto distribution~\cite{Pickands1975,Balkema1974}
 \begin{equation}
-	P(Y \le y) = 1 - \Bigl(1 + \frac{\xi\,y}{\beta}\Bigr)^{-1/\xi},
+	P(Y \le y) = 1 - \Bigl(1 + \frac{\xi\,y}{\omega}\Bigr)^{-1/\xi},
 	\label{eq:gpd}
 \end{equation}
-with scale $\beta > 0$ and shape~$\xi$.  A bounded support, as for outlier
+with scale $\omega > 0$ and shape~$\xi$.  A bounded support, as for outlier
 residuals inside the image, has $\xi < 0$ and the endpoint
-$u + \beta/|\xi|$; a uniform tail has $\xi = -1$.  We set the threshold to
-a quantile of the complement, $u = Q_q(\cZ(\cO))$, fit $(\xi, \beta)$ to
+$u + \omega/|\xi|$; a uniform tail has $\xi = -1$.  We set the threshold to
+a quantile of the complement, $u = Q_\eta(\cZ(\cO))$ at level~$\eta$, fit $(\xi, \omega)$ to
 the exceedances by probability-weighted moments~\cite{Hosking1987}, and
 estimate the half-width by the endpoint
 \begin{equation}
-	\ahat(\cO) = u + \frac{\hat\beta}{|\hat\xi|}.
+	\ahat(\cO) = u + \frac{\hat\omega}{|\hat\xi|}.
 	\label{eq:endpoint}
 \end{equation}
-The quantile $q$, for example $0.9$, is the only choice the estimate makes.
+The quantile level~$\eta$, for example $0.9$, is the only choice the
+estimate makes.
 
 \subsection{The extreme-value profile-marginal score}
 \label{sec:evpm}
@@ -147,7 +162,7 @@ prefix argument of~\cite{Pritts2026} applies to every such exchange.
 \end{proposition}
 \begin{proof}
 	Rescaling multiplies $\RSS_\cI$ by $c^2$.  The quantile~$u$, the
-	exceedances and the fitted scale $\hat\beta$ scale with~$c$ and the
+	exceedances and the fitted scale $\hat\omega$ scale with~$c$ and the
 	shape $\hat\xi$ does not, so $\ahat(\cO)$ scales with~$c$.  In the Jeffreys
 	limit of \cref{eq:evpm}, the second term changes by $-\nu\log c$ and
 	the last by $-n_O d_g\log c$, a total of
@@ -161,17 +176,17 @@ score~\cref{eq:pm-closed} has no such property: its last term does not
 change with~$c$, so the shift $-\nu\log c$ differs between partitions.
 
 \paragraph{Insensitivity to the threshold quantile.}
-The quantile~$q$ replaces the half-width~$a$ as the score's one choice, but
+The quantile level~$\eta$ replaces the half-width~$a$ as the score's one choice, but
 the two are not alike.  The half-width is a length that sets the outlier
 cost directly.  The quantile is dimensionless, and it does not change
 what is estimated: if the exceedances over~$u_0$ are generalized Pareto
-with parameters $(\xi, \beta_0)$, then those over any $u > u_0$ are
-generalized Pareto with $(\xi, \beta_0 + \xi(u - u_0))$~\cite{Coles2001},
-and the endpoint $u + (\beta_0 + \xi(u - u_0))/|\xi| = u_0 + \beta_0/|\xi|$
-does not depend on~$u$.  Raising~$q$ only trades bias for variance: fewer
+with parameters $(\xi, \omega_0)$, then those over any $u > u_0$ are
+generalized Pareto with $(\xi, \omega_0 + \xi(u - u_0))$~\cite{Coles2001},
+and the endpoint $u + (\omega_0 + \xi(u - u_0))/|\xi| = u_0 + \omega_0/|\xi|$
+does not depend on~$u$.  Raising~$\eta$ only trades bias for variance: fewer
 exceedances, a noisier fit, the same endpoint.  \Cref{sec:synthetic}
 confirms that the selected partition is unchanged across
-$q \in [0.8, 0.95]$.
+$\eta \in [0.8, 0.95]$.
 
 \paragraph{The tail shape as a diagnostic.}
 The fitted shape~$\hat\xi$ tests the outlier half of the model at no extra
