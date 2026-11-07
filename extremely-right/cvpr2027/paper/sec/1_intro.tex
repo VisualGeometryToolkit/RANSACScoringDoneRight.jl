@@ -19,8 +19,10 @@ profile-marginal score~\cite{Pritts2026}, and the extent of the outlier
 distribution is estimated by extreme value theory from the correspondences
 the split calls outliers; the best split is then chosen.  The key
 observation is that choosing the best split gives every candidate model, at
-no cost, a natural complement of putative outliers, and the upper tail of
-their residuals is exactly what the outlier extent describes.  Above a high
+no cost, a hard partition: a concrete set of putative outliers, the
+complement of the inliers, rather than soft labels to be inferred.  The
+upper tail of their residuals is exactly what the outlier extent
+describes.  Above a high
 threshold, the exceedances of almost any distribution follow a generalized
 Pareto distribution~\cite{Pickands1975,Balkema1974}, whose endpoint is the
 boundary of the support; we fit it by peaks over
@@ -41,7 +43,8 @@ does not depend on the threshold.
 	      distribution in its geometric likelihood.  It fully parameterizes the
 	      \gaussunif mixture from the data: the inlier scale is marginalized and
 	      the outlier support is estimated by peaks over threshold on the
-	      complement that profiling over partitions supplies.
+	      complement that profiling over partitions supplies.  Profiling gives
+	      the extreme value fit exact, hard labels instead of soft ones.
 	\item A proof that its ranking of models is invariant to the units of the
 	      residuals, and an argument from threshold stability that its one
 	      remaining choice, the threshold quantile, does not change what is
@@ -99,28 +102,42 @@ the units of the residuals.  We estimate~$a$ and remove this last length.
 
 \paragraph{\evsac.}
 The closest work is \evsac by Fragoso et~al.~\cite{Fragoso2013evsac}, which
-also brings extreme value theory into \ransac.  \evsac models the
-\emph{matching scores} of a nearest-neighbour feature matcher, the
-descriptor distances of each correspondence, as a mixture of a distribution
-for correct matches and an extreme value distribution for incorrect ones,
-fitted once per image pair and before any model exists.  It turns this
-mixture into a confidence per correspondence that guides \emph{sampling},
-so that good hypotheses are generated sooner; the score that ranks them,
-and its inlier threshold, are unchanged.  This is a much weaker use of extreme value theory than ours: a
-descriptor-level model decides only which correspondences are sampled, and
-it cannot affect which model is selected.  We model the \emph{geometric
-residuals} of each candidate model, and the extreme value distribution
-enters the \emph{likelihood} that scores it, as a component of the mixture;
-we change the score, not the sampler.  Our fit is recomputed for every candidate and every split, from
-the complement that profiling supplies, and it removes the last
-residual-unit parameter of the score.  It needs no matching scores, so it
-applies unchanged to learned matchers and to any problem with residuals.
-The extremes also differ, and the difference matters.  \evsac models
-minimum distances, the natural extremes of nearest-neighbour search.  For
-outlier residuals the minima lie where the inliers are, an estimate built
-from them adapts to the inliers in the complement, and the score collapses
-to its smallest split (\cref{sec:why-maxima}); the upper tail, formed by the
-gross outliers far from the model, does not.  The two methods are
-complementary: \evsac's sampler can feed our score.
+also brings extreme value theory into \ransac.  The decisive difference is
+how each method knows which observations are outliers.  \evsac has no
+partition into inliers and outliers.  It models the \emph{matching scores}
+of a nearest-neighbour feature matcher, the descriptor distances of each
+correspondence, as a mixture of a distribution for correct matches and an
+extreme value distribution for incorrect ones, fitted once per image pair,
+before any model exists.  Its labels are therefore soft and indirect:
+whether a correspondence is an outlier is inferred from descriptor
+distances alone, which say little about whether it agrees with the
+geometry, and the extreme value distribution of the incorrect matches is
+fitted under that uncertain labelling.  The result is a confidence per
+correspondence that guides \emph{sampling}; the score that ranks the
+hypotheses, and its inlier threshold, are unchanged.
+
+Our score has a hard, geometric partition.  For every candidate model and
+every split the \sortsweep visits, the profile-marginal formulation defines
+the outliers as a concrete set, the complement of the inlier prefix, so the
+extreme value distribution is fitted to exactly the observations it
+describes, with no latent labels to infer.  The fit then enters the
+\emph{likelihood} that scores the candidate, as the outlier component of the
+mixture, and maximizing over splits selects the labelling and the model
+together.  Profiling over partitions is what makes this possible: it turns
+the labelling into an exact, enumerable variable rather than a soft
+posterior.  The two uses of extreme value theory differ accordingly in
+strength: a descriptor-level model decides only which correspondences are
+sampled and cannot affect which model is selected, whereas ours is part of
+the geometric likelihood itself and removes its last residual-unit
+parameter.  Ours also needs no matching scores, so it applies unchanged to
+learned matchers and to any problem with residuals.
+
+The extremes differ too, and the difference matters.  \evsac models minimum
+distances, the natural extremes of nearest-neighbour search.  For outlier
+residuals the minima lie where the inliers are, an estimate built from them
+adapts to the inliers in the complement, and the score collapses to its
+smallest split (\cref{sec:why-maxima}); the upper tail, formed by the gross
+outliers far from the model, does not.  The two methods are complementary:
+\evsac's sampler can feed our score.
 \TODO{check the description of EVSAC against the paper (Gamma/GEV mixture,
 fitted from the 2nd..k-th neighbours; confidences used for guided sampling)}
