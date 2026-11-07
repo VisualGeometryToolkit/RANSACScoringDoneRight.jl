@@ -49,7 +49,15 @@ clean_tree() {
     echo "working tree has uncommitted changes — commit or stash first" >&2; exit 1
   }
 }
-fetch_tip() { git fetch -q "$REMOTE" "$REMOTE_BRANCH"; git rev-parse FETCH_HEAD; }
+# The remote tip. A failed fetch (no network, no credentials) stops the
+# script: a command substitution does not inherit `set -e`.
+fetch_tip() {
+  git fetch -q "$REMOTE" "$REMOTE_BRANCH" >&2 || {
+    echo "could not fetch $REMOTE $REMOTE_BRANCH — check the network and your Overleaf git token" >&2
+    return 1
+  }
+  git rev-parse FETCH_HEAD
+}
 # The prefix's tree as one commit on the remote tip, pushed as a fast-forward.
 push_tree() {
   local tip=$1 msg=$2 tree commit
@@ -72,7 +80,7 @@ case "${1:-}" in
   init)
     need_remote; clean_tree
     git rev-parse -q --verify "$BRANCH" >/dev/null && { echo "already initialised ($BRANCH exists) — use push/pull" >&2; exit 1; }
-    tip=$(fetch_tip)
+    tip=$(fetch_tip) || exit 1
     # The blank project's files are replaced by this paper (a fast-forward on
     # its tip), and the result is merged here with this tree kept, so later
     # pulls have a merge base.
@@ -82,7 +90,7 @@ case "${1:-}" in
     ;;
   push)
     need_remote; clean_tree
-    tip=$(fetch_tip)
+    tip=$(fetch_tip) || exit 1
     pushed=$(git rev-parse -q --verify "$BRANCH" || true)
     [ "$tip" = "$pushed" ] || git merge-base --is-ancestor "$tip" HEAD || {
       echo "Overleaf $REMOTE_BRANCH is at ${tip:0:8}, which is not merged here — run: $0 pull" >&2; exit 1
@@ -91,7 +99,7 @@ case "${1:-}" in
     ;;
   pull)
     need_remote; clean_tree
-    tip=$(fetch_tip)
+    tip=$(fetch_tip) || exit 1
     git merge --no-ff -X subtree="$PREFIX" "$tip" -m "cvpr2027: merge Overleaf edits into $PREFIX"
     ;;
   status)
