@@ -271,7 +271,7 @@ scale, normalised to 1 at `d = 0` (see [`residual_quality`](@extref VisualGeomet
 `MlesacScoring(problem)`: the width-free grid family; `MlesacScoring(dg; threshold = w)`:
 the scorer at loss width `w`.
 """
-struct MlesacScoring{DG, T} <: GauScoring
+struct MlesacScoring{DG, T} <: AbstractThresholdScoring{T}
     threshold::T
     MlesacScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
 end
@@ -284,7 +284,7 @@ on; its loss width is that cutoff, `_MAGSAC_SCALE_MULTIPLE·σ_max` (see
 [`residual_quality`](@extref VisualGeometryToolkitCore.residual_quality)). Tag `"magsac"`;
 the forms of [`MlesacScoring`](@ref).
 """
-struct MagsacScoring{DG, T} <: GauScoring
+struct MagsacScoring{DG, T} <: AbstractThresholdScoring{T}
     threshold::T
     MagsacScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
 end
@@ -296,7 +296,7 @@ The Welsch cost as a loss-width score at codimension `DG`: `1 − ρ/w²` with
 VisualGeometryToolkitCore's Welsch `ρ`, no mixture underneath. Tag `"welsch_cost"`;
 the forms of [`MlesacScoring`](@ref).
 """
-struct WelschCostScoring{DG, T} <: LossCostScoring
+struct WelschCostScoring{DG, T} <: LossCostScoring{T}
     threshold::T
     WelschCostScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
 end
@@ -308,7 +308,7 @@ The smooth truncated-least-squares cost as a loss-width score at codimension
 `DG`: `1 − ρ/w²` with VisualGeometryToolkitCore's smooth-TLS `ρ`. Tag
 `"smooth_tls"`; the forms of [`MlesacScoring`](@ref).
 """
-struct SmoothTLSScoring{DG, T} <: LossCostScoring
+struct SmoothTLSScoring{DG, T} <: LossCostScoring{T}
     threshold::T
     SmoothTLSScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
 end
@@ -320,7 +320,7 @@ The Geman–McClure cost as a loss-width score at codimension `DG`: `1 − ρ/w�
 with VisualGeometryToolkitCore's Geman–McClure `ρ`. Tag `"geman"`; the forms of
 [`MlesacScoring`](@ref).
 """
-struct GemanScoring{DG, T} <: LossCostScoring
+struct GemanScoring{DG, T} <: LossCostScoring{T}
     threshold::T
     GemanScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
 end
@@ -344,10 +344,27 @@ const LossWidthScoring{DG} = Union{RansacScoring{DG}, MsacScoring{DG}, MlesacSco
 const _OwnLossWidthScoring{DG} = Union{MlesacScoring{DG}, MagsacScoring{DG}, WelschCostScoring{DG},
                                        SmoothTLSScoring{DG}, GemanScoring{DG}}
 
-# The same five at a loss width: the scorers of `score!` (scoring_eval_common.jl).
-const _OwnAtLossWidth = Union{MlesacScoring{<:Any, Float64}, MagsacScoring{<:Any, Float64},
-                              WelschCostScoring{<:Any, Float64}, SmoothTLSScoring{<:Any, Float64},
-                              GemanScoring{<:Any, Float64}}
+# At a loss width the five are VisualGeometryToolkitCore `AbstractThresholdScoring{Float64}`s:
+# Core's one threshold loop scores them (`score!` on a `ThresholdScoringWorkspace`,
+# with its consensus set d² < w²), from their `residual_quality` below.
+#
+# Their `score_bound`s, the per-point maximum b with 0 ≤ quality ≤ b for every
+# finite d² ≥ 0 (to a few ulps of b, which the early exit's margin absorbs):
+#   MLESAC     log1pexp((w² − d²)/(2w²))/log1pexp(½): the argument is ≤ ½, the
+#              value at d = 0 is 1.0 exactly, and log1pexp ≥ 0. b = 1.
+#   Welsch     1 − ρ/w² = exp(−d²/w²): −expm1(−s/w²) ∈ [0, 1]. b = 1.
+#   SmoothTLS  (1 − d²/w²)² below w², 0 from w² on. b = 1.
+#   Geman      w²/(w² + d²) ∈ (0, 1]. b = 1. (A finite d² so large that w²·d²
+#              overflows scores −Inf, which only lowers the sum; a sample point
+#              there makes the full score NaN, which beats no bound.)
+#   MAGSAC++   raw_cut − ρ(r): ρ is a loss, 0 at r = 0 and increasing to raw_cut
+#              at the cutoff, and 0 past it, so b = raw_cut, the quality at
+#              d = 0, which depends on the width.
+# Measured 2026-11-07 on 2.2·10⁵ residuals per family and width (w from 0.01 to
+# 10³, d/w from 0 to 10³⁰): no quality above its b, none below −1 ulp of b.
+score_bound(::Union{MlesacScoring{<:Any, Float64}, WelschCostScoring{<:Any, Float64},
+                    SmoothTLSScoring{<:Any, Float64}, GemanScoring{<:Any, Float64}}) = 1.0
+score_bound(sc::MagsacScoring{<:Any, Float64}) = residual_quality(sc, 0.0, inlier_threshold(sc, nothing))
 
 codimension(::_OwnLossWidthScoring{DG}) where {DG} = DG
 

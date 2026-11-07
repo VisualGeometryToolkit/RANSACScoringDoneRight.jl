@@ -92,8 +92,8 @@ using VisualGeometryToolkitCore: AbstractConstraintProblem, data_size,
     whitened_constraint_rows, IGPrior, JeffreysPrior,
     square_distances!, zero_sample!, GauInlier, decision_threshold,
     truncated_log_normaliser, consensus_s2, ScoreBuffers, residuals,
-    scoring_workspace, RansacScoring, MsacScoring
-import VisualGeometryToolkitCore: AbstractScoring, loss_shape, codimension, score!,
+    scoring_workspace, RansacScoring, MsacScoring, AbstractThresholdScoring
+import VisualGeometryToolkitCore: AbstractScoring, loss_shape, codimension, score!, score_bound,
     inlier_count, consensus_order, inlier_threshold, has_inlier_threshold, is_predictive,
     scored_model, scale_prior, outlier_halfwidth, check_workspace, with_width, width_axis, minimal_sample_size,
     residual_quality, scoring_workspace,

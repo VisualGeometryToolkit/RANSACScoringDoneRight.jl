@@ -39,9 +39,19 @@
 # The loss width each branch runs at comes from a DIFFERENT THEORY — MAP for
 # the mixture, asymptotic efficiency for the loss — which is the substantive
 # reason not to give them a common supertype that implies a mixture.
+#
+# The TYPES follow what the scorers compute, because Julia has one supertype:
+# every family at a loss width is a VisualGeometryToolkitCore
+# `AbstractThresholdScoring{T}` (`T` its width's type), whose one loop scores
+# it. So `LossCostScoring{T} <: AbstractThresholdScoring{T}`, and MLESAC and
+# MAGSAC++ subtype `AbstractThresholdScoring` directly; `GauScoring` holds the
+# one mixture scorer with no loss width, `StudentTUniformScoring`. Nothing
+# dispatches on `GauScoring` (2026-11-07: this package, LODR, BlobBoards, the
+# neurips2026 code), so the move changed no dispatch. The branch a family
+# belongs to is the table above, not its supertype.
 
 abstract type GauScoring <: AbstractScoring end
-abstract type LossCostScoring <: AbstractScoring end
+abstract type LossCostScoring{T} <: AbstractThresholdScoring{T} end
 
 # The Gaussian-uniform mixture's boundary, both ways — `decision_threshold`
 # (the residual at which the MAP rule flips) and `decision_width(::GauInlier, …)`

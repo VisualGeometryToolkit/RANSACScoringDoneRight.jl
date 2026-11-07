@@ -14,11 +14,13 @@ No function here opens a file; pool IO belongs to VisualGeometryToolkitEval.
 One pair's selection is VisualGeometryToolkitCore's
 [`best_pool_model`](@extref VisualGeometryToolkitCore.best_pool_model)`(scoring, pair, R)`
 for a scorer at its width: the Student-t marginal, or a loss-width family at a
-loss width, `with_width(F(dg), LossWidth(w))` — this package's families score
-through their `score!`:
+loss width, `with_width(F(dg), LossWidth(w))`. The loss-width families are
+VisualGeometryToolkitCore `AbstractThresholdScoring`s, as RANSAC and MSAC are,
+and score through Core's one threshold `score!`: Σ quality in index order, the
+minimal sample's points at zero residual, a consensus set `d² < w²`, and under
+a running best an early exit that never changes the selection.
 
 ```@docs
-score!(::Nothing, ::RANSACScoringDoneRight._OwnAtLossWidth, ::AbstractVector, ::AbstractVector, ::Int)
 precompute_pair
 ```
 

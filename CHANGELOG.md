@@ -12,11 +12,22 @@ VisualGeometryToolkitCore `"0.6"` until the monorepo's version fields are bumped
   `RansacScoring{DG, T}`/`MsacScoring{DG, T}` do: `MlesacScoring{DG, T}`,
   `MagsacScoring`, `WelschCostScoring`, `SmoothTLSScoring` and `GemanScoring`
   are width-free (`F()`, `F(dg)`, `F(problem)`, `T = Nothing`) or at a loss width
-  (`F(dg; threshold = w)`, `with_width(F(dg), LossWidth(w))`, `T = Float64`), and
-  at a loss width they implement `score!` (`scoring_workspace` is `nothing`; no
-  consensus set). VisualGeometryToolkitCore's `best_pool_model` and
-  VisualGeometryToolkitEval's sample-budget engine (`LossWidthSpec`) select with
-  them.
+  (`F(dg; threshold = w)`, `with_width(F(dg), LossWidth(w))`, `T = Float64`).
+  VisualGeometryToolkitCore's `best_pool_model` and VisualGeometryToolkitEval's
+  sample-budget engine (`LossWidthSpec`) select with them.
+- **The five families are VisualGeometryToolkitCore `AbstractThresholdScoring{T}`s,
+  and this package's copy of the threshold loop is deleted.** `MlesacScoring` and
+  `MagsacScoring` subtype it directly (they leave `GauScoring`, which now holds
+  `StudentTUniformScoring` only; nothing dispatched on it), and `LossCostScoring{T}
+  <: AbstractThresholdScoring{T}` (it gains its width's type parameter). At a loss
+  width they score through Core's one `score!` on a `ThresholdScoringWorkspace`
+  (no longer `nothing`), bit for bit the same score, and they gain what the loop
+  gives: a consensus set (`d² < w²`, the sample's points in it; `inlier_count`,
+  `consensus_order`, `inlier_threshold`, `has_inlier_threshold`), and an early exit
+  against a running best (`score_bound`: 1 for MLESAC, Welsch, smooth TLS and
+  Geman–McClure; the quality at `d = 0` for MAGSAC++). The exit returns `-Inf`
+  only for a model that provably cannot beat the bound, so no selection changes.
+  Migration: `score!(nothing, sc, …)` → `score!(scoring_workspace(sc, n, d_g), sc, …)`.
 - **Removed: `pool_model_score` and the 4-argument `best_pool_model(scoring, pair,
   R, loss_width)`.** Migration: `best_pool_model(F(), pair, R, w)` →
   `best_pool_model(with_width(F(dg), LossWidth(w)), pair, R)`; a model's score is

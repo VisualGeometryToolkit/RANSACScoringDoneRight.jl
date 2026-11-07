@@ -1,14 +1,14 @@
 #!/usr/bin/env julia
 # =============================================================================
-# scoring_eval_common.jl — the loss-width families at a loss width on the
-# scoring contract, and the per-pair staging precompute
+# scoring_eval_common.jl — the summed quality over a row subset, and the
+# per-pair staging precompute
 #
 # Contains:
-#   - `score!` of this package's loss-width families AT a loss width
-#     (`MlesacScoring(dg; threshold = w)`, …, or `with_width(F, LossWidth(w))`):
-#     what VisualGeometryToolkitCore's `best_pool_model(scoring, pair, R)` and
-#     VisualGeometryToolkitEval's sample-budget engine select with (RANSAC's and MSAC's
-#     `score!` are VisualGeometryToolkitCore's, the same arithmetic);
+#   - `_loss_width_sum!`, Σ quality over some rows (SIMFIT++'s train split). A
+#     family's `score!` AT a loss width (`MlesacScoring(dg; threshold = w)`, …,
+#     or `with_width(F, LossWidth(w))`) is VisualGeometryToolkitCore's one
+#     threshold loop: the five families are `AbstractThresholdScoring`s, as
+#     RANSAC and MSAC are;
 #   - the per-pair staging precompute (PrecomputedPair)
 # Every function here takes the light pool record (VisualGeometryToolkitCore's
 # `PoolPair`) together with its residual matrix `R` (num_points × num_models,
@@ -27,16 +27,17 @@
 # =============================================================================
 # A loss-width family's score at a loss width
 #
-# ONE CPU loop over the SAME per-residual quantity the grids evaluate:
-# Σᵢ residual_quality(scoring, dᵢ², loss_width) — the scalar of the
-# KernelAbstractions Exact/LogBinned kernels (loss_width_sweep_ka.jl), fed
-# exactly as staging (`precompute_pair`) feeds them: d² squared in the
-# residuals' precision, a non-finite residual an outlier (quality 0), the
-# model's minimal-sample points exact inliers (d² = 0). It is the exact scorer on
-# one pair, kept on the CPU: staging one pair (a sort of every column) plus a
-# kernel launch cost 7–39× this loop for RANSAC/MSAC at n = 300 (benchmark
-# 2026-09-22, KA.CPU() on 32 threads against this single-threaded loop), and
-# callers already thread over pairs.
+# VisualGeometryToolkitCore's threshold `score!`: ONE CPU loop over the SAME
+# per-residual quantity the grids evaluate, Σᵢ residual_quality(scoring, dᵢ²,
+# loss_width) — the scalar of the KernelAbstractions Exact/LogBinned kernels
+# (loss_width_sweep_ka.jl), fed exactly as staging (`precompute_pair`) feeds
+# them: d² squared in the residuals' precision, a non-finite square an outlier
+# (quality 0), the model's minimal-sample points exact inliers (d² = 0). It is
+# the exact scorer on one pair, kept on the CPU: staging one pair (a sort of
+# every column) plus a kernel launch cost 7–39× this loop for RANSAC/MSAC at
+# n = 300 (benchmark 2026-09-22, KA.CPU() on 32 threads against this
+# single-threaded loop), and callers already thread over pairs. This package's
+# copy of that loop for its own five families is deleted (2026-11-07).
 #
 # CONTRACTS, one for the whole stack:
 #   * the loss width is supplied linear, never squared, for every family;
@@ -51,8 +52,8 @@
 # residual vector `d`, d² squared in `d`'s own precision (the staging contract),
 # a non-finite d² an outlier (quality 0, VisualGeometryToolkitCore's rule: a finite d
 # whose square overflows too); each point's quality into `scores` (or not, for
-# `nothing`). The one such sum: every at-width family's `score!` and SIMFIT++'s
-# MSAC-best over a train split (simfitpp.jl).
+# `nothing`) — the arithmetic of VisualGeometryToolkitCore's threshold `score!`
+# on a row subset, for SIMFIT++'s MSAC-best over a train split (simfitpp.jl).
 @inline function _quality(scoring, d, loss_width::Float64)
     d2 = Float64(d * d)
     return isfinite(d2) ? residual_quality(scoring, d2, loss_width) : 0.0
@@ -64,43 +65,6 @@ end
         q = _quality(scoring, d[i], loss_width)
         scores === nothing || (scores[i] = q)
         s += q
-    end
-    return s
-end
-
-# The scoring contract of a family at a loss width — pool selection: `score!`
-# only (its score is all a pool argmax and a running-best selector read). It
-# holds no consensus set, so it has no `inlier_count`/`consensus_order` and no
-# workspace (`nothing`); RANSAC's and MSAC's loop scorers are
-# VisualGeometryToolkitCore's.
-scoring_workspace(::_OwnAtLossWidth, _n::Int, _d_g::Int) = nothing
-
-"""
-    score!(nothing, scoring, scores, residuals, n; sample = nothing, bound = -Inf) -> Float64
-
-The score of one model under a loss-width family AT its loss width `w`
-(`MlesacScoring(dg; threshold = w)`, `MagsacScoring`, the loss costs; or
-`with_width(F(dg), LossWidth(w))`): `Σᵢ residual_quality(scoring, dᵢ², w)` over
-`residuals[1:n]`, each point's quality into `scores`. The workspace is
-`nothing` (`scoring_workspace` of these scorers).
-
-The stack's minimal-sample rule, the same in every scorer: the model's
-minimal-sample points (`sample`) are fit exactly by construction and carry no
-information, so they enter at ZERO residual whatever was stored for them — each
-contributes the constant `residual_quality(scoring, 0, w)`. A non-finite stored
-d is an outlier (quality 0), and so is a finite d whose square overflows. An
-invalid sample index throws. `bound` is accepted and never used (no early exit).
-"""
-function score!(::Nothing, scoring::_OwnAtLossWidth, scores::AbstractVector, residuals::AbstractVector,
-                n::Int; sample = nothing, bound::Float64 = -Inf)
-    w = scoring.threshold
-    s = _loss_width_sum!(scores, scoring, residuals, 1:n, w)
-    if sample !== nothing
-        q0 = residual_quality(scoring, 0.0, w)
-        for i in sample   # bounds-checked: an invalid sample index throws (a handful of reads)
-            s += q0 - _quality(scoring, residuals[i], w)
-            scores[i] = q0
-        end
     end
     return s
 end
