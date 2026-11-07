@@ -3,113 +3,99 @@
 \label{sec:method}
 % =====================================================================
 
-\subsection{The profile-marginal score}
-\label{sec:pm}
-
 Consider $N$ observations $\bx_i \in \Reals^d$ and a candidate geometric
-model~$\btheta$ with $n_\theta$ degrees of freedom.  Noise-free observations lie on the model manifold
-$\cM_{\btheta} = \{\bx : \bg(\bx, \btheta) = \bzero\}$ of codimension~$d_g$,
-so each observation imposes $d_g$ scalar constraints on~$\btheta$, and a
-minimal sample has
+model~$\btheta$ with $n_\theta$ degrees of freedom.  Noise-free observations
+lie on the model manifold $\cM_{\btheta} = \{\bx : \bg(\bx, \btheta) =
+\bzero\}$ of codimension~$d_g$, and a minimal sample has
 $m = \lceil n_\theta/d_g \rceil$ observations.  As in~\cite{Pritts2026},
-the residual $\br_i \in \Reals^{d_g}$ of an inlier is the whitened
-constraint, approximately $\NN(\bzero, \sigma^2\bI_{d_g})$ with unknown
-inlier scale~$\sigma$, and $\delta_i = \|\br_i\|$ is its distance to the
-model.  In the \gaussunif mixture~\cite{Torr2000,Shekhovtsov2025}, a
-latent label $z_i \in \{0,1\}$ marks observation~$i$ as inlier or outlier,
-and
-\begin{equation}
-	p(\br_i \mid z_i, \btheta, \sigma) = \begin{cases}
-		\pin(\br_i;\sigma) & z_i = 1, \\
-		\pout              & z_i = 0,
-	\end{cases}
-	\label{eq:component-densities}
-\end{equation}
-with $\pin(\br_i;\sigma) = (2\pi\sigma^2)^{-d_g/2}
-e^{-\|\br_i\|^2/2\sigma^2}$ and $\pout = (2a)^{-d_g}$:
-a Gaussian inlier density and a uniform outlier density on
-$[-a,a]^{d_g}$.  The half-width~$a$ has the same units as~$\sigma$.
-Grouping the labels into a partition, with inliers $\cI$, outliers
-$\cO = \{1,\ldots,N\}\setminus\cI$, $n_I = |\cI|$ and $n_O = |\cO|$, gives
-the partition-conditioned likelihood
+$\br_i \in \Reals^{d_g}$ is the whitened residual of observation~$i$ and
+$\delta_i = \|\br_i\|$ its distance to the model.
+
+\subsection{The extreme-value profile-marginal score}
+\label{sec:evpm}
+
+We score~$\btheta$ by a \gaussunif mixture in which both components are
+fitted to the data.  A latent label $z_i \in \{0,1\}$ marks observation~$i$
+as inlier or outlier.  Grouping the labels into a partition, with inliers
+$\cI$, outliers $\cO = \{1,\ldots,N\}\setminus\cI$, $n_I = |\cI|$ and
+$n_O = |\cO|$, the partition-conditioned likelihood is
 \begin{equation}
 	p(\br \mid \btheta, \cI, \sigma)
-	= \prod_{i\in\cI} \pin(\br_i;\sigma) \cdot \pout^{\,n_O}.
+	= \prod_{i\in\cI} \pin(\br_i;\sigma) \cdot \pout(\cO)^{\,n_O},
 	\label{eq:partition-likelihood}
 \end{equation}
-With the non-informative label prior $\gamma = \tfrac12$, the prior of a
-partition is the constant $2^{-N}$ and drops out.  Rather than eliminating
-the labels at a fixed scale, the profile-marginal score eliminates the
-scale for each fixed partition, under a conjugate prior
-$\pi(\sigma^2) = \IG(\alpha_0, \beta_0)$, and then maximizes over
-partitions:
+with the Gaussian inlier density
+$\pin(\br_i;\sigma) = (2\pi\sigma^2)^{-d_g/2}e^{-\|\br_i\|^2/2\sigma^2}$ of
+unknown inlier scale~$\sigma$, and the uniform outlier density
+\begin{equation}
+	\pout(\cO) = \bigl(2\,\ahat(\cO)\bigr)^{-d_g}
+	\label{eq:pout}
+\end{equation}
+on $[-\ahat, \ahat]^{d_g}$, whose half-width $\ahat(\cO)$ is estimated from
+the outliers~$\cO$ themselves by extreme value theory (\cref{sec:outlier}).
+The inlier scale is integrated out for each partition and the partition is
+then chosen:
 \begin{align}
-	S(\btheta, \cI) & = \log\int_0^\infty
+	S_{\mathrm{EV}}(\btheta, \cI) & = \log\int_0^\infty
 	p(\br \mid \btheta, \cI, \sigma)\,\pi(\sigma^2)\,d\sigma^2,
-	\label{eq:pm}                                                  \\
-	S^*(\btheta)    & = \max_{\cI} S(\btheta, \cI).
-	\label{eq:pm-profile}
+	\label{eq:evpm}                                                  \\
+	S^*_{\mathrm{EV}}(\btheta)    & = \max_{\cI} S_{\mathrm{EV}}(\btheta, \cI),
+	\label{eq:evpm-profile}
 \end{align}
-$S$ is the \emph{scale-marginalized log-likelihood} of a partition and
-$S^*$ the \emph{profile-marginal score}: profile over the discrete
-partition, marginal over the continuous scale.  The integral
-has the closed form~\cite{Pritts2026}
+with the conjugate prior $\pi(\sigma^2) = \IG(\alpha_0, \beta_0)$ or its
+non-informative Jeffreys limit.  Neither component carries a length set by
+hand: the inlier scale is marginalized, and the outlier support is
+estimated from the partition it describes.  The label prior is
+$\gamma = \tfrac12$, which makes the prior of every partition the constant
+$2^{-N}$.
+
+\subsection{The inlier component: marginalizing the scale}
+\label{sec:inlier}
+
+The inlier component is that of the profile-marginal
+score~\cite{Pritts2026}, and the integral \cref{eq:evpm} has its closed
+form
 \begin{equation}
 	\begin{aligned}
-		S(\btheta, \cI)
+		S_{\mathrm{EV}}(\btheta, \cI)
 		 & = \log\Gamma\Bigl(\frac{\nu}{2} + \alpha_0\Bigr)
 		- \Bigl(\frac{\nu}{2} + \alpha_0\Bigr)
 		\log\Bigl(\frac{\RSS_\cI}{2} + \beta_0\Bigr) \\
-		 & \quad - \frac{\nu}{2}\log(2\pi) - n_O\,d_g\log(2a),
+		 & \quad - \frac{\nu}{2}\log(2\pi)
+		- n_O\,d_g\log\bigl(2\,\ahat(\cO)\bigr),
 	\end{aligned}
-	\label{eq:pm-closed}
+	\label{eq:evpm-closed}
 \end{equation}
-where $\RSS_\cI = \sum_{i\in\cI}\delta_i^2$ and
-$\nu = n_I d_g - n_\theta$ counts the residual coordinates left after the
-$n_\theta$ consumed by fitting~$\btheta$.  The non-informative Jeffreys
-prior $\pi(\sigma^2) \propto 1/\sigma^2$ is the limit
-$(\alpha_0, \beta_0) \to (0, 0)$; it requires $\nu > 0$, i.e.\ at least
-one inlier beyond the minimal sample.  For a fixed~$\btheta$ the best
-partition is a prefix of the distance-sorted observations, so one sort
-and one linear sweep evaluate~$S^*$.  In the Jeffreys limit,
-\cref{eq:pm-closed} has two lengths: the residual sum of squares, which
-comes from the data, and the outlier half-width~$a$, which does not.
+where $\RSS_\cI = \sum_{i\in\cI}\delta_i^2$ and $\nu = n_I d_g - n_\theta$
+counts the residual coordinates left after the $n_\theta$ consumed by
+fitting~$\btheta$.  The Jeffreys prior $\pi(\sigma^2) \propto 1/\sigma^2$ is
+the limit $(\alpha_0, \beta_0) \to (0,0)$ and requires $\nu > 0$, i.e.\ at
+least one inlier beyond the minimal sample.  With a fixed half-width~$a$ in
+place of $\ahat(\cO)$, \cref{eq:evpm-closed} is the scale-marginalized
+log-likelihood of~\cite{Pritts2026}, and its maximum over partitions the
+profile-marginal score.
 
-\subsection{The outlier half-width is a nuisance}
-\label{sec:nuisance}
+As there, we maximize over the prefixes of the distance-sorted
+observations, so one sort and one linear sweep evaluate
+$S^*_{\mathrm{EV}}$.  Exchanging an inlier and an outlier that both lie
+below the threshold~$u$ of \cref{sec:outlier} leaves the exceedances, and
+hence $\ahat$, unchanged, so the prefix argument of~\cite{Pritts2026}
+applies to every such exchange.
 
-The half-width~$a$ enters only the last term of \cref{eq:pm-closed}, the
-cost $d_g\log(2a)$ of each outlier, but it decides where the selected
-partition ends.  The boundary of the optimal partition is the implicit
-threshold~\cite{Pritts2026}
+\subsection{The outlier component: the support from the upper tail}
+\label{sec:outlier}
+
+Under \cref{eq:pout}, every coordinate of an outlier residual is uniform on
+$[-a, a]$, so the pooled absolute coordinates of the complement,
 \begin{equation}
-	\tau^* = \hat s\,\sqrt{2\,d_g\log\bigl(a\sqrt{2/\pi}/\hat s\bigr)},
-	\label{eq:implicit-threshold}
-\end{equation}
-where $\hat s^2 = (2\beta_0 + \RSS_{\cI^*})/(2\alpha_0 + \nu)$ is the
-variance estimate of the optimal partition~$\cI^*$~\cite{Pritts2026}.  The score is
-robust to~$a$ because $\tau^*$ depends on it only logarithmically, but $a$
-is still a length: rescaling the residuals by~$c$ without rescaling~$a$
-changes $\tau^*/\hat s$, and hence the selected partition and the ranking
-of models.  Its value depends on the residual type, on the normalization
-of the image coordinates and on the image size, and it is cross-validated
-on annotated data like a threshold.
-
-\subsection{The complement and its upper tail}
-\label{sec:pot}
-
-For a partition~$\cI$, profiling supplies the complement~$\cO$ of putative
-outliers.  Under the model, every coordinate of an outlier residual is
-uniform on $[-a, a]$, so the pooled absolute coordinates
-\begin{equation}
-	\cZ(\cO) = \bigl\{\, |r_{ij}| : i \in \cO,\ j = 1,\ldots,d_g \,\bigr\}
+	\cZ(\cO) = \bigl\{\, |r_{ij}| : i \in \cO,\ j = 1,\ldots,d_g \,\bigr\},
 	\label{eq:pooled}
 \end{equation}
 are $n_O d_g$ draws from a distribution on $[0, a]$ whose upper endpoint is
-the half-width.  Estimating~$a$ is thus estimating the endpoint of a
-distribution from its upper tail, the problem extreme value theory solves.
+the half-width.  Estimating the outlier support is thus estimating the
+endpoint of a distribution from its upper tail, which is what extreme value
+theory does.
 
-\paragraph{Peaks over threshold.}
 For a threshold~$u$, the exceedances $y = z - u$ of the values $z > u$
 follow, for almost any distribution and $u$ high enough, a generalized
 Pareto distribution~\cite{Pickands1975,Balkema1974}
@@ -120,35 +106,15 @@ Pareto distribution~\cite{Pickands1975,Balkema1974}
 with scale $\omega > 0$ and shape~$\xi$.  A bounded support, as for outlier
 residuals inside the image, has $\xi < 0$ and the endpoint
 $u + \omega/|\xi|$; a uniform tail has $\xi = -1$.  We set the threshold to
-a quantile of the complement, $u = Q_\eta(\cZ(\cO))$ at level~$\eta$, fit $(\xi, \omega)$ to
-the exceedances by probability-weighted moments~\cite{Hosking1987}, and
-estimate the half-width by the endpoint
+the quantile of the complement at level~$\eta$, $u = Q_\eta(\cZ(\cO))$, fit
+$(\xi, \omega)$ to the exceedances by probability-weighted
+moments~\cite{Hosking1987}, and take the endpoint as the half-width:
 \begin{equation}
 	\ahat(\cO) = u + \frac{\hat\omega}{|\hat\xi|}.
 	\label{eq:endpoint}
 \end{equation}
-The quantile level~$\eta$, for example $0.9$, is the only choice the
-estimate makes.
-
-\subsection{The extreme-value profile-marginal score}
-\label{sec:evpm}
-
-Replacing the fixed half-width by its estimate from the complement gives,
-for each partition, the mixture likelihood \cref{eq:partition-likelihood}
-with the inlier scale marginalized and the outlier support estimated:
-\begin{equation}
-	S_{\mathrm{EV}}(\btheta, \cI) = S(\btheta, \cI)\big|_{a = \ahat(\cO)},
-	\qquad
-	S^*_{\mathrm{EV}}(\btheta) = \max_\cI S_{\mathrm{EV}}(\btheta, \cI),
-	\label{eq:evpm}
-\end{equation}
-that is, \cref{eq:pm-closed} with the outlier cost
-$-n_O d_g\log\bigl(2\,\ahat(\cO)\bigr)$.  The inlier and outlier components now compete on equal terms: both
-are fitted to the partition they describe.  We profile over the same
-distance-sorted prefixes as~\cite{Pritts2026}.  This is the natural
-restriction: exchanging an inlier and an outlier that both lie below the
-threshold~$u$ leaves the exceedances, and hence $\ahat$, unchanged, so the
-prefix argument of~\cite{Pritts2026} applies to every such exchange.
+The quantile level~$\eta$, for example $0.9$, is the only choice the score
+makes.
 
 \subsection{Properties}
 \label{sec:properties}
@@ -164,37 +130,49 @@ prefix argument of~\cite{Pritts2026} applies to every such exchange.
 	Rescaling multiplies $\RSS_\cI$ by $c^2$.  The quantile~$u$, the
 	exceedances and the fitted scale $\hat\omega$ scale with~$c$ and the
 	shape $\hat\xi$ does not, so $\ahat(\cO)$ scales with~$c$.  In the Jeffreys
-	limit of \cref{eq:evpm}, the second term changes by $-\nu\log c$ and
-	the last by $-n_O d_g\log c$, a total of
+	limit of \cref{eq:evpm-closed}, the second term changes by $-\nu\log c$
+	and the last by $-n_O d_g\log c$, a total of
 	$-(n_I d_g - n_\theta + n_O d_g)\log c = -(N d_g - n_\theta)\log c$,
-	which is the same for every partition and every candidate.
+	the same for every partition and every candidate.
 \end{proof}
 With an informative prior, $\beta_0$ has units of length squared; it is
 invariant in the same sense when, as in~\cite{Pritts2026}, it is fitted by
-empirical Bayes to residuals in the same units.  The fixed-half-width
-score~\cref{eq:pm-closed} has no such property: its last term does not
-change with~$c$, so the shift $-\nu\log c$ differs between partitions.
+empirical Bayes to residuals in the same units.  The profile-marginal score
+with a fixed~$a$ has no such property: its outlier cost does not change
+with~$c$, so the shift $-\nu\log c$ differs between partitions.
+
+\paragraph{The implicit threshold.}
+The boundary of the optimal partition is the implicit
+threshold~\cite{Pritts2026}
+\begin{equation}
+	\tau^* = \hat s\,\sqrt{2\,d_g\log\bigl(\ahat\sqrt{2/\pi}/\hat s\bigr)},
+	\label{eq:implicit-threshold}
+\end{equation}
+where $\hat s^2 = (2\beta_0 + \RSS_{\cI^*})/(2\alpha_0 + \nu)$ is the
+variance estimate of the optimal partition~$\cI^*$.  With a fixed~$a$,
+$\tau^*/\hat s$ depends on the units of the residuals; with $\ahat$, it
+depends only on the dimensionless ratio $\ahat/\hat s$, which the data
+determine.
 
 \paragraph{Insensitivity to the threshold quantile.}
-The quantile level~$\eta$ replaces the half-width~$a$ as the score's one choice, but
-the two are not alike.  The half-width is a length that sets the outlier
-cost directly.  The quantile is dimensionless, and it does not change
-what is estimated: if the exceedances over~$u_0$ are generalized Pareto
-with parameters $(\xi, \omega_0)$, then those over any $u > u_0$ are
+The quantile level~$\eta$ replaces the half-width~$a$ as the score's one
+choice, but the two are not alike.  The half-width is a length that sets
+the outlier cost directly.  The quantile level is dimensionless, and it does
+not change what is estimated: if the exceedances over~$u_0$ are generalized
+Pareto with parameters $(\xi, \omega_0)$, then those over any $u > u_0$ are
 generalized Pareto with $(\xi, \omega_0 + \xi(u - u_0))$~\cite{Coles2001},
 and the endpoint $u + (\omega_0 + \xi(u - u_0))/|\xi| = u_0 + \omega_0/|\xi|$
-does not depend on~$u$.  Raising~$\eta$ only trades bias for variance: fewer
-exceedances, a noisier fit, the same endpoint.  \Cref{sec:synthetic}
+does not depend on~$u$.  Raising~$\eta$ only trades bias for variance:
+fewer exceedances, a noisier fit, the same endpoint.  \Cref{sec:synthetic}
 confirms that the selected partition is unchanged across
 $\eta \in [0.8, 0.95]$.
 
 \paragraph{The tail shape as a diagnostic.}
-The fitted shape~$\hat\xi$ tests the outlier half of the model at no extra
-cost.  A value near~$-1$ means that the far outliers are uniform up to an
-edge, as \cref{eq:partition-likelihood} assumes; a clearly larger value,
-such as $-\tfrac12$ for a density that falls linearly to zero, signals that
-the outliers thin out and that the endpoint overstates the outlier density
-near the model.
+The fitted shape~$\hat\xi$ tests the outlier component at no extra cost.  A
+value near~$-1$ means that the far outliers are uniform up to an edge, as
+\cref{eq:pout} assumes; a clearly larger value, such as $-\tfrac12$ for a
+density that falls linearly to zero, signals that the outliers thin out and
+that the endpoint overstates the outlier density near the model.
 
 \paragraph{Why the upper tail and not the minima.}
 \label{sec:why-maxima}

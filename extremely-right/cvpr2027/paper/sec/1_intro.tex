@@ -5,115 +5,115 @@
 
 \ransac~\cite{Fischler1981} estimates a geometric model from contaminated
 correspondences: minimal samples generate candidate models, a score ranks
-them, and the best one is kept.  Every widely used score, whether inlier
-counting (\ransac), truncated squared error (\msac~\cite{Torr1998}) or the
-\gaussunif marginal likelihood (\mlesac~\cite{Torr2000}), depends on a
-threshold in residual units, and a user must either set it or estimate the
-inlier scale it stands for from contaminated data.
+them, and the best one is kept.  Every widely used score depends on a
+threshold in residual units that separates inliers from outliers.  The
+threshold stands in for the unknown noise level of the inliers, it must be
+cross-validated on annotated data, and it transfers poorly between
+datasets, feature pipelines and image sizes.
 
-Shekhovtsov~\cite{Shekhovtsov2025} unifies these scores through a single
-probabilistic model, the \gaussunif mixture, in which an inlier residual is
-Gaussian with scale~$\sigma$ and an outlier is uniform.  \msac is its profile
-likelihood, maximized over the latent inlier labels, and \mlesac its marginal
-likelihood, summed over them.  Both are parameterized by a decision
-threshold $\tau = q\,\sigma$, a fixed quantile of the inlier scale, so tuning
-the threshold is tuning~$\sigma$ in other units.  We call these scores
-\emph{threshold-based}.  \magsac and \magsacpp~\cite{Barath2019,Barath2020}
-were introduced to remove this dependence by ``marginalizing'' the inlier
-scale, but their score is numerically equivalent to \mlesac at a fixed
-scale~\cite{Shekhovtsov2025}, and their upper bound on~$\sigma$ is a
-threshold in disguise.  When the threshold is well tuned, all of these scores
-select models equally well; the bottleneck is the threshold itself.
-
-Two lines of work avoid a hand-set threshold.  Adaptive-scale estimators
-(\assc~\cite{Wang2004}, \askc~\cite{Wang2010}), SIMFIT~\cite{Heinrich2013}
-and \simfitpp~\cite{Edstedt2025} estimate the inlier scale from the
-contaminated residuals and then score against it; \simfitpp reduces the
-fitting and truncation bias of that estimate with held-out residuals.
-\recon~\cite{Raguram2011} seeks consistency in how different models rank the
-points.  A-contrario methods (\minpran~\cite{Stewart1995},
-\orsa/\acransac~\cite{Moisan2004,Moisan2012}) need no inlier scale: they rank
-inlier sets by a significance test against a uniform background model, whose
-domain they take from the image.  None of them fully parameterizes the
-\gaussunif mixture that the threshold-based scores share.
-
-The profile-marginal score of Pritts et~al.~\cite{Pritts2026} does, for the
-inlier half.  It reverses the usual order of inference: instead of
-eliminating the labels at a fixed scale, it integrates out~$\sigma$ under a
-conjugate \invgamma prior for each fixed partition into inliers and
-outliers, and then maximizes over partitions.  The integral has a closed
-form, one \sortsweep finds each candidate's best partition, and the inlier
-scale is absent from the score.  The outlier half is still fixed by hand:
-the half-width~$a$ of the uniform outlier distribution is a length in
-residual units.  The score is far less sensitive to~$a$ than threshold-based
-scores are to their threshold, because its implicit inlier threshold depends
-on~$a$ only logarithmically~\cite{Pritts2026}, but $a$ must still be chosen
-for each residual type, coordinate normalization and image size, it is
-cross-validated like a threshold, and it is why the score's ranking of
-models still depends on the units of the residuals.
-
-We parameterize the outlier half of the mixture from the data as well.  The
-key observation is that profiling over partitions gives every candidate
-model, at no cost, a natural complement: the correspondences its best
-partition labels as outliers.  The upper tail of their residuals is exactly
-what~$a$ describes, the extent of the outlier support, and extreme value
-theory gives that tail a universal form.  Above a high threshold, the
-exceedances of almost any distribution follow a generalized Pareto
-distribution~\cite{Pickands1975,Balkema1974}, whose endpoint is the support
-boundary.  We fit it to the complement by peaks over
-threshold~\cite{Coles2001,Hosking1987}, with the threshold set as a quantile
-of the complement, and replace the half-width by the estimated endpoint.
-Both components of the mixture are then fitted to the partition they
-describe: the inlier scale is marginalized and the outlier support is
-estimated.  With the non-informative prior, the score contains no parameter
-with units of length.  It is, to our knowledge, the first thresholdless
-\ransac score: no threshold, no inlier scale and no outlier width is set,
-and its ranking of models is provably invariant to the units of the
-residuals.  Its one remaining choice, the threshold quantile, is
-dimensionless, and the threshold stability of the generalized Pareto tail
-makes the score insensitive to it.
-
-\paragraph{Relation to \evsac.}
-The closest work is \evsac by Fragoso et~al.~\cite{Fragoso2013evsac}, which
-also brings extreme value theory into \ransac.  The two methods differ in
-what they model, at which stage, and to what end.
-\evsac models the \emph{matching scores} of a nearest-neighbour feature
-matcher, the descriptor distances of each correspondence, as a mixture of a
-distribution for correct matches and an extreme value distribution for
-incorrect ones, fitted once per image pair and before any model exists.  It
-turns this mixture into a confidence per correspondence that guides
-\emph{sampling}, so that good hypotheses are generated sooner; the score
-that ranks the hypotheses, and its inlier threshold, are left unchanged.
-We model the \emph{geometric residuals} of each candidate model, not
-descriptor distances, and we change the \emph{score}, not the sampler.  Our
-extreme value fit is recomputed for every candidate and every partition,
-from the complement that profiling supplies, and it removes the last
-residual-unit parameter of the score.  It needs no matching scores, so it
-applies unchanged to learned matchers and to any problem with residuals.
-The choice of extremes also differs, and it matters.  \evsac models minimum
-distances, the natural extremes of nearest-neighbour search.  For the
-outlier residuals, the minima are the wrong extremes: they lie where the
-inliers are, an estimate built from them adapts to the inliers in the
-complement, and the score collapses to its smallest partition
-(\cref{sec:why-maxima}).  The upper tail is formed by the gross outliers far
-from the model, which do not move as the partition grows.  The two methods
-are complementary, and \evsac's sampler can feed our score.
-\TODO{check the description of EVSAC against the paper (Gamma/GEV mixture,
-fitted from the 2nd..k-th neighbours; confidences used for guided sampling)}
+We propose the first truly threshold-free \ransac score.  It ranks a
+candidate model by a \gaussunif mixture in which both components are fitted
+to the data.  For each split of the correspondences into inliers and
+outliers, the inlier noise level is integrated out in closed form, as in the
+profile-marginal score~\cite{Pritts2026}, and the extent of the outlier
+distribution is estimated by extreme value theory from the correspondences
+the split calls outliers; the best split is then chosen.  The key
+observation is that choosing the best split gives every candidate model, at
+no cost, a natural complement of putative outliers, and the upper tail of
+their residuals is exactly what the outlier extent describes.  Above a high
+threshold, the exceedances of almost any distribution follow a generalized
+Pareto distribution~\cite{Pickands1975,Balkema1974}, whose endpoint is the
+boundary of the support; we fit it by peaks over
+threshold~\cite{Coles2001,Hosking1987}, with the threshold set as a
+quantile of the complement.  The score contains no parameter with units of
+length, no threshold, no inlier scale and no outlier width, and its
+ranking of models is invariant to the units of the residuals.  Its one
+remaining choice is a dimensionless quantile, fixed once for all data, to
+which it is insensitive because the endpoint of a generalized Pareto tail
+does not depend on the threshold.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-	\item We show that the profile-marginal score supplies, for every
-	      candidate, a complement of putative outliers whose upper tail
-	      identifies the outlier support, and we estimate that support by
-	      peaks over threshold.  This fully parameterizes the \gaussunif
-	      mixture from the data and gives a thresholdless \ransac score.
-	\item We prove that its ranking of models is invariant to the units of
-	      the residuals, and that its one remaining choice, the threshold
-	      quantile, does not change the estimated support.
-	\item We show why the upper tail, not the minima, is the right extreme:
-	      a minima-based estimate adapts to the inliers in the complement and
-	      collapses the partition.
-	\item The fitted tail shape is a free diagnostic of the uniform outlier
-	      model.  \TODO{experimental contribution on real pools}
+	\item A \ransac score that fully parameterizes the \gaussunif mixture from
+	      the data: the inlier scale is marginalized and the outlier support is
+	      estimated by peaks over threshold on the complement that profiling
+	      over partitions supplies.
+	\item A proof that its ranking of models is invariant to the units of the
+	      residuals, and an argument from threshold stability that its one
+	      remaining choice, the threshold quantile, does not change what is
+	      estimated.
+	\item An analysis of which extremes to use: the upper tail of the
+	      complement identifies the outlier support, whereas its minima adapt
+	      to the inliers it contains and collapse the partition.
+	\item A free diagnostic of the uniform outlier model from the fitted tail
+	      shape.  \TODO{experimental contribution on real pools}
 \end{enumerate}
+
+\paragraph{Threshold-based scores.}
+Inlier counting (\ransac), truncated squared error
+(\msac~\cite{Torr1998}) and the \gaussunif marginal likelihood
+(\mlesac~\cite{Torr2000}) all need a threshold.
+Shekhovtsov~\cite{Shekhovtsov2025} shows that they share the \gaussunif
+mixture and that their threshold is a fixed quantile of the inlier scale,
+$\tau = q\,\sigma$: tuning the threshold is tuning~$\sigma$ in other
+units.  \magsac and \magsacpp~\cite{Barath2019,Barath2020} replace the
+threshold by an upper bound on~$\sigma$, but their score is numerically
+equivalent to \mlesac at a fixed scale~\cite{Shekhovtsov2025}, and the
+bound is a threshold in disguise.  When well tuned these scores select
+models equally well; the bottleneck is the threshold.  Our score has none.
+
+\paragraph{Scale estimation.}
+Adaptive-scale estimators (\assc~\cite{Wang2004}, \askc~\cite{Wang2010}),
+SIMFIT~\cite{Heinrich2013} and \simfitpp~\cite{Edstedt2025} estimate the
+inlier scale from the contaminated residuals and then score against it;
+\simfitpp reduces the fitting and truncation bias of the estimate with
+held-out residuals.  They still score with a threshold derived from the
+estimate, and the estimate is only as good as the contaminated data allow.
+We never estimate the scale before scoring: it is integrated out for each
+split.  \recon~\cite{Raguram2011} avoids the scale by seeking consistency
+in how models rank the points, but does not score a model by a likelihood.
+
+\paragraph{A-contrario methods.}
+\minpran~\cite{Stewart1995} and \orsa/\acransac~\cite{Moisan2004,Moisan2012}
+need no inlier scale: they rank inlier sets by a significance test against a
+uniform background model whose domain they take from the image.  The image
+domain plays the role of the outlier width, fixed in advance; we estimate
+the extent of the outliers from the residuals of each candidate, and we
+score by the likelihood of the same \gaussunif mixture that the
+threshold-based scores share.
+
+\paragraph{The profile-marginal score.}
+Pritts et~al.~\cite{Pritts2026} gave the first likelihood-based score
+without an inlier scale, by integrating out~$\sigma$ for each fixed split
+and then choosing the split.  It leaves the outlier half of the mixture
+fixed by hand: the half-width~$a$ of the uniform outlier distribution is a
+length in residual units, chosen for each residual type, coordinate
+normalization and image size and cross-validated like a threshold.  The
+score is robust to~$a$, because its implicit inlier threshold depends on~$a$
+only logarithmically, but $a$ is why its ranking of models still depends on
+the units of the residuals.  We estimate~$a$ and remove this last length.
+
+\paragraph{\evsac.}
+The closest work is \evsac by Fragoso et~al.~\cite{Fragoso2013evsac}, which
+also brings extreme value theory into \ransac.  \evsac models the
+\emph{matching scores} of a nearest-neighbour feature matcher, the
+descriptor distances of each correspondence, as a mixture of a distribution
+for correct matches and an extreme value distribution for incorrect ones,
+fitted once per image pair and before any model exists.  It turns this
+mixture into a confidence per correspondence that guides \emph{sampling},
+so that good hypotheses are generated sooner; the score that ranks them,
+and its inlier threshold, are unchanged.  We model the \emph{geometric
+residuals} of each candidate model and change the \emph{score}, not the
+sampler.  Our fit is recomputed for every candidate and every split, from
+the complement that profiling supplies, and it removes the last
+residual-unit parameter of the score.  It needs no matching scores, so it
+applies unchanged to learned matchers and to any problem with residuals.
+The extremes also differ, and the difference matters.  \evsac models
+minimum distances, the natural extremes of nearest-neighbour search.  For
+outlier residuals the minima lie where the inliers are, an estimate built
+from them adapts to the inliers in the complement, and the score collapses
+to its smallest split (\cref{sec:why-maxima}); the upper tail, formed by the
+gross outliers far from the model, does not.  The two methods are
+complementary: \evsac's sampler can feed our score.
+\TODO{check the description of EVSAC against the paper (Gamma/GEV mixture,
+fitted from the 2nd..k-th neighbours; confidences used for guided sampling)}
