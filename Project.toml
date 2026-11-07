@@ -1,6 +1,6 @@
 name = "RANSACScoringDoneRight"
 uuid = "084d9f33-8b05-4903-a655-8a8c4926d033"
-version = "0.4.1"
+version = "0.5.0"
 authors = ["James Pritts"]
 
 [deps]
