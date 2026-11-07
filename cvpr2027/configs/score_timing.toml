@@ -1,0 +1,65 @@
+# =============================================================================
+# score_timing — configuration of record of scripts/score_timing.jl: the CPU
+# cost per hypothesis of the extreme-value scorers, on neurips2026's protocol
+# and with its harness (neurips2026/scripts/studies/score_timing.jl: single
+# thread, the pairs of one PT-E scene in two density regimes, minimum of
+# `reps` repetitions, compilation excluded, per-pair workspaces). The
+# baselines are that study's list; the rows below are the extreme-value
+# variants of RANSACScoringDoneRight's StudentTUniformScoring.
+# =============================================================================
+
+[pool]
+# RELATIVE to data_root(): the format-5 PT-E pools (light file + residuals).
+dir = "accv2026/data/PT-E-SIFT-4K_pf5"
+scene = "british_museum"
+npairs = 20
+# The exact Θ(N²) references ([[scorers]] with reference = true) are timed on
+# the first `reference_npairs` pairs of each regime only: on all of them the
+# dense regime alone would take hours. The table states the pairs each row used.
+reference_npairs = 2
+
+[protocol]
+reps = 3
+# The operating point of the fixed-width scorers (neurips2026's): one number,
+# a loss width for the loss-width baselines and an outlier half-width for the
+# profile-marginal score, in the pool frame's unit.
+loss_width = 0.00164
+
+# The tail rules of the extreme-value outlier models.
+[tail]
+threshold_quantile = 0.9
+min_excess = 5
+finite_shape_limit = -1e-3
+
+[label_prior]
+beta = [0.5, 0.5]
+
+# The extreme-value scorers timed: (name, outlier model, label prior).
+#   outlier: ev_halfwidth (component I), gpd_prefix (component II, refitted
+#   per prefix), gpd_hypothesis (component II, fitted once per hypothesis)
+[[scorers]]
+name = "O1, gamma 1/2"
+outlier = "ev_halfwidth"
+label_prior = "half"
+
+[[scorers]]
+name = "O1, gamma marg."
+outlier = "ev_halfwidth"
+label_prior = "marginal"
+
+[[scorers]]
+name = "O2 per prefix, gamma marg."
+outlier = "gpd_prefix"
+label_prior = "marginal"
+reference = true
+
+[[scorers]]
+name = "O2 per hypothesis, gamma marg."
+outlier = "gpd_hypothesis"
+label_prior = "marginal"
+
+# Excluded from the run key: where the paper reads the table.
+[render]
+table = "tab_timing.tex"
+macros = "timing_numbers.tex"
+digits = 2

@@ -195,42 +195,69 @@ Per-point scores ‖rᵢ‖² = gᵢᵀ Σ̃_{gᵢ}⁻¹ gᵢ, where rᵢ = Lᵢ
 shape-whitened residual. For the predictive variant, Σ̃_{gᵢ} includes
 model estimation uncertainty.
 
-Build it with `StudentTUniformScoring(problem | P | model_dof, outlier_halfwidth;
-prior = JeffreysPrior(), profile_prior = false)` (the `model_dof` form takes
-`codimension`), or `StudentTUniformScoring{Predictive}(problem | P, outlier_halfwidth; …)`.
+Build it with `StudentTUniformScoring(problem | P | model_dof, outlier;
+prior = JeffreysPrior(), label_prior = FlatLabelPrior())` (the `model_dof` form takes
+`codimension`), or `StudentTUniformScoring{Predictive}(problem | P, outlier; …)`.
+
+The outlier component `outlier` is a supplied half-width (a number, or
+[`FixedHalfwidth`](@ref): the profile-marginal score) or an outlier model that
+estimates the support: [`ExtremeValueHalfwidth`](@ref) estimates the
+half-width from each partition's complement, [`GeneralizedParetoOutliers`](@ref)
+scores the complement under the fitted generalized Pareto law, and
+[`OutlierTerm`](@ref) under a caller's cost. Those have no length parameter
+and take model-certain scalar residuals (`d_g = 1`), since the scorer receives
+one distance per point, not the residual's coordinates.
 
 # Fields
-- `outlier_halfwidth::Float64`: the half-width of the uniform outlier support
-  (the sweep charges `log(2·outlier_halfwidth)` per point and axis)
 - `model_dof::Int`: Minimal sample size m = ⌈n_θ/dg⌉
-- `profile_prior::Bool`: Whether the profiled-γ correction is used (the
-  workspace's `prior_table`): the profiled label prior γ̂ = nᵢ/N instead of
-  the flat γ = ½.
+- `label_prior::L`: the prior of the labels (the workspace's `prior_table`):
+  [`FlatLabelPrior`](@ref) (γ = ½), [`ProfiledLabelPrior`](@ref) (γ̂ = nᵢ/N)
+  or [`BetaLabelPrior`](@ref) (γ integrated out).
 - `scale_prior::IGPrior`: Scale prior for σ² marginalization. Jeffreys
   is `IGPrior(0.0, 0.0)`; weakly-informative IG is `IGPrior(α₀, β₀)`.
+- `outlier_model::O`: the outlier component.
+
+The label prior and the outlier model are type parameters, so the sweep
+dispatches on them statically.
 """
-struct StudentTUniformScoring{P, DG} <: GauScoring
-    outlier_halfwidth::Float64
+struct StudentTUniformScoring{P, DG, L<:AbstractLabelPrior, O<:AbstractOutlierModel} <: GauScoring
     model_dof::Int
-    profile_prior::Bool
+    label_prior::L
     scale_prior::IGPrior
+    outlier_model::O
     # TYPED field constructor, replacing the default one that `convert`s every
     # argument: a stale positional call would otherwise convert silently.
-    StudentTUniformScoring{P, DG}(outlier_halfwidth::Float64, model_dof::Int, profile_prior::Bool,
-                                  scale_prior::IGPrior) where {P, DG} =
-        new{P, DG}(outlier_halfwidth, model_dof, profile_prior, scale_prior)
+    StudentTUniformScoring{P, DG}(model_dof::Int, label_prior::L, scale_prior::IGPrior,
+                                  outlier_model::O) where {P, DG, L<:AbstractLabelPrior, O<:AbstractOutlierModel} =
+        new{P, DG, L, O}(model_dof, label_prior, scale_prior, outlier_model)
 end
 
 codimension(::StudentTUniformScoring{P, DG}) where {P, DG} = DG
 
 # Accessors — downstream reads the spec through these, never by field name.
 """
-    outlier_halfwidth(scoring::StudentTUniformScoring) -> Float64
+    outlier_halfwidth(scoring::StudentTUniformScoring{P, DG, L, FixedHalfwidth}) -> Float64
 
-The half-width of the uniform outlier support per axis. The sweep charges
-`log(2·outlier_halfwidth)` per point and axis.
+The supplied half-width of the uniform outlier support per axis. The sweep
+charges `log(2·outlier_halfwidth)` per point and axis. A scorer whose outlier
+model estimates the support has none: the scoring contract's `nothing`.
 """
-outlier_halfwidth(s::StudentTUniformScoring) = s.outlier_halfwidth
+outlier_halfwidth(s::StudentTUniformScoring{P, DG, L, FixedHalfwidth}) where {P, DG, L} =
+    s.outlier_model.outlier_halfwidth
+
+"""
+    outlier_model(scoring::StudentTUniformScoring) -> AbstractOutlierModel
+
+The scorer's outlier component.
+"""
+outlier_model(s::StudentTUniformScoring) = s.outlier_model
+
+"""
+    label_prior(scoring::StudentTUniformScoring) -> AbstractLabelPrior
+
+The scorer's prior of the labels.
+"""
+label_prior(s::StudentTUniformScoring) = s.label_prior
 
 # The model DOF `m` of `ν = (k − m)·d_g` — the problem's minimal sample size,
 # which is what every problem-aware constructor fills the field from.
@@ -282,32 +309,45 @@ end
 # half-width are consumed. The data count belongs to the WORKSPACE, which is
 # sized by `scoring_workspace(scoring, n, d_g)`.
 
-function StudentTUniformScoring{P, DG}(model_dof::Int, outlier_halfwidth::Real;
-                                       prior::IGPrior = JeffreysPrior(), profile_prior::Bool = false) where {P, DG}
-    outlier_halfwidth > 0 ||
-        throw(ArgumentError("outlier_halfwidth must be positive, got $outlier_halfwidth"))
-    return StudentTUniformScoring{P, DG}(Float64(outlier_halfwidth), model_dof, profile_prior, prior)
+# A number is the supplied half-width; an outlier model that estimates the
+# support needs model-certain scalar residuals (the sweep sees one distance per
+# point, so the coordinates the tail is fitted to exist only at d_g = 1, and the
+# predictive penalties' parametric sweep has no tail fit).
+_outlier_model(a::Real) = FixedHalfwidth(a)
+_outlier_model(m::AbstractOutlierModel) = m
+_check_outlier_model(::Type, ::Val, ::FixedHalfwidth) = nothing
+function _check_outlier_model(P::Type, ::Val{DG}, m::AbstractOutlierModel) where {DG}
+    DG == 1 || throw(ArgumentError(
+        "$(nameof(typeof(m))) fits the residual coordinates, and a scorer receives one " *
+        "distance per point: it supports codimension 1, got $DG"))
+    P === Nothing || throw(ArgumentError(
+        "$(nameof(typeof(m))) is model-certain only (the predictive parametric sweep has no tail fit)"))
+    return nothing
 end
 
-# Bare model DOF: the codimension is a keyword (1 by default).
-StudentTUniformScoring{P}(model_dof::Int, outlier_halfwidth::Real; codimension::Int = 1,
-                          prior::IGPrior = JeffreysPrior(), profile_prior::Bool = false) where {P} =
-    StudentTUniformScoring{P, codimension}(model_dof, outlier_halfwidth; prior, profile_prior)
-StudentTUniformScoring(model_dof::Int, outlier_halfwidth::Real; codimension::Int = 1,
-                       prior::IGPrior = JeffreysPrior(), profile_prior::Bool = false) =
-    StudentTUniformScoring{Nothing, codimension}(model_dof, outlier_halfwidth; prior, profile_prior)
+function StudentTUniformScoring{P, DG}(model_dof::Int, outlier::Union{Real, AbstractOutlierModel};
+                                       prior::IGPrior = JeffreysPrior(),
+                                       label_prior::AbstractLabelPrior = FlatLabelPrior()) where {P, DG}
+    m = _outlier_model(outlier)
+    _check_outlier_model(P, Val(DG), m)
+    return StudentTUniformScoring{P, DG}(model_dof, label_prior, prior, m)
+end
+
+# Bare model DOF: the codimension is a keyword (1 by default). The keywords
+# `prior` and `label_prior` are the `{P, DG}` method's.
+StudentTUniformScoring{P}(model_dof::Int, outlier; codimension::Int = 1, kw...) where {P} =
+    StudentTUniformScoring{P, codimension}(model_dof, outlier; kw...)
+StudentTUniformScoring(model_dof::Int, outlier; codimension::Int = 1, kw...) =
+    StudentTUniformScoring{Nothing, codimension}(model_dof, outlier; kw...)
 
 # Problem-aware: m and d_g from the problem (an instance or its type).
 StudentTUniformScoring(problem::Union{AbstractConstraintProblem, Type{<:AbstractConstraintProblem}},
-                       outlier_halfwidth::Real; prior::IGPrior = JeffreysPrior(), profile_prior::Bool = false) =
-    StudentTUniformScoring{Nothing, codimension(problem)}(minimal_sample_size(problem), outlier_halfwidth;
-                                                          prior, profile_prior)
+                       outlier; kw...) =
+    StudentTUniformScoring{Nothing, codimension(problem)}(minimal_sample_size(problem), outlier; kw...)
 StudentTUniformScoring{P}(problem::Union{AbstractConstraintProblem, Type{<:AbstractConstraintProblem}},
-                          outlier_halfwidth::Real; prior::IGPrior = JeffreysPrior(),
-                          profile_prior::Bool = false) where {P} =
+                          outlier; kw...) where {P} =
     (_check_provider(P, problem isa Type ? problem : typeof(problem));
-     StudentTUniformScoring{P, codimension(problem)}(minimal_sample_size(problem), outlier_halfwidth;
-                                                     prior, profile_prior))
+     StudentTUniformScoring{P, codimension(problem)}(minimal_sample_size(problem), outlier; kw...))
 
 _check_provider(::Type, ::Type) = nothing
 _check_provider(::Type{Predictive}, ::Type{P}) where {P} =
@@ -327,7 +367,8 @@ Allocate scratch buffers for Algorithm 1 sweep. Depends on:
 - `data_size(problem)` — buffer lengths
 - `codimension(problem)` — lg_table step size
 - `scoring.scale_prior` — lg_table α₀ offset (Jeffreys → 0.0)
-- `scoring.profile_prior` — whether the profiled-γ correction table is built
+- `scoring.label_prior` — the label prior's table (none for the flat prior)
+- `scoring.outlier_model` — the extreme-value tail buffers (none for a supplied width)
 
 A RANSAC's workspace (VisualGeometryToolkitEstimation's `RansacWorkspace`)
 calls it, so the buffers live with the loop that reuses them.
@@ -350,7 +391,8 @@ The resulting sws carries `scoring.scale_prior`, so subsequent
 """
 function alloc_scoring_workspace(n::Int, dg::Int, scoring::StudentTUniformScoring)
     lg = _build_lg_table(n, dg; alpha0=_alpha0(scoring.scale_prior))
-    pt = scoring.profile_prior ? _build_prior_table(n) : Float64[]
+    pt = _build_prior_table(n, scoring.label_prior)
+    tail = _needs_tail(scoring.outlier_model) ? Vector{Float64}(undef, 3n + 2) : Float64[]
     ScoringWorkspace(
         Vector{Int}(undef, n),
         Vector{Int}(undef, n),
@@ -358,7 +400,9 @@ function alloc_scoring_workspace(n::Int, dg::Int, scoring::StudentTUniformScorin
         zeros(Float64, n),
         Vector{Float64}(undef, n),
         pt,
-        scoring.scale_prior,
+        scoring.scale_prior;
+        label_prior = scoring.label_prior,
+        tail,
     )
 end
 
@@ -506,15 +550,22 @@ _maybe_prior(sws::ScoringWorkspace) = isempty(sws.prior_table) ? nothing : sws.p
 
 sweep!(sws::ScoringWorkspace, s::StudentTUniformScoring{Nothing, DG},
        scores::Vector{T}, n::Int) where {DG, T} =
-    sweep!(sws.perm, sws.lg_table, s.model_dof, log(2 * s.outlier_halfwidth), DG, scores, n;
-           scratch=sws.scratch, prior_table=_maybe_prior(sws), scale_prior=s.scale_prior,
-           radix=sws.radix)
+    _outlier_sweep!(s.outlier_model, sws, s, scores, n)
+# A supplied width: the profile-marginal sweep, unchanged.
+function _outlier_sweep!(m::FixedHalfwidth, sws::ScoringWorkspace, s::StudentTUniformScoring{Nothing, DG},
+                         scores::Vector{T}, n::Int) where {DG, T}
+    sws.outlier_halfwidth = m.outlier_halfwidth
+    return sweep!(sws.perm, sws.lg_table, s.model_dof, log(2 * m.outlier_halfwidth), DG, scores, n;
+                  scratch=sws.scratch, prior_table=_maybe_prior(sws), scale_prior=s.scale_prior,
+                  radix=sws.radix)
+end
 sweep!(sws::ScoringWorkspace, s::StudentTUniformScoring{Predictive, DG},
        scores::Vector{T}, n::Int) where {DG, T} =
-    sweep!(sws.perm, sws.lg_table, s.model_dof, log(2 * s.outlier_halfwidth), DG, scores, n;
+    (sws.outlier_halfwidth = outlier_halfwidth(s);
+     sweep!(sws.perm, sws.lg_table, s.model_dof, log(2 * outlier_halfwidth(s)), DG, scores, n;
            scratch=sws.scratch, penalties=sws.penalties,
            prior_table=_maybe_prior(sws), scale_prior=s.scale_prior,
-           radix=sws.radix)
+           radix=sws.radix))
 
 # (`sweep_marginal!` and `score_residuals_marginal!` — the logsumexp over
 #  nested partitions instead of their max — are deleted with the `:marginal_soft`
@@ -645,24 +696,31 @@ function inlier_threshold(s::StudentTUniformScoring{P, DG}, buf::ScoreBuffers) w
     sws = buf.scoring_ws
     k = sws.k
     s2 = consensus_s2(s, residuals(buf), sws.perm, k; model_dof = s.model_dof + 1, d_g = DG)
-    return decision_threshold(GauInlier(s2; d_g = DG), s.outlier_halfwidth)
+    return decision_threshold(GauInlier(s2; d_g = DG), sws.outlier_halfwidth)
 end
 has_inlier_threshold(::Type{<:StudentTUniformScoring}) = true
 
-# A workspace's tables are built for one prior and one profile flag.
+# A workspace's tables are built for one scale prior, one label prior and one
+# kind of outlier model (the tail buffers or none).
 function check_workspace(s::StudentTUniformScoring, sws::ScoringWorkspace)
-    sws.scale_prior == s.scale_prior && isempty(sws.prior_table) == !s.profile_prior && return nothing
+    sws.scale_prior == s.scale_prior && sws.label_prior == s.label_prior &&
+        isempty(sws.tail) == !_needs_tail(s.outlier_model) && return nothing
     throw(ArgumentError(
-        "the workspace's scoring tables were built for scale prior $(sws.scale_prior) " *
-        "(profile_prior = $(!isempty(sws.prior_table))), but the scoring has $(s.scale_prior) " *
-        "(profile_prior = $(s.profile_prior)); build the workspace from this scoring"))
+        "the workspace's scoring tables were built for scale prior $(sws.scale_prior), " *
+        "label prior $(sws.label_prior) and $(isempty(sws.tail) ? "a supplied" : "an estimated") " *
+        "outlier half-width, but the scoring has $(s.scale_prior), $(s.label_prior) and " *
+        "$(nameof(typeof(s.outlier_model))); build the workspace from this scoring"))
 end
 
 """
-    with_width(scoring::StudentTUniformScoring, a::OutlierHalfwidth) -> StudentTUniformScoring
+    with_width(scoring::StudentTUniformScoring, width::OutlierHalfwidth) -> StudentTUniformScoring
 
-The same scorer at the outlier half-width `a` (every other field kept).
+The same scorer at the supplied outlier half-width `width` (every other field
+kept); a scorer whose outlier model estimates the support takes none (the
+contract's `ArgumentError`).
 """
-with_width(s::StudentTUniformScoring{P, DG}, a::OutlierHalfwidth{Float64}) where {P, DG} =
-    StudentTUniformScoring{P, DG}(a.value, s.model_dof, s.profile_prior, s.scale_prior)
-width_axis(::StudentTUniformScoring) = OutlierHalfwidth()
+with_width(s::StudentTUniformScoring{P, DG, L, FixedHalfwidth}, w::OutlierHalfwidth{Float64}) where {P, DG, L} =
+    StudentTUniformScoring{P, DG}(s.model_dof, s.label_prior, s.scale_prior, FixedHalfwidth(w.value))
+# Only a supplied width has an axis; a scorer whose outlier model estimates the
+# support takes no width (no `width_axis`, so a width grid refuses it up front).
+width_axis(::StudentTUniformScoring{P, DG, L, FixedHalfwidth}) where {P, DG, L} = OutlierHalfwidth()

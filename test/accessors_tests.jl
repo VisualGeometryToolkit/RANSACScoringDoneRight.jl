@@ -13,7 +13,7 @@
     @testset "accessors" begin
         prior = IGPrior(1.5, 0.25)
         s = StudentTUniformScoring(4, 3.0; prior, codimension = 2)
-        @test outlier_halfwidth(s) === s.outlier_halfwidth === 3.0
+        @test outlier_halfwidth(s) === s.outlier_model.outlier_halfwidth === 3.0
         @test minimal_sample_size(s) === s.model_dof === 4
         @test scale_prior(s) === s.scale_prior === prior
         @test codimension(s) === 2
@@ -39,8 +39,9 @@
         dg, m, halfwidth = 1, 4, 2.0
         r = Float64[0.01, -0.03, 0.02, 0.05, -0.04, 0.06, 0.015, -0.025,
                     1.3, -1.7, 0.9, 1.9, -1.1, 0.7, 0.012, -0.018, 2.2, 0.03]
-        for profile_prior in (false, true), prior in (IGPrior(), IGPrior(1.5, 0.01))
-            s = StudentTUniformScoring(m, halfwidth; prior, profile_prior)
+        for label_prior in (FlatLabelPrior(), ProfiledLabelPrior(), BetaLabelPrior()),
+            prior in (IGPrior(), IGPrior(1.5, 0.01))
+            s = StudentTUniformScoring(m, halfwidth; prior, label_prior)
             big = alloc_scoring_workspace(40, dg, s)
             for n in (length(r), 9, length(r))            # trim, trim further, regrow
                 @test resize!(big, n) === big
@@ -49,8 +50,8 @@
                 @test all(iszero, penalties(big))
                 @test length(big.radix.keys) == length(big.radix.keys2) ==
                       length(big.radix.perm2) == n
-                # the profiled-γ table is REBUILT for n, not truncated from N = 40
-                @test big.prior_table == (profile_prior ? _build_prior_table(n) : Float64[])
+                # the label prior's table is REBUILT for n, not truncated from N = 40
+                @test big.prior_table == RANSACScoringDoneRight._build_prior_table(n, label_prior)
 
                 fresh = alloc_scoring_workspace(n, dg, s)
                 got  = score_residuals!(big,   zeros(n), s, r[1:n], n)
@@ -63,10 +64,10 @@
         sws = default_scoring_workspace(10)
         @test_throws ArgumentError resize!(sws, 11)
         @test_throws ArgumentError resize!(sws, -1)
-        # n = 0 keeps a profiled table (its non-emptiness IS the profile flag)
-        sp = alloc_scoring_workspace(10, 1, StudentTUniformScoring(4, 2.0; profile_prior = true))
+        # the table follows the workspace's label prior through any size, n = 0 included
+        sp = alloc_scoring_workspace(10, 1, StudentTUniformScoring(4, 2.0; label_prior = ProfiledLabelPrior()))
         resize!(sp, 0)
-        @test !isempty(sp.prior_table)
+        @test isempty(sp.prior_table)
         resize!(sp, 7)
         @test sp.prior_table == _build_prior_table(7)
     end

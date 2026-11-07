@@ -25,3 +25,5 @@ with its `_config.toml` and `_provenance.toml`.
 |---|---|---|---|---|---|---|
 | `tab:synthetic` | `paper/figures/tab_synthetic.tex` | generated | `scripts/synthetic.jl` | `configs/synthetic.toml` | synthetic draws ([simulate], [[cases]]) | `_provenance.toml` of the run |
 | — | `paper/figures/synthetic_numbers.tex` | generated | `scripts/synthetic.jl` | `configs/synthetic.toml` | synthetic draws ([simulate], [[cases]]) | `_provenance.toml` of the run |
+| `tab:timing` | `paper/figures/tab_timing.tex` | generated | `scripts/score_timing.jl` (harness: `../neurips2026/scripts/studies/score_timing.jl`) | `configs/score_timing.toml` | the PT-E format-5 pool of [pool] under `data_root()`: not a published artifact yet — LocalOptimizationDoneRight `accv2026/scripts/pt_e_pools.jl` generates it from the published `pt_raw_validation` / `pt_raw_test` inputs (neurips2026 `configs/data_artifacts.toml`) | `_provenance.toml` of the run |
+| — | `paper/figures/timing_numbers.tex` | generated | `scripts/score_timing.jl` | `configs/score_timing.toml` | as `tab:timing` | `_provenance.toml` of the run |

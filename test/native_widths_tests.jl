@@ -76,7 +76,7 @@
         end
         # what the device sweep cannot score is refused, never scored as something else
         @test_throws ArgumentError grid_evaluate(StudentTUniformScoring{Predictive}(5, 1.0; codimension = 1), sh, hw)
-        @test_throws ArgumentError grid_evaluate(StudentTUniformScoring(5, 1.0; codimension = 1, profile_prior = true), sh, hw)
+        @test_throws ArgumentError grid_evaluate(StudentTUniformScoring(5, 1.0; codimension = 1, label_prior = ProfiledLabelPrior()), sh, hw)
         # the mixture marginal needs the problem's minimal sample size and codimension
         spec = loss_spec(WelschShape(), IGPrior(); Δ = 0.5, t_lo = -10.0, t_hi = 0.0, NG = 33)
         @test_throws UndefKeywordError grid_evaluate(spec, sh, hw)

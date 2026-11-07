@@ -43,7 +43,7 @@ import VisualGeometryToolkitCore as VgtkCore
 # and millimetre UNITS, and several local variables here share those names.
 using LinearAlgebra: I, det, dot, norm
 using StaticArrays: SMatrix, SVector, StaticMatrix, StaticVector
-using SpecialFunctions: loggamma, gamma, gamma_inc
+using SpecialFunctions: loggamma, logbeta, gamma, gamma_inc
 using LogExpFunctions: log1pexp # log(1 + eˣ) (MLESAC's quality)
 using Distributions: Chisq, cdf, quantile
 using Random: AbstractRNG, default_rng, randperm
@@ -112,6 +112,12 @@ public precompute_pair
 
 # The Student-t + uniform scorer (scoring.jl): model-certain, or Predictive.
 export StudentTUniformScoring, Predictive
+# Its label priors and outlier models (extreme_value.jl).
+export AbstractLabelPrior, FlatLabelPrior, ProfiledLabelPrior, BetaLabelPrior
+export AbstractOutlierModel, FixedHalfwidth, TailRules, ExtremeValueHalfwidth, GeneralizedParetoOutliers,
+    OutlierTerm
+export outlier_model, label_prior
+public gpd_pwm_fit, tail_fit, gpd_support, gpd_outlier_cost
 export score_residuals!, score_sq_residuals!
 
 # GPU scoring (KernelAbstractions): flat-layout staging + THE grid verb.
@@ -159,8 +165,10 @@ public sweep!, default_scoring_workspace, alloc_scoring_workspace
 # Include order: sweep → scoring
 # -----------------------------------------------------------------------------
 
+include("extreme_value.jl")           # label priors, outlier models, the generalized Pareto fit
 include("sweep.jl")                   # ScoringWorkspace, sweep!
 include("scoring.jl")                 # StudentTUniformScoring + its scoring contract + score_residuals!/score_sq_residuals!
+include("extreme_value_sweep.jl")     # the sweep with an extreme-value outlier model
 
 # -----------------------------------------------------------------------------
 # GPU scoring (KernelAbstractions port)

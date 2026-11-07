@@ -79,19 +79,22 @@ function timed_scorers(pairs, loss_width::Float64)
 end
 
 """
-    time_scorers(subs, loss_width; reps) -> Vector{NamedTuple}
+    time_scorers(subs, scorers; reps) -> Vector{NamedTuple}
 
 µs per hypothesis of every timed scorer on each `(regime, pairs, mats)` of
 `subs`: the minimum over `reps` repetitions, compilation excluded.
+`scorers(pairs)` returns the `(name, f(pair, R))` list to time (this study's
+is `timed_scorers(pairs, loss_width)`; cvpr2027's timing driver hands it its
+own list and reuses this harness).
 """
-function time_scorers(subs, loss_width::Float64; reps::Int)
+function time_scorers(subs, scorers; reps::Int)
     results = NamedTuple[]
     for (regime, sub, mats) in subs
         nhyp = sum(num_models(p) for p in sub)
         navg = round(Int, sum(num_points(p) for p in sub) / length(sub))
         println("=== $regime: $(length(sub)) pairs, n̄=$navg points, $nhyp hypotheses ==="); flush(stdout)
         @printf("  %-24s %12s\n", "score", "µs/hyp")
-        for (name, f) in timed_scorers(sub, loss_width)
+        for (name, f) in scorers(sub)
             f(sub[1], mats[1])                    # warmup — compilation excluded
             best = Inf
             for _ in 1:reps
@@ -106,6 +109,26 @@ function time_scorers(subs, loss_width::Float64; reps::Int)
         println()
     end
     return results
+end
+
+"""
+    timing_subsets(path, npairs) -> [(regime, pairs, mats)]
+
+The two density regimes of the protocol: the first `npairs` pairs of the pool
+at `path` ("typical") and its `npairs` pairs with the most points ("dense"),
+with their residual matrices — read for those pairs only, so a 95 GB
+residuals file costs what the timed pairs hold.
+"""
+function timing_subsets(path::AbstractString, npairs::Int)
+    pool = load_pool(path)
+    pairs = pool.pairs
+    println("loaded $(length(pairs)) pairs"); flush(stdout)
+    k   = min(npairs, length(pairs))
+    byn = sortperm(pairs; by = num_points, rev = true)
+    typical, dense = collect(1:k), byn[1:k]
+    res = load_pool_residuals(residuals_path(path), pool; pairs = sort(unique(vcat(typical, dense))))
+    sub(ix) = (pairs[ix], [residual_matrix(res, i) for i in ix])
+    return [("typical", sub(typical)...), ("dense", sub(dense)...)]
 end
 
 function main(args = ARGS)
@@ -124,16 +147,8 @@ function main(args = ARGS)
 
     println("loading $scene …"); flush(stdout)
     path = joinpath(pool_dir, "$scene.jld2")
-    pool = load_pool(path)
-    res  = load_pool_residuals(residuals_path(path), pool)
-    pairs = pool.pairs
-    println("loaded $(length(pairs)) pairs"); flush(stdout)
-    k   = min(npairs, length(pairs))
-    byn = sortperm(pairs; by = num_points, rev = true)
-    sub(ix) = (pairs[ix], [residual_matrix(res, i) for i in ix])
-    subs = [("typical", sub(1:k)...), ("dense", sub(byn[1:k])...)]
-
-    results = time_scorers(subs, loss_width; reps)
+    subs = timing_subsets(path, npairs)
+    results = time_scorers(subs, sub -> timed_scorers(sub, loss_width); reps)
 
     dst = joinpath(out, "score_timing_exact_$(scene).jld2")
     JLD2.jldsave(dst; scene, loss_width, reps, nthreads = Threads.nthreads(), results)

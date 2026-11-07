@@ -17,5 +17,6 @@ include(srcdir("CVPR2027.jl"))
         foreach(x -> @info(sprint(show, x)), v)
         @test isempty(v)
     end
-    include(joinpath(@__DIR__, "evt_tests.jl"))
+    include(joinpath(@__DIR__, "simulation_tests.jl"))
+    include(joinpath(@__DIR__, "subtree_tests.jl"))
 end

@@ -22,10 +22,11 @@ worked example, neurips2026 the sibling — and `test/runtests.jl` enforces them
 The manuscript's prose and numbers are the author's: never edit them to match
 a regenerated result; report the difference.
 
-Julia only: the experiments are Julia drivers run through kaimon. The
-extreme-value pieces of the score live in `src/evt.jl` (the generalized Pareto
-density is Distributions'); once the score scores real pools it becomes a
-scorer of the package (`../src`), never paper code there.
+Julia only: the experiments are Julia drivers run through kaimon. The score —
+the outlier models, the label priors, the generalized Pareto fit, the sweep —
+is the package's (`../src`, StudentTUniformScoring); `src/simulation.jl` holds
+only the synthetic generative model, the block baselines, the soft-label
+formulation and the metrics, and never re-implements the package.
 
 The package itself is a library and never depends on this project. Run the
 tests with `julia --project=. test/runtests.jl`.

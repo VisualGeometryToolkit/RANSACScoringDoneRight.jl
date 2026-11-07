@@ -133,16 +133,19 @@ Runs `ig_sweep_kernel!` on the shared chunked driver (`_chunked_argmax_eval`):
 pair-chunks of `pair_chunk_size` bound the score block, and the model argmax is
 the shared `argmax_models_kernel!`, which takes the FIRST strictly best model
 and SKIPS a NaN score. The device sweep scores the model-certain marginal with
-the flat label prior only: a `StudentTUniformScoring{Predictive}` or a scoring with
-`profile_prior = true` is an `ArgumentError`, never scored as something else.
+the flat label prior and a supplied outlier half-width only: a
+`StudentTUniformScoring{Predictive}`, a non-flat label prior or an outlier model
+that estimates the support is an `ArgumentError`, never scored as something else.
 """
 function grid_evaluate(scoring::StudentTUniformScoring{P}, staged::IGSharedData,
                        outlier_halfwidths::AbstractVector{<:Real};
                        pair_chunk_size::Int = 256, return_idxs::Bool = false) where {P}
     P === Nothing || throw(ArgumentError(
         "grid_evaluate: the device marginal sweep is model-certain; got StudentTUniformScoring{$P}"))
-    scoring.profile_prior && throw(ArgumentError(
-        "grid_evaluate: the device marginal sweep has no profiled label prior; got profile_prior = true"))
+    scoring.label_prior isa FlatLabelPrior || throw(ArgumentError(
+        "grid_evaluate: the device marginal sweep has the flat label prior only; got $(scoring.label_prior)"))
+    scoring.outlier_model isa FixedHalfwidth || throw(ArgumentError(
+        "grid_evaluate: a grid of outlier half-widths needs a supplied one; got $(nameof(typeof(scoring.outlier_model)))"))
     backend = staged.backend
     Pn = length(staged.K_per_pair)
     T  = length(outlier_halfwidths)

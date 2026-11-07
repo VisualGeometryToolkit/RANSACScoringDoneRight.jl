@@ -14,7 +14,7 @@
     using RANSACScoringDoneRight: alloc_scoring_workspace, _sweep_score
     using VisualGeometryToolkitCore: IGPrior
 
-    function _brute_Sk(r, model_dof, dg, halfwidth, prior, sws, profile_prior)
+    function _brute_Sk(r, model_dof, dg, halfwidth, prior, sws, label_prior)
         n = length(r)
         sq = sort(r .^ 2)
         Sk = Float64[]
@@ -24,7 +24,7 @@
             k <= model_dof && continue
             S = _sweep_score(prior, sws.lg_table[k - model_dof], dg * (k - model_dof) / 2,
                              max(rss, eps()), (n - k) * dg * log(2 * halfwidth))
-            profile_prior && (S += sws.prior_table[k])
+            label_prior isa FlatLabelPrior || (S += sws.prior_table[k])
             push!(Sk, S)
         end
         return Sk
@@ -38,20 +38,21 @@
         # running RSS sits below the floor for many partitions.
         r0 = [zeros(model_dof); 1e-10 .* (1:14); [1.3, -1.7, 0.9, 1.9, -1.1, 0.7]]
         @test maximum(abs2, r0[1:model_dof+14]) < eps()
-        for data in (r, r0), profile_prior in (false, true), prior in (IGPrior(), IGPrior(1.5, 0.01))
+        for data in (r, r0), label_prior in (FlatLabelPrior(), ProfiledLabelPrior(), BetaLabelPrior()),
+            prior in (IGPrior(), IGPrior(1.5, 0.01))
             n = length(data)
-            s = StudentTUniformScoring(model_dof, halfwidth; prior, profile_prior)
+            s = StudentTUniformScoring(model_dof, halfwidth; prior, label_prior)
             sws = alloc_scoring_workspace(n, dg, s)
             S_hard, k_hard = score_residuals!(sws, zeros(n), s, data, n)
-            Sk = _brute_Sk(data, model_dof, dg, halfwidth, prior, sws, profile_prior)
+            Sk = _brute_Sk(data, model_dof, dg, halfwidth, prior, sws, label_prior)
             @test S_hard ≈ maximum(Sk) rtol = 1e-14
             @test k_hard == model_dof + argmax(Sk)
         end
 
         # The profiled prior changes the score.
         n = length(r)
-        s0 = StudentTUniformScoring(model_dof, halfwidth; profile_prior = false)
-        s1 = StudentTUniformScoring(model_dof, halfwidth; profile_prior = true)
+        s0 = StudentTUniformScoring(model_dof, halfwidth; label_prior = FlatLabelPrior())
+        s1 = StudentTUniformScoring(model_dof, halfwidth; label_prior = ProfiledLabelPrior())
         S0, _ = score_residuals!(alloc_scoring_workspace(n, dg, s0), zeros(n), s0, r, n)
         S1, _ = score_residuals!(alloc_scoring_workspace(n, dg, s1), zeros(n), s1, r, n)
         @test S0 != S1

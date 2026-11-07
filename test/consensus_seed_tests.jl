@@ -76,7 +76,7 @@
         @test_throws ArgumentError check_workspace(StudentTUniformScoring(4, halfwidth; codimension = 2,
                                                    prior = IGPrior(1.0, 0.25)), VGC.scoring_workspace(s, n, 2))
         @test_throws ArgumentError check_workspace(StudentTUniformScoring(4, halfwidth; codimension = 2,
-                                                   profile_prior = true), VGC.scoring_workspace(s, n, 2))
+                                                   label_prior = ProfiledLabelPrior()), VGC.scoring_workspace(s, n, 2))
         s2 = with_width(s, OutlierHalfwidth(3.0))
         @test s2 isa typeof(s) && outlier_halfwidth(s2) === 3.0
         @test VGC.minimal_sample_size(s2) == 4 && VGC.codimension(s2) == 2

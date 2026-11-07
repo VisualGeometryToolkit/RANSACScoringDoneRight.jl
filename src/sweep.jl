@@ -261,8 +261,15 @@ lg_table with an IG score formula.
   Mahalanobis `q` in Predictive scoring (raw r² only in the model-certain
   fallback); with heterogeneous penalties `sweep!` follows the generalized
   sweep lemma's parametric ordering.
-- `prior_table::Vector{Float64}` — profiled-γ correction; empty = flat prior
+- `prior_table::Vector{Float64}` — the label prior's term over the inlier count
+  (profiled or Beta-marginal γ); empty = flat prior
 - `scale_prior::IGPrior` — the prior the lg_table was built for (α₀=β₀=0 ⇒ Jeffreys)
+- `label_prior::AbstractLabelPrior` — the label prior the `prior_table` was built for
+- `tail::Vector{Float64}` — the extreme-value sweep's buffers (sorted distances
+  and their two prefix sums, `3n + 2`); empty for a supplied half-width
+- `outlier_halfwidth::Float64` — the (uniform-equivalent) outlier half-width
+  the last `score!` scored its `k` with: the supplied one, or the one an
+  extreme-value outlier model estimated
 
 Build with [`alloc_scoring_workspace`](@ref)`(problem, scoring)` or
 [`default_scoring_workspace`](@ref)`(n; dg, scale_prior)`.
@@ -276,20 +283,25 @@ mutable struct ScoringWorkspace{K<:Unsigned}
     const prior_table::Vector{Float64}
     const scale_prior::IGPrior
     const radix::RadixPermBuffers{K}   # K = sort-key width; see RadixPermBuffers
+    const label_prior::AbstractLabelPrior
+    const tail::Vector{Float64}        # extreme-value sweep buffers; empty = supplied half-width
     k::Int                             # k* of the last `score!` (the scoring contract's `inlier_count`)
+    outlier_halfwidth::Float64         # the half-width the last score used at k*
 end
 
 # Seven-argument form: derive the radix scratch from the perm buffer's length,
-# at the default key width. NOT a back-compat shim, which is what this comment
-# used to call it — it is the form BOTH of this package's workspace builders
+# at the default key width — the form both of this package's workspace builders
 # call (`default_scoring_workspace` here, `alloc_scoring_workspace` in
-# scoring.jl). The eight-argument inner constructor is the one nothing calls
-# directly.
+# scoring.jl); nothing calls the field-by-field inner constructor directly.
+# The `prior_table` must be the one `_build_prior_table(n, label_prior)` gives,
+# and `tail` holds the extreme-value buffers (none for a supplied width).
 ScoringWorkspace(perm::Vector{Int}, scratch::Vector{Int}, lg_table::Vector{Float64},
                  penalties::Vector{Float64}, sort_key::Vector{Float64},
-                 prior_table::Vector{Float64}, scale_prior::IGPrior) =
+                 prior_table::Vector{Float64}, scale_prior::IGPrior;
+                 label_prior::AbstractLabelPrior = FlatLabelPrior(),
+                 tail::Vector{Float64} = Float64[]) =
     ScoringWorkspace(perm, scratch, lg_table, penalties, sort_key, prior_table,
-                     scale_prior, RadixPermBuffers(length(perm)), 0)
+                     scale_prior, RadixPermBuffers(length(perm)), label_prior, tail, 0, NaN)
 
 # -----------------------------------------------------------------------------
 # Accessors — downstream reaches the workspace through these, never by field
@@ -346,11 +358,11 @@ scale_prior(sws::ScoringWorkspace) = sws.scale_prior
 Size every per-point buffer of `sws` for a problem of `n` points. They are the sort
 permutation and its scratch, the predictive `penalties` (zeroed, as a fresh
 workspace has them) and `sort_key`, and the radix perm-sort scratch — keeping
-the exact-size radix fast path of `sweep!` reachable. A profiled-γ
-`prior_table` is REBUILT for `n`, since `k·log(k/N) + (N−k)·log((N−k)/N)`
-depends on `N`: truncating a table built for a larger `N` would keep that
-`N`'s values. At `n = 0` the table is left as it is, because its
-non-emptiness is the workspace's only record that the scoring is profiled.
+the exact-size radix fast path of `sweep!` reachable. A label-prior
+`prior_table` is REBUILT for `n` from the workspace's `label_prior`, since its
+terms depend on `N`: truncating a table built for a larger `N` would keep that
+`N`'s values. The extreme-value `tail` buffers, when present, are resized
+with the rest.
 
 `lg_table` is not resized: its entries depend on `k` alone, so a table of
 capacity ≥ `n` serves any `n`. It cannot grow — the workspace does not record
@@ -370,9 +382,9 @@ function Base.resize!(sws::ScoringWorkspace, n::Integer)
     resize!(sws.scratch, n)
     fill!(resize!(sws.penalties, n), 0.0)
     resize!(sws.sort_key, n)
-    if n > 0 && !isempty(sws.prior_table)
-        copyto!(resize!(sws.prior_table, n), _build_prior_table(n))
-    end
+    t = _build_prior_table(n, sws.label_prior)
+    copyto!(resize!(sws.prior_table, length(t)), t)
+    isempty(sws.tail) || resize!(sws.tail, 3n + 2)
     resize!(sws.radix.keys, n)
     resize!(sws.radix.keys2, n)
     resize!(sws.radix.perm2, n)
@@ -418,16 +430,61 @@ end
 # (`ig_sweep_kernel!`). The RSS floor clamps a COPY, never the running sum;
 # ν = dg·(k − m) residual dof, and the n − k outliers pay (2·outlier_halfwidth)^{−dg} each.
 # Plain Float64 arithmetic, callable inside a KernelAbstractions kernel.
-@inline function _partition_score(prior::IGPrior, lg_table, RSS::Float64, k::Integer,
-                                  model_dof::Integer, dg_f::Float64, n::Integer,
-                                  log_two_outlier_halfwidth::Float64)
-    return _sweep_score(prior, lg_table[k - model_dof], dg_f * (k - model_dof) / 2,
-                        max(RSS, eps(Float64)), (n - k) * dg_f * log_two_outlier_halfwidth)
-end
+@inline _partition_score(prior::IGPrior, lg_table, RSS::Float64, k::Integer, model_dof::Integer,
+                         dg_f::Float64, n::Integer, log_two_outlier_halfwidth::Float64) =
+    _partition_score_cost(prior, lg_table, RSS, k, model_dof, dg_f,
+                          (n - k) * dg_f * log_two_outlier_halfwidth)
+
+# The same score with the complement's cost given (an outlier model that
+# estimates its support, extreme_value_sweep.jl).
+@inline _partition_score_cost(prior::IGPrior, lg_table, RSS::Float64, k::Integer, model_dof::Integer,
+                              dg_f::Float64, outlier_cost::Float64) =
+    _sweep_score(prior, lg_table[k - model_dof], dg_f * (k - model_dof) / 2,
+                 max(RSS, eps(Float64)), outlier_cost)
 
 # =============================================================================
 # Sort-and-Sweep
 # =============================================================================
+
+"""
+    _sort_perm!(perm, sort_target, n; scratch = nothing, radix = nothing) -> perm
+
+The sweep's ascending sort of the first `n` points by `sort_target`: the stable
+Θ(n) radix perm-sort on the exact-size path when radix buffers are in hand
+(bitwise identical to `sortperm!`), else `sortperm!`; the partial-buffer path
+sorts views of the first-n prefix (see `sweep!`, Sizing). Shared by `sweep!`
+and the extreme-value sweep.
+"""
+function _sort_perm!(perm::Vector{Int}, sort_target_full, n::Int;
+                     scratch::Union{Nothing,Vector{Int}} = nothing,
+                     radix::Union{Nothing,RadixPermBuffers} = nothing)
+    if length(perm) == n && length(sort_target_full) == n
+        # Exact-size fast path (RANSAC scoring). With radix buffers in hand
+        # the stable O(n) radix perm-sort replaces the comparison sortperm! —
+        # the output permutation is bitwise identical (sortperm!'s documented
+        # stability guarantee + the isless-exact key transform; pinned by
+        # radix_sortperm_tests.jl incl. tie-heavy and NaN/±0.0 cases).
+        if radix !== nothing && sort_target_full isa Union{Vector{Float64},Vector{Float32}} &&
+           length(radix.keys) >= n && length(radix.keys2) >= n && length(radix.perm2) >= n
+            _radix_sortperm!(perm, sort_target_full, radix, n)
+        elseif !isnothing(scratch) && length(scratch) >= n
+            sortperm!(perm, sort_target_full; scratch)
+        else
+            sortperm!(perm, sort_target_full)
+        end
+    else
+        # Partial path (BB blob adaptation, CUDA ext host seed): sort views
+        # of the first-n prefix of each oversized buffer.
+        perm_v = @view perm[1:n]
+        tgt_v = length(sort_target_full) == n ? sort_target_full : @view(sort_target_full[1:n])
+        if !isnothing(scratch) && length(scratch) >= n
+            sortperm!(perm_v, tgt_v; scratch)
+        else
+            sortperm!(perm_v, tgt_v)
+        end
+    end
+    return perm
+end
 
 """
     sweep!(perm, lg_table, model_dof, log_two_outlier_halfwidth, dg, scores, n; ...) -> (S*, k*)
@@ -519,33 +576,7 @@ function sweep!(perm::Vector{Int}, lg_table::Vector{Float64},
                                       scale_prior, n)
         end
     end
-    sort_target_full = isnothing(sort_key) ? scores : sort_key
-
-    if length(perm) == n && length(sort_target_full) == n
-        # Exact-size fast path (RANSAC scoring). With radix buffers in hand
-        # the stable O(n) radix perm-sort replaces the comparison sortperm! —
-        # the output permutation is bitwise identical (sortperm!'s documented
-        # stability guarantee + the isless-exact key transform; pinned by
-        # radix_sortperm_tests.jl incl. tie-heavy and NaN/±0.0 cases).
-        if radix !== nothing && sort_target_full isa Union{Vector{Float64},Vector{Float32}} &&
-           length(radix.keys) >= n && length(radix.keys2) >= n && length(radix.perm2) >= n
-            _radix_sortperm!(perm, sort_target_full, radix, n)
-        elseif !isnothing(scratch) && length(scratch) >= n
-            sortperm!(perm, sort_target_full; scratch)
-        else
-            sortperm!(perm, sort_target_full)
-        end
-    else
-        # Partial path (BB blob adaptation, CUDA ext host seed): sort views
-        # of the first-n prefix of each oversized buffer.
-        perm_v = @view perm[1:n]
-        tgt_v = length(sort_target_full) == n ? sort_target_full : @view(sort_target_full[1:n])
-        if !isnothing(scratch) && length(scratch) >= n
-            sortperm!(perm_v, tgt_v; scratch)
-        else
-            sortperm!(perm_v, tgt_v)
-        end
-    end
+    _sort_perm!(perm, isnothing(sort_key) ? scores : sort_key, n; scratch, radix)
 
     m = model_dof
     # Accumulate in Float64 REGARDLESS of the scores eltype: the sweep picks
