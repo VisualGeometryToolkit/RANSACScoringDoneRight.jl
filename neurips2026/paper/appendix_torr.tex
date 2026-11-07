@@ -1,10 +1,10 @@
 % =====================================================================
 %  Relation to Torr's Bayesian framework, GRIC and MAGSAC++
 %  (camera-ready; rebuttal to Reviewer P2b3, Question 2, and Reviewer
-%  vKBs, "MAGSAC++ discussion"; the AC's Action 5).  \input at the end
-%  of the "Shekhovtsov's Unified Threshold Framework" appendix.
+%  vKBs, "MAGSAC++ discussion"; the AC's Action 5).  A section of the
+%  supplementary material in its own right.
 % =====================================================================
-\subsection{Relation to Torr's Bayesian Framework, \gric, and \magsacpp}
+\section{Relation to Torr's Bayesian Framework, \gric, and \magsacpp}
 \label{sec:supp-torr}
 
 \paragraph{Torr's Bayesian manifold formulation.}
@@ -48,15 +48,3 @@ formulation instead starts from the Gaussian density of the
 $d_g$-dimensional residual vector itself: $d_g$ is the per-observation
 constraint dimension and $\nu$ the total residual evidence after
 fitting, and neither is used as the shape of a radial likelihood.
-
-\paragraph{Exact reparameterizations and a numerical equivalence.}
-The threshold reparameterizations of \ransac, \msac and \gau
-in~\cite{Shekhovtsov2025} are exact.  The reduction of \magsacpp to
-fixed-scale \gau ($\sigma \approx 0.96\,\tau$ at observation dimension
-$d = 4$)~\cite{Shekhovtsov2025} is a \emph{numerical} equivalence, not an
-identity.  Our conclusions do not rely on that
-approximation: our experiments run \magsacpp as defined in its paper
-and reference code, and it nevertheless tracks \msac and \gau in
-\Cref{fig:profile-grid,fig:sensitivity-grid}---in its optimum, its
-degradation under perturbation, and its dependence on validation-set
-size---which corroborates the equivalence empirically.

@@ -79,7 +79,7 @@ With $n_O = N - n_I$ outliers,
 	= (2\pi\sigma^2)^{-\nu/2}
 	\exp\!\Bigl({-}\frac{\RSS_\cI}{2\sigma^2}\Bigr)\,
 	(2a)^{-n_O d_g},
-	\qquad
+	\quad
 	\nu = (n_I - m)\,d_g = n_I\,d_g - n_\theta,
 	\label{eq:dof-likelihood}
 \end{equation}
@@ -122,6 +122,4 @@ step~\eqref{eq:dof-interp} fails.  After local
 optimization~\eqref{eq:dof-interp} no longer holds, $\RSS_\cI =
 \RSS_\cR$ fails with it, and the same count $\nu = n_I\,d_g -
 n_\theta$ follows instead from the classical projection argument for
-a least-squares fit on~$\cI$.  The correction is not \gric's
-model-complexity penalty~\cite{Torr2002}: $\nu$ counts the residual
-Gaussian evidence left after fitting (\Cref{sec:supp-torr}).
+a least-squares fit on~$\cI$.

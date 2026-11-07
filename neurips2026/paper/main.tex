@@ -172,7 +172,7 @@
 	These scores derive from the negative log-likelihood of a
 	\gaussunif mixture. The threshold separates inliers, which
 	follow the noise model, from outliers, and it is a function of the
-	measurement noise level, also known as the inlier scale. We remove
+	observation noise level, also known as the inlier scale. We remove
 	this dependence on the threshold by reversing the usual order of
 	\ransac inference: rather than estimating the scale and then
 	scoring against it, we marginalize the scale in closed form for a
@@ -243,8 +243,7 @@ the outlier model and is not tied to any quantile of the inlier scale.
 When an image pair contains enough inliers for the data to dominate
 the prior, we find that the score is significantly less sensitive
 to~$a$ than threshold-based scores are to their threshold.  The score
-is thus inlier-scale-free. \Cref{sec:supp-deploy-a} discusses how to
-set~$a$, and \Cref{sec:supp-torr} compares our score with Torr's
+is thus inlier-scale-free, and \Cref{sec:supp-torr} compares our score with Torr's
 Bayesian framework and \gric~\cite{Torr2002}.
 
 \magsac~\cite{Barath2019} and \magsacpp~\cite{Barath2020} were
@@ -336,7 +335,9 @@ residual~$\br_i$ has conditional density
 \end{equation}
 a Gaussian inlier density and a uniform outlier density on
 $[-a,a]^{d_g}$; the half-width~$a$ has the same units as~$\sigma$
-(e.g.\ pixels for a Sampson distance).  By independence, the joint
+(e.g.\ pixels for a Sampson distance).  We normalize coordinates so
+that the image half-diagonal is one, which fixes the outlier domain,
+and hence~$a$, independently of~$\sigma$.  By independence, the joint
 density of residuals and labels $\bz = (z_1,\ldots,z_N)$ factorizes as
 \begin{equation}
 	p(\br, \bz \mid \btheta, \sigma) = \prod_{i=1}^{N} \bigl[\gamma\,
@@ -553,7 +554,7 @@ through $\|\br\|$), with $\hat s$ the variance estimate above evaluated at~$\cI^
 \end{equation}
 Unlike the baselines' one global~$\tau$, the proposed profile-marginal
 score adapts per hypothesis through~$\hat s$
-(\Cref{sec:implicit-threshold} details the case $d_g = 1$).  It also
+(\Cref{sec:implicit-threshold} derives it).  It also
 explains the robustness to miscalibration: a baseline's boundary is
 proportional to its hyperparameter, whereas $\tau^*$ depends on~$a$
 only through a square-rooted logarithm:
@@ -594,7 +595,7 @@ minimal sample~\cite{Fischler1981}; the model with the highest
 score~$S^*$ is selected.  The sort sets the cost: $O(N\log N)$ with
 a comparison sort, and $O(N)$ with a radix sort on fixed-precision
 keys (we sort 32-bit floats, the precision of the residuals), the
-same order as \msac at a few microseconds more per hypothesis
+same order as \msac at 9--20\,$\mu$s more per hypothesis
 (\Cref{tab:runtime-hyp}).
 
 \begin{algorithm}[h]
@@ -1196,11 +1197,13 @@ suffices---is enough to deploy near-optimally.
 \paragraph{Limitations.}
 The score is inlier-scale-free, not hyperparameter-free: the outlier
 half-width~$a$ remains, though it is far less sensitive than a
-threshold (\Cref{sec:supp-deploy-a}).  The informative variants need
+threshold (\eqref{eq:implicit-threshold}, \Cref{sec:profile}).  The informative variants need
 annotated correspondences to fit their prior; Jeffreys needs none but
-is less reliable when the selected inlier set is small, which the
-selected~$\nu^\star$ flags at inference
-(\Cref{sec:supp-deploy-reliability}).  The \gaussunif model
+is less reliable when the selected inlier set is small.  The selected
+degrees of freedom~$\nu^\star$ flag this at inference, since the
+posterior of~$\sigma^2$ has relative spread about
+$\sqrt{2/\nu^\star}$, though a large~$\nu^\star$ does not detect
+structured outliers.  The \gaussunif model
 does not describe structured outliers such as \heb's competing
 planes.  Our evaluation is limited to two-view geometry and mostly to fixed
 candidate pools; transfer to other robust-fitting problems is untested.
@@ -1232,11 +1235,10 @@ candidate pools; transfer to other robust-fitting problems is untested.
 \label{sec:supp-score-deriv}
 % =====================================================================
 
-For a fixed partition~$\cI$, applying the \invgamma prior
+For a fixed partition~$\cI$, multiplying the partition
+likelihood~\eqref{eq:joint-partition} by the \invgamma prior
 $\pi(\sigma^2) \propto (\sigma^2)^{-(\alpha_0+1)}\exp(-\beta_0/\sigma^2)$
-to the partition likelihood~\eqref{eq:joint-partition} multiplies
-the inlier Gaussian factor with a $\sigma^{-2(\alpha_0+1)}$ tail and an
-exponential dampener at scale~$\beta_0$:
+and integrating gives
 \begin{equation}
 	p(\br \mid \btheta, \cI)
 	\;\propto\;
@@ -1262,7 +1264,7 @@ constant
 	(\sigma^2)^{-(n_I d_g/2 + \alpha_0 + 1)}
 	\exp\!\Bigl({-}\frac{\RSS_\cI/2 + \beta_0}{\sigma^2}\Bigr)\,
 	d\sigma^2
-	= \Gamma\!\Bigl(\frac{n_I\,d_g}{2} + \alpha_0\Bigr)\,
+	= \Gamma\!\Bigl(\frac{n_I\,d_g}{2} + \alpha_0\Bigr)
 	\Bigl(\frac{\RSS_\cI}{2} + \beta_0\Bigr)^{\!-(n_I d_g/2 + \alpha_0)}.
 	\label{eq:invgamma-integral}
 \end{equation}
@@ -1598,145 +1600,61 @@ $\mathbb{E}[\RSS_\cI/2\sigma^2 \mid \cI] = \RSS_\cI/2\hat s^2$.
 \label{sec:implicit-threshold}
 % =====================================================================
 
-Although our score~\eqref{eq:score} eliminates~$\sigma$ as an
-explicit parameter, \Cref{alg:score} selects an optimal
-inlier prefix $\cI^* = \{(1),\ldots,(k^*)\}$ whose boundary
-implicitly defines a threshold.  We derive the relationship
-between this implicit threshold, the outlier half-width~$a$, and
-the estimated scale~$\hat s$---first exactly, then via a
-large-sample approximation that reveals the connection to the \gaussunif
-mixture's decision rule.  The analysis below uses the scalar case
-$d_g = 1$ (score~\eqref{eq:score}),
-where $\|\br_i\|^2$ reduces to the squared
-residual~$r_i^2$ and the boundary residual is
-$\tau^* = |r_{(k^*)}|$.
-For $d_g = 1$ the residual~$r_i$ is a scalar with
-$r_i \sim \NN(0,\,\sigma^2)$ under~$H_0$, and the
-outlier density reduces to the 1D uniform
-$\pout = 1/(2a)$ on~$[-a,a]$.  This
-scalar mixture model is the setting of
-Shekhovtsov's~\cite{Shekhovtsov2025} $\tau$-parameterized
-framework (\Cref{sec:supp-mixture}); the connection
-below relies on this $d_g{=}1$ reduction.
+We derive the implicit threshold~\eqref{eq:implicit-threshold} for
+general codimension~$d_g$ and prior $(\alpha_0, \beta_0)$.  Write
+$\nu_k = k\,d_g - n_\theta$, $\RSS_k = \sum_{j=1}^{k} \delta_{(j)}^2$,
+$A_k = \alpha_0 + \nu_k/2$ and $B_k = \beta_0 + \RSS_k/2$ for the
+prefix $\cI_k$ of \Cref{alg:score}, so that
+$\hat s_k^2 = B_k/A_k$ is the variance estimate of \Cref{sec:score}.
 
-\paragraph{Exact discrete condition.}
-\Cref{alg:score} sweeps over sorted residuals and selects
-the prefix length~$k^*$ that maximizes~\eqref{eq:score}.  The
-optimal~$k^*$ is the largest~$k$ for which adding the $(k{+}1)$-th
-point still improves the score, i.e.,
-$\Delta S_k \coloneqq S(\btheta,\cI_{k+1}) - S(\btheta,\cI_k) \geq 0$:
+\paragraph{Exact increment.}
+Moving the next point, at distance $\delta = \delta_{(k+1)}$, from
+the outliers to the inliers adds $d_g$ residual coordinates, adds
+$\delta^2$ to the residual sum of squares and removes one outlier,
+so by~\eqref{eq:score}
 \begin{equation}
-	\Delta S_k
-	= \log\frac{\Gamma\!\bigl(\tfrac{k{-}n_\theta{+}1}{2}\bigr)}
-	{\Gamma\!\bigl(\tfrac{k{-}n_\theta}{2}\bigr)}
-	- \tfrac{1}{2}\log\pi
-	+ \frac{k{-}n_\theta}{2}\,\log\RSS_k
-	- \frac{k{-}n_\theta{+}1}{2}\,\log\!\bigl(\RSS_k + r_{(k+1)}^2\bigr)
-	+ \log(2a)\,,
+	\begin{aligned}
+		\Delta S_k \coloneqq S(\btheta, \cI_{k+1}) - S(\btheta, \cI_k)
+		 & = \log\frac{\Gamma(A_k + d_g/2)}{\Gamma(A_k)}
+		- \Bigl(A_k + \frac{d_g}{2}\Bigr)\log\Bigl(B_k + \frac{\delta^2}{2}\Bigr) \\
+		 & \quad + A_k \log B_k - \frac{d_g}{2}\log(2\pi) + d_g \log(2a).
+	\end{aligned}
 	\label{eq:delta-S}
 \end{equation}
-where $\RSS_k = \sum_{j=1}^{k} r_{(j)}^2$.
-The first term is
-the inlier reward from the $\log\Gamma$ factor; the middle terms
-capture the degradation in fit quality from including a larger
-residual; the last term is the outlier penalty
-saved.
-Equation~\eqref{eq:delta-S} is exact and valid for any inlier
-count, including the small sets that arise from minimal samples.
+Since $-(A_k + \tfrac{d_g}{2})\log(B_k + \tfrac{\delta^2}{2}) + A_k\log B_k
+= -\tfrac{d_g}{2}\log B_k - (A_k + \tfrac{d_g}{2})\log(1 + \tfrac{\delta^2}{2B_k})$,
+the increment is exactly $\Delta S_k = \log\bigl(\pin^*(\br)/\pout\bigr)$
+at $\|\br\| = \delta$, where
+\begin{equation*}
+	\pin^*(\br) = \frac{\Gamma(A_k + d_g/2)}{\Gamma(A_k)\,(2\pi B_k)^{d_g/2}}
+	\Bigl(1 + \frac{\|\br\|^2}{2B_k}\Bigr)^{-(A_k + d_g/2)}
+\end{equation*}
+is the posterior predictive density of a new residual, a $d_g$-variate Student-$t$ with
+$2A_k$ degrees of freedom and scale~$\hat s_k$.  This holds for every
+prefix, including the small ones just beyond the minimal sample.
 
-\paragraph{Relation to MAP classification.}
-Given the predictive Student-$t$--uniform
-mixture, the MAP rule classifies
-point~$i$ as an inlier whenever
-$\pin^*(r_i) > \pout$.  Because the sweep
-operates on a discrete, sorted sequence, the optimal prefix
-boundary~$k^*$ does not in general land exactly on this MAP
-threshold: the true MAP boundary---where the Student-$t$ inlier
-density equals the uniform outlier density---lies between
-$|r_{(k^*)}|$ and $|r_{(k^*+1)}|$.  The sweep therefore
-\emph{bounds} the MAP threshold rather than computing it
-exactly.  Moreover, the MAP threshold itself is not a fixed
-quantity: it depends on the sufficient statistics
-$(\nu,\,\RSS_\cI)$, which change with the partition, creating
-a fixed-point problem.  The sweep resolves this circularity in a
-single pass by jointly optimizing the partition and the implicit
-scale.  In the large-sample limit (below), the discrete
-condition~\eqref{eq:delta-S} converges to the continuous MAP
-boundary, and the bound becomes tight.
-
-\paragraph{Large-sample approximation.}
-Using Stirling's approximation
-$\log\Gamma(n/2) \approx \tfrac{n}{2}\log\tfrac{n}{2} -
-	\tfrac{n}{2}$ and treating the threshold
-continuously, with $\log(1 + r_{(k+1)}^2/\RSS_k) \approx r_{(k+1)}^2/\RSS_k$
-for the boundary residual,
-the condition $\Delta S_k = 0$ reduces to
-\begin{equation}
-	\boxed{
-		\frac{1}{\sqrt{2\pi}\,\hat s}\,
-		\exp\!\Bigl({-}\frac{{\tau^*}^2}{2\hat s^2}\Bigr)
-		\;=\; \frac{1}{2a}\,,
-	}
-	\label{eq:implicit-tau}
-\end{equation}
-where $\hat s = \sqrt{\RSS_{k^*}/(k^*{-}n_\theta)}$ is the inlier
-RMS over the $k^*{-}n_\theta$ effective degrees of freedom
-(since $m = n_\theta$ for $d_g = 1$).  The
-left-hand side is the Gaussian inlier density
-$\pin(\tau^*;\hat s)$---the large-$\nu$ limit of the
-Student-$t$ predictive density
-$\pin^*(\tau^*)$---and the right-hand side is the
-uniform outlier density~$\pout$.
-This is precisely the MAP condition
-$\pin^*(\tau^*) = \pout$, confirming that
-the sweep's discrete bound converges to the MAP boundary in the
-large-sample limit.
-
-\paragraph{Connection to \gau scoring.}
-Recall that the \gaussunif mixture~\cite{Shekhovtsov2025}
-classifies point~$i$ as an inlier when
-$\pin(r_i;\sigma) > \mu$, with
-$\mu = \tfrac{1-\gamma}{\gamma}\,\tfrac{1}{2a}$~\cite{Shekhovtsov2025}.
-The threshold $\tau_{\mathrm{GaU}}$ is the root of
-$\pin(\tau;\sigma) = \mu$.
-Comparing with~\eqref{eq:implicit-tau}, our score's implicit
-threshold satisfies the \emph{same} equation with
-\begin{equation}
-	\frac{1{-}\gamma}{\gamma}
-	\;\longrightarrow\;
-	1\,,
-	\qquad\text{i.e.,}\quad
-	\gamma_{\mathrm{eff}}
-	= \tfrac{1}{2}\,.
-	\label{eq:gamma-eff}
-\end{equation}
-The effective prior is $\gamma_{\mathrm{eff}} = 1/2$,
-corresponding to maximum ignorance about inlier/outlier status.
-The non-informative choice $\gamma = \tfrac{1}{2}$ adopted in
-\Cref{sec:reverse-order} is therefore self-consistent:
-the score's implicit threshold reproduces the mixture's MAP threshold
-at exactly $\gamma = \tfrac{1}{2}$.  Crucially, \gau
-requires~$\sigma$ (and hence~$\tau$) to be supplied externally,
-whereas our method jointly estimates~$\hat s$ and selects the
-optimal partition from the data
-(\Cref{sec:score}).  In the high-$\nu$ limit $\hat s \to \sigma$
-and the score converges to the \gau log-likelihood at the
-per-partition maximum-likelihood scale, which a globally fixed
-$\sigma$ can match but not exceed: threshold-based scoring is the
-$\sigma$-fixed specialization of the profile-marginal score, and the
-per-model adaptation of~$\tau^*$ through~$\hat s$ is what no global
-threshold can replicate.
-
-Solving~\eqref{eq:implicit-tau} for~$\tau^*$ in closed form:
-\begin{equation}
-	\tau^*
-	= \hat s\,\sqrt{2\,\log\!\bigl(a\sqrt{2/\pi}\,/\,\hat s\bigr)}\,.
-	\label{eq:tau-star}
-\end{equation}
-For typical values (e.g., $a = 10\hat s$), this gives
-$\tau^* \approx 2.0\,\hat s$; for $a = 100\hat s$, we obtain
-$\tau^* \approx 3.0\,\hat s$---squarely in the 2--3$\sigma$ range
-commonly used in practice.
+\paragraph{Large-sample limit.}
+As $A_k$ grows the Student-$t$ tends to the Gaussian: with
+$\log\Gamma(A_k + d_g/2) - \log\Gamma(A_k) \approx (d_g/2)\log A_k$
+and $(A_k + d_g/2)\log(1 + \delta^2/2B_k) \approx A_k\,\delta^2/2B_k$,
+\begin{equation*}
+	\Delta S_k \;\approx\;
+	-\frac{d_g}{2}\log\bigl(2\pi\hat s_k^2\bigr)
+	- \frac{\delta^2}{2\hat s_k^2}
+	+ d_g\log(2a)
+	\;=\;
+	\log\frac{\pin(\br;\hat s_k)}{\pout}\Big|_{\|\br\| = \delta}.
+\end{equation*}
+Adding a point thus raises the score exactly when the Gaussian with
+the current variance estimate explains it better than the uniform
+outlier density, the MAP rule of the \gaussunif mixture at
+$\gamma = \tfrac12$.  The increment decreases in~$\delta$, so along
+the sorted sweep it changes sign once: the optimal prefix ends where
+$\pin(\br;\hat s) = \pout$ at $\|\br\| = \tau^*$, with
+$\delta_{(k^*)} \le \tau^* < \delta_{(k^*+1)}$.  Solving for~$\tau^*$
+gives~\eqref{eq:implicit-threshold}.  For finite~$\nu$ the
+Student-$t$'s heavier tails place the exact boundary slightly further
+out.
 
 % =====================================================================
 \section{Estimating the Prior Parameters $(\alpha_0, \beta_0)$}
@@ -1750,20 +1668,15 @@ $n_p^{\mathrm{in}}$, we fit the model to $\cI_p^{\mathrm{gt}}$ by an
 unconstrained least-squares fit (DLT for~$\bH$) and set
 $\hat\sigma^2_p = \RSS_p / (d_g\,n_p^{\mathrm{in}} - n_\theta)$, with
 $\RSS_p$ the Sampson sum of squares of the inliers under that fit.
-Fitting instead under the oracle pose (for~$\bH$, only the 3-DOF plane
-normal) would gain degrees of freedom but charge any deviation from a
-single rigid plane to the residual: on the homography benchmark the
-labelled inliers are not strictly coplanar---facades exhibit several
-pixels of relief, and some labels are inconsistent with one plane at
-the oracle pose---so the pose-constrained estimate inflates by one to
-several orders of magnitude on a non-trivial fraction of pairs and
-destabilizes both estimators below.  For relative pose the two fits
-coincide.  Pairs with $d_g\,n_p^{\mathrm{in}} \le n_\theta$ yield no
+We do not fit under the oracle pose (for~$\bH$, only the 3-DOF plane
+normal): \heb's labelled inliers are not strictly coplanar, so that
+estimate inflates by orders of magnitude on a non-trivial fraction of
+pairs.  For relative pose the two fits coincide.  Pairs with $d_g\,n_p^{\mathrm{in}} \le n_\theta$ yield no
 $\hat\sigma^2_p$ and are excluded from the prior aggregation; they
 remain test pairs, since the score~\eqref{eq:score} only requires the
 selected partition to satisfy $\nu > 0$.
 
-\paragraph{Type-II maximum likelihood.}  Using the identity
+\paragraph{\igmle: type-II maximum likelihood.}  Using the identity
 $\sigma^2 \!\sim\! \IG(\alpha,\beta) \iff
 	1/\sigma^2 \!\sim\! \mathrm{Gamma}(\alpha,\,1/\beta)$,
 we fit a Gamma distribution to $\{1/\hat\sigma^2_p\}_p$ and
@@ -1772,16 +1685,16 @@ scale.  Both parameters are jointly identified, so the prior
 captures both the location and the dispersion of the
 validation $\hat\sigma^2_p$.  This estimator is preferred when
 the per-pair $\hat\sigma^2_p$ are well concentrated, but is
-sensitive to outliers: pairs with few inliers produce
-$\hat\sigma^2_p$ estimates with $\sqrt{2/\nu_p}$ relative
-standard error, and a small number of extreme values can drag
+sensitive to outliers: a pair with few inliers gives a
+$\hat\sigma^2_p$ with relative standard error $\sqrt{2/\nu_p}$,
+$\nu_p = d_g\,n_p^{\mathrm{in}} - n_\theta$, and a small number of extreme values can drag
 the joint MLE far from the bulk of the distribution.
 
-\paragraph{Robust median anchor.}  We fix $\alpha_0$ at a weak
-default (we use $\alpha_0 = 1$, i.e.\ two pseudo-observations)
-and set $\beta_0 = \alpha_0 \cdot \mathrm{median}(\hat\sigma^2_p)$
-so that the prior pseudo-scale $\beta_0/\alpha_0$ matches the
-empirical median of $\{\hat\sigma^2_p\}$.  This sacrifices the
+\paragraph{\igrobust: median anchor.}  We fix $\alpha_0 = 1$, i.e.\
+two pseudo-observations, and set
+$\beta_0 = \alpha_0 \cdot \mathrm{median}(\hat\sigma^2_p)$, so that the
+prior mean square $s_0^2 = \beta_0/\alpha_0$ is the median of
+$\{\hat\sigma^2_p\}$.  This sacrifices the
 dispersion information captured by joint MLE in exchange for
 robustness to heavy tails in $\{\hat\sigma^2_p\}$, which arise
 on datasets with widely-varying per-pair inlier counts.
@@ -1980,231 +1893,21 @@ corresponds to $\sim$$9\text{mm}$ at the surface, but the same
 		not needed this on \ethd or ScanNet1500.
 		\fi  % end commented-out (sec:supp-gt-calibration)
 
-		% =====================================================================
-		\section{Shekhovtsov's Unified Threshold Framework}
-		\label{sec:supp-unified}
-		% =====================================================================
-
-		We review the unified comparison framework
-		of~\cite{Shekhovtsov2025}, which parameterizes the most widely
-		used \ransac scoring functions by a single decision
-		threshold~$\tau$ (in pixels).  This framework is the basis of the experimental
-		comparisons in \Cref{sec:experiments}.
-
-		\subsection{From Mixture Model to Decision Threshold}
-		\label{sec:supp-mixture}
-
-		For the scalar case $d_g = 1$, the residual~$r_i$
-		is a scalar drawn from a two-component mixture: an inlier density
-	$\pin(r;\sigma) =
-	\tfrac{1}{\sqrt{2\pi}\,\sigma}\exp(-r^2/2\sigma^2)$
-		and a uniform outlier density
-	$\pout = \frac{1}{2a}$ over $[-a, a]$, where $a$ is
-		the outlier domain half-width~\eqref{eq:component-densities}
-		(same units as~$\sigma$).
-		This 1D mixture is the starting point for
-		Shekhovtsov's~\cite{Shekhovtsov2025} $\tau$-parameterized framework.
-		With prior inlier probability
-	$\gamma$, the MAP classification rule labels point~$i$ as an inlier
-		when
-		\begin{equation}
-			\gamma\, \pin(r_i;\sigma)
-			\;>\; (1{-}\gamma)\, \pout\,.
-			\label{eq:supp-map}
-		\end{equation}
-		Geometrically, the decision threshold~$\tau$ is the
-		\emph{intersection} of the prior-weighted inlier and outlier
-		densities:
-		\begin{equation}
-			\gamma\, \pin(\tau;\,\sigma)
-			\;=\; (1{-}\gamma)\, \pout\,,
-			\label{eq:supp-tau-def}
-		\end{equation}
-		i.e., the residual value at which the two components of the mixture
-		are equally likely.  Since the Gaussian density
-	$\pin(r;\sigma)$ is monotone decreasing for $r \geq 0$
-		while the uniform density is constant, the intersection is unique,
-		and the MAP rule reduces to the simple threshold test
-	$|r_i| < \tau$.  Every method that uses this mixture
-		model---regardless of how it parameterizes itself---implicitly
-		defines such a crossing point~$\tau$.
-
-		\input{appendix_torr}
-
-		\iffalse  % unreferenced; commented out for space
-
-		\subsection{Scoring Functions Parameterized by $\tau$}
-		\label{sec:supp-scoring}
-
-		Shekhovtsov~\cite{Shekhovtsov2025} shows that the profile and
-		marginal likelihood scoring functions can both be written in terms
-		of~$\tau$ through the reference level
-	$\log \pin(\tau;\sigma)$
-		(we suppress the~$\sigma$ argument where it is absorbed
-		into~$\tau$):
-		\begin{align}
-			\rho^{\mathrm{prof}}(r)
-			 & = \max\!\bigl(\log \pin(r;\sigma)
-			- \log \pin(\tau;\sigma),\; 0\bigr),
-			\label{eq:supp-rho-prof}              \\[4pt]
-			\rho^{\mathrm{MARG}}(r)
-			 & = \smax\!\bigl(\log \pin(r;\sigma)
-			- \log \pin(\tau;\sigma),\; 0\bigr),
-			\label{eq:supp-rho-marg}
-		\end{align}
-		where
-	$\smax(x,y) \coloneqq \log(e^x + e^y)$ is the
-		smooth (soft) maximum.  In both cases the total score is
-	$Q(\btheta) = \sum_i \rho(r_i)$, an additive function of the
-		residuals.
-
-		\subsection{Gaussian Inliers: Normalization and $\sigma$-Cancellation}
-		\label{sec:supp-gauss}
-
-		For Gaussian inlier density
-	$\pin(r;\sigma) =
-	\tfrac{1}{\sqrt{2\pi}\,\sigma}\exp(-r^2/2\sigma^2)$,
-		the scoring functions become:
-		\begin{align}
-			\rho^{\mathrm{prof}}(r)
-			 & = \max\!\biggl(\frac{\tau^2 - r^2}{2\sigma^2},\; 0\biggr),
-			\label{eq:supp-msac-unnorm}                                   \\[4pt]
-			\rho^{\mathrm{MARG}}(r)
-			 & = \smax\!\biggl(
-			\frac{\tau^2 - r^2}{2\sigma^2},\; 0\biggr).
-			\label{eq:supp-gau-unnorm}
-		\end{align}
-		\emph{Normalizing} the profile score so that
-	$\tilde\rho(0) = 1$ and $\tilde\rho(\tau) = 0$:
-		\begin{equation}
-			\tilde\rho^{\,\mathrm{MSAC}}(r)
-			= \max\!\bigl(1 - r^2/\tau^2,\; 0\bigr).
-			\label{eq:supp-msac}
-		\end{equation}
-		The scale~$\sigma$ cancels completely---the normalized \msac
-		scoring function depends \emph{only} on~$\tau$.  Two different
-	$(\sigma, \gamma)$ pairs that produce the same~$\tau$
-		via~\eqref{eq:supp-tau-def} yield the same scoring function
-		and the same inlier set.
-
-		For the marginal (\gau) score, normalization gives
-		\begin{equation}
-			\tilde\rho^{\,\mathrm{GaU}}(r)
-			= \frac{\smax\!\bigl(
-			(\tau^2 {-} r^2)/(2\sigma^2),\; 0\bigr)}
-			{\smax\!\bigl(
-			\tau^2/(2\sigma^2),\; 0\bigr)}\,.
-			\label{eq:supp-gau}
-		\end{equation}
-		Here $\sigma$ does not fully cancel: \gau depends on both $\tau$
-		and~$\sigma$.  However, Shekhovtsov shows empirically that for
-		fitted \gau models $\sigma \approx \tau$, so even \gau
-		effectively has a single degree of freedom.
-
-		\subsection{Mapping Each Method's Native Parameter to $\tau$}
-		\label{sec:supp-mapping}
-
-		Different methods parameterize themselves differently, but each
-		implicitly defines a decision threshold~$\tau$:
-
-		\begin{center}
-			\begin{tabular}{@{}lll@{}}
-				\textbf{Method} & \textbf{Native parameter}
-				                & \textbf{Mapping to $\tau$}                          \\
-				\midrule
-				\msac~\cite{Torr1998}
-				                & $\tau$ directly
-				                & identity                                            \\[2pt]
-				\mlesac / \gau~\cite{Torr2000}
-				                & $\sigma$
-				                & root of $\pin(\tau;\sigma) = \mu$                   \\[2pt]
-				\magsacpp~\cite{Barath2020}
-				                & $\sigma_{\max}$
-				                & $\tau \approx \kappa\,\sigma_{\max}$
-				\;\text{($\kappa$: 99th \%ile of $\chi_d$, $d$: obs.\ dim.)}          \\[2pt]
-				Ours\textsuperscript{$\dagger$}
-				                & $a$
-				                & $\tau^* = \hat s\sqrt{2\log(a\sqrt{2/\pi}/\hat s)}$
-				\;\text{(Eq.~\ref{eq:tau-star})}
-			\end{tabular}
-		\end{center}
-		\noindent\textsuperscript{$\dagger$}The mapping
-	$\tau^* = \hat s\sqrt{2\log(a\sqrt{2/\pi}/\hat s)}$ is a per-model
-		asymptotic approximation: $\hat s$ depends on the candidate model, so
-	$\tau^*$ varies across models and is not a global parameter.  This
-		mapping is used only for exposition; the evaluation protocol
-		(\Cref{sec:eval-protocol}) does not rely on it.
-
-		\noindent For \magsacpp, Shekhovtsov demonstrates that the
-		scale-marginalized $\chi_d$ density closely approximates the \gau
-		posterior, giving $\sigma \approx 0.96\,\tau$ when $d = 4$
-		(the observation dimension for two-view correspondences).  The
-		parameter $\sigma_{\max}$ therefore functions as an alternative
-		parameterization of $\tau$, and \magsacpp reduces to a member of the
-		\gau family~\cite{Shekhovtsov2025}.
-
-		\subsection{Experimental Protocol}
-		\label{sec:supp-protocol}
-
-		With all methods expressed in terms of~$\tau$, Shekhovtsov's
-		evaluation proceeds as follows:
-		\begin{enumerate}
-			\item Discretize $\tau$ over a grid of 200 values (e.g.,
-			      $[0.1, 30]$ pixels).
-			\item For each $\tau$ and each method, use
-			      $\cI(\tau) = \{i : |r_i| < \tau\}$ as the inlier set and
-			      evaluate the method's scoring function.  Additive scores
-			      $Q = \sum_i \rho(r_i;\tau)$ can be computed efficiently via
-			      a residual histogram shared across all threshold
-			      values~\cite{Shekhovtsov2025}.
-			\item Select the model~$\btheta$ with the highest score, measure
-			      pose error, and record the result.
-			\item Plot pose error \emph{vs.}\ $\tau$ on a common axis.
-		\end{enumerate}
-		This protocol ensures a fair comparison: at each operating
-		point the same inlier set is used, and the only difference
-		between methods is the weighting of residuals within that set.
-		The key conclusion of~\cite{Shekhovtsov2025} is that when $\tau$
-		is properly tuned, all scoring functions---MSAC, \gau, and
-		\magsacpp---perform identically for model selection; the
-		bottleneck is not the score but the choice of~$\tau$.
-
-		\paragraph{Generalized protocol for non-additive methods.}
-		The protocol above assumes that every scoring function is additive,
-		i.e., $Q = \sum_i \rho(r_i;\tau)$, so that step~2 can be carried out
-		via the shared residual histogram.
-		Our scale-free score is non-additive
-		(\Cref{sec:experiments}), so step~2 must be replaced by
-		method-specific scoring: the method receives the candidate models and
-		correspondences and returns the best model under its own rule.
-		In practice the protocol becomes: (1)~generate a shared model pool as
-		before; (2)~each method scores the pool using its own function and
-		hyperparameter ($\tau$ for the additive baselines, $a$ for ours);
-		(3)~measure pose error of the selected model; (4)~plot pose error
-		vs.\ each method's native hyperparameter.
-		The $x$-axis is therefore method-specific rather than a shared~$\tau$,
-		but the comparison remains fair because every method scores the same
-		models and is evaluated by the same metric, with its hyperparameter
-		chosen on a held-out validation set
-		(see \Cref{sec:eval-protocol}).
-		\fi  % end commented-out (sec:supp-scoring, sec:supp-gauss, sec:supp-mapping, sec:supp-protocol)
+% =====================================================================
+\input{appendix_torr}
 
 		% =====================================================================
 		\section{Model Dimensions: Parameters, Codimension, and Minimal Sample Size}
 		\label{sec:supp-dims}
 		% ---------------------------------------------------------------------
 
-		\Cref{tab:model-dims} summarizes the key dimensional quantities for
-		common geometric models.  The model parameter
-		count~$n_\theta = \dim(\btheta)$ is the number of free parameters after
-		fixing gauge freedoms.  The codimension~$d_g$ is the number of
-		independent constraints each observation imposes on the
-		model.  The minimal sample size $m = \lceil n_\theta / d_g \rceil$ is the
-		fewest observations that determine~$\btheta$; equivalently, the
-		constraint-space design matrix
-	$\pdv{\bg_\cI}!{\btheta} \in \Reals^{k\,d_g \times n_\theta}$ has rank~$n_\theta$ only when
-	$k \geq m$.  The observation dimension~$d$ is the ambient
-		dimension of each measurement~$\bx_i$.
+\Cref{tab:model-dims} lists the quantities of \Cref{sec:partition}:
+$n_\theta$ is the number of free parameters after fixing gauge
+freedoms, $d_g$ the codimension, $m = \lceil n_\theta/d_g\rceil$ the
+minimal sample size (the Jacobian
+$\pdv{\bg_\cI}!{\btheta} \in \Reals^{k\,d_g \times n_\theta}$ generically
+has rank~$n_\theta$ only for $k \ge m$), and $d$ the dimension of an
+observation~$\bx_i$.
 
 \begin{table}[ht]
 	\centering
@@ -2256,7 +1959,7 @@ feature pipeline.
 \end{table}
 
 \paragraph{Annotations.}
-Each dataset provides stereo pairs with ground-truth absolute
+Each dataset provides image pairs with ground-truth absolute
 pose and camera calibration, from which we construct the
 ground-truth relative pose.  \heb additionally annotates the
 homographies induced by the dominant planes in each scene.
@@ -2271,10 +1974,10 @@ tentative correspondence set---SIFT~\cite{Lowe2004} on \heb,
 \rootsift~\cite{Arandjelovic2012} on \phototourism---and
 SfM bundle-adjusted GT matches (for \heb, restricted to the
 annotated plane).  These GT matches are
-pseudo-ground-truth---a multi-view SfM reference treated as
-gold-standard for the two-view sub-problem---and their
-reprojection residuals also seed our per-pair variance
-estimates.  \ethd ships only per-view laser depth (training
+pseudo-ground-truth, a multi-view SfM reference treated as
+gold-standard for the two-view sub-problem; they also give the
+per-pair variance estimates~$\hat\sigma^2_p$ of
+\Cref{sec:supp-prior-estimation}.  \ethd ships only per-view laser depth (training
 subset only; the test set is unreleased); we run
 \superpoint~\cite{DeTone2018}\,+\,\lightglue~\cite{Lindenberger2023}
 (SP+LG), a learned detect-and-match pipeline, as the
@@ -2284,16 +1987,11 @@ frame by the GT poses, and accepted when the resulting 3D
 points lie within a dataset-specific threshold (reflecting
 feature, depth-sensor, and absolute-pose accuracy).  Pairing
 SP+LG with SIFT/\rootsift on the other two datasets exercises
-our methods against feature noise from both hand-designed and
-learned pipelines.  One caveat for \heb: the mapping from
-SfM-derived ground-truth correspondences to the annotated
-dominant planes is not always clean---a pair's matches can
-span multiple planes, so a scoring method may select a model
-that fits one plane while the GT inliers we score against
-belong to another.  This shows up downstream as anomalous
-residual structure when a selected model is evaluated against
-the GT inlier set, and surfaces in some \heb panels of the
-experiments.
+our variants against feature noise from both hand-designed and
+learned pipelines.  On \heb a pair's matches can span several
+planes, so a scoring method may select a model that fits one plane
+while the GT inliers belong to another; this surfaces in some \heb
+panels of the experiments.
 
 % =====================================================================
 %  NeurIPS Paper Checklist

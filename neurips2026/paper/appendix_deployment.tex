@@ -4,57 +4,21 @@
 %  the author rebuttal on OpenReview (24-25 Jul 2026); none is produced
 %  by a driver of this project yet (REPRODUCE.md has no row for them).
 % =====================================================================
-\section{Deployment: Hyperparameter, Runtime, and Complete Pipelines}
+\section{Deployment: Runtime and Complete Pipelines}
 \label{sec:supp-deploy}
 
 The main experiments isolate the scoring function on fixed candidate
-pools.  This appendix collects the evidence needed to deploy it:
-how to set the remaining hyperparameter, its cost, and its behavior
-inside a complete \ransac pipeline.
-
-% ---------------------------------------------------------------------
-\subsection{The Remaining Hyperparameter}
-\label{sec:supp-deploy-a}
-
-\paragraph{Inlier-scale-free, not hyperparameter-free.}
-The proposed scores remove the inlier scale~$\sigma$; they do not
-remove every hyperparameter.  The outlier half-width~$a$ remains.  It
-is an outlier-\emph{domain} parameter, not a scale proxy: we
-normalize image coordinates so that the half-diagonal is one, which
-fixes the outlier domain in the canonical frame and admits a
-dataset-independent default for~$a$ \camtodo{state the default value
-of $a$}, after which the model is de-normalized.  Normalization does
-not determine~$\sigma$.  Varying~$a$ several-fold has negligible
-effect (\Cref{fig:profile-grid}), and on \phototourism and \ethd the
-default lies in the flat region.
-
-% ---------------------------------------------------------------------
-\subsection{Inference-Time Reliability}
-\label{sec:supp-deploy-reliability}
-
-The selected partition provides $k^\star$ and hence $\nu^\star =
-k^\star d_g - n_\theta$ at inference.  Under the Jeffreys prior the
-posterior of the inlier scale is
-$\sigma^2 \mid \cI^\star, \br \sim
-\IG\bigl(\nu^\star/2,\, \RSS_{\cI^\star}/2\bigr)$
-(\eqref{eq:ig-posterior} at $\alpha_0 = \beta_0 = 0$), whose relative
-spread is of order $\sqrt{2/\nu^\star}$.  Thus $\nu^\star$ directly
-controls the uncertainty of the inferred scale: a small $\nu^\star$
-gives a diffuse posterior and signals that Jeffreys is relying on too
-little residual evidence.  This is the regime observed on \heb, where
-small inlier sets make Jeffreys less accurate and more variable and
-Jeffreys' failures are concentrated on such pairs, while \igrobust
-regularizes the posterior scale (\Cref{par:pseudo-obs}).  A
-large~$\nu^\star$ indicates a concentrated scale posterior under the
-assumed model, but does not by itself detect structured outliers or
-model misspecification.
+pools.  This appendix collects the evidence needed to deploy it: its cost,
+its behavior inside a complete \ransac pipeline, and a comparison of
+its hyperparameter with a threshold through a common decision
+boundary.
 
 % ---------------------------------------------------------------------
 \subsection{Runtime}
 \label{sec:supp-deploy-runtime}
 
 \Cref{tab:runtime-hyp} reports single-threaded per-hypothesis
-timings.  All scorers receive identical precomputed residuals.  For
+timings on \phototourism.  All scorers receive identical precomputed residuals.  For
 \magsacpp we use the lookup-table implementation prescribed by the
 paper and shipped with the reference code, its most optimistic
 faithful runtime; the closed form is included for completeness.
@@ -62,9 +26,8 @@ Although comparison sorting is $O(N\log N)$, our implementation sorts
 with a radix sort on 32-bit float keys, so the \sortsweep is
 $\Theta(N)$: increasing the correspondence count by $2.21\times$
 increases the runtime by $2.24\times$, against the $2.48\times$
-that $N\log N$ scaling would predict.  The absolute difference to \msac is
-$7.8$--$16.6\,\mu$s per hypothesis.
-\camtodo{name the CPU, the dataset and how $\bar n$ was obtained}
+that $N\log N$ scaling would predict.  Our score costs $8.8$--$19.7\,\mu$s more per hypothesis than \msac
+and $7.8$--$16.6\,\mu$s more than the \magsacpp lookup table.
 
 \begin{table}[ht]
 	\centering
@@ -98,22 +61,22 @@ therefore measures a complete pipeline.
 
 The \sortsweep supplies every quantity the downstream components
 of \ransac need: the selected support~$\cI^\star$, its cutoff
-$\tau^\star = r_{(k^\star)}$, the inlier ratio $\hat w = k^\star/N$,
-and the partition scale $\hat\sigma^2 = \RSS_{\cI^\star}/\nu^\star$.
+$\tau^\star = \delta_{(k^\star)}$, the inlier ratio $\hat w = k^\star/N$,
+and the variance estimate~$\hat s^2$ of \Cref{sec:score}.
 Standard confidence-based termination uses
 \begin{equation}
 	K = \frac{\log(1-p)}{\log(1-\hat w^{\,m})},
 \end{equation}
 and local optimization uses either~$\tau^\star$ or a
-partition-anchored width $c = \kappa\,\hat\sigma$, with only the
-dimensionless~$\kappa$ cross-validated.  No calibrated residual
+partition-anchored width $\lambda\hat s$, with only the
+dimensionless~$\lambda$ cross-validated.  No calibrated residual
 threshold is required at test time.
 
 \Cref{tab:lo-anchor} isolates this effect with the same \poselib
 truncated Levenberg--Marquardt optimizer~\cite{PoseLib}.  The fixed
 variant uses a calibrated threshold~$\tau_{\mathrm{ref}}$, perturbed
 at test time by~$\zeta$; the anchored variant re-estimates
-$\tau = \kappa\hat\sigma$ for each hypothesis.  Both are tuned at
+$\tau = \lambda\hat s$ for each hypothesis.  Both are tuned at
 $\zeta = 1$.
 
 \begin{table}[ht]
@@ -128,7 +91,7 @@ $\zeta = 1$.
 		\poselib TLS-LM                                & $\zeta = 1$ & $\zeta = 16$ & $\zeta = 128$ \\
 		\midrule
 		fixed ($\tau_{\mathrm{ref}}$)                 & 1.8         & 4.0          & 22.0          \\
-		anchored ($\tau = \kappa\hat\sigma$)          & 1.9         & 2.4          & 4.2           \\
+		anchored ($\tau = \lambda\hat s$)          & 1.9         & 2.4          & 4.2           \\
 		\bottomrule
 	\end{tabular}
 \end{table}
@@ -137,16 +100,15 @@ $\zeta = 1$.
 \subsection{A Complete \ransac Pipeline}
 \label{sec:supp-deploy-e2e}
 
-We compare our full estimator---the proposed score, with the
-estimated partition calibrating the scale of local optimization at
-test time---with source-built \superansac~\cite{Barath2025superansac}.
+We compare our full estimator, the profile-marginal score with the
+selected partition calibrating local optimization at test time,
+with source-built \superansac~\cite{Barath2025superansac}.
 In the tested configuration \superansac uses \prosac sampling, \sprt
 verification, terminal local optimization, final least-squares
-polishing and its default \magsac scoring, so the baseline is not a
-plain-threshold pipeline: it embeds \magsacpp scoring in a highly
-engineered public estimator.  Its \texttt{inlier\_threshold}
-specifies the \magsac scale bound~$\bar\sigma$, equivalently
-$\tau = \kappa\bar\sigma$, and is perturbed by~$\zeta$ in the same
+polishing and its default \magsacpp scoring, so the baseline is a
+highly engineered public estimator, not a plain-threshold pipeline.
+Its \texttt{inlier\_threshold} specifies the \magsacpp scale
+bound~$\bar\sigma$, equivalently $\tau = q\bar\sigma$, and is perturbed by~$\zeta$ in the same
 role-faithful manner as in the scoring experiment.
 
 Both methods use matched termination settings (minimum 100 and
@@ -208,17 +170,16 @@ per-hypothesis cost.  The trend matches the scoring-only results:
 The Profile experiment (\Cref{sec:profile}) perturbs each method's
 native hyperparameter, and $\tau$ and~$a$ have different statistical
 roles.  We therefore also compare the methods through a common induced
-decision boundary.  Let $k$ denote the boundary radius in units of
-the assumed inlier scale.  Threshold-based scores use
-$\tau = k\hat\sigma$, while our \gaussunif model with
-$\gamma = \tfrac12$ gives
+decision boundary.  Let $q$ be the boundary radius in units of an assumed inlier
+scale~$\hat\sigma$.  Threshold-based scores use $\tau = q\hat\sigma$,
+while inverting the implicit threshold~\eqref{eq:implicit-threshold}
+gives
 \begin{equation}
-	a(k, \hat\sigma) = \sqrt{\pi/2}\;\hat\sigma\,
-	\exp\!\bigl(k^2/(2d_g)\bigr),
+	a(q, \hat\sigma) = \sqrt{\pi/2}\;\hat\sigma\,
+	\exp\!\bigl(q^2/(2d_g)\bigr).
 \end{equation}
-the inverse of the implicit threshold of \Cref{sec:score}.  Both maps
-are homogeneous, $m(k, \zeta\hat\sigma) = \zeta\,m(k, \hat\sigma)$.
-Each method is tuned over the same dimensionless $k$-grid at correct
+Both maps are linear in~$\hat\sigma$.  Each method is tuned over the
+same dimensionless $q$-grid at correct
 calibration and then frozen; test-time miscalibration changes only
 the common scale, $\hat\sigma \to \zeta\hat\sigma$, inducing
 $\tau \to \zeta\tau$ and $a \to \zeta a$.  Every method thus receives
@@ -257,11 +218,9 @@ score retains 0.56 mAA versus 0.14--0.30 for the baselines; at
 $\zeta = 128$ it retains 0.45 versus 0.03--0.05.  Threshold-based
 scores consume the corrupted scale directly as their inlier boundary,
 whereas our score re-estimates the inlier scale for each hypothesis,
-exposing only its outlier model to the perturbation.  \magsacpp is
-evaluated with its original score, not its approximate \gau
-equivalent.  The hypothesis budget of 1000 minimal samples per pair
-suffices for every scorer: on 8\,800 PT-E-SIFT-4K pairs from four
-held-out scenes, all scorers tie at correct calibration
+exposing only its outlier model to the perturbation.  The hypothesis budget of 1000 minimal samples per pair
+suffices for every scorer: on 8\,800 \phototourism pairs with about
+4\,000 \rootsift correspondences each, from four held-out scenes, all scorers tie at correct calibration
 (mAA@$10^\circ$ 0.534--0.542, median error $2.80^\circ$--$2.96^\circ$),
 and under $32\times$ miscalibration ours retains 0.466 mAA and
 $4.60^\circ$ while the baselines fall to 0.10--0.14 mAA and
