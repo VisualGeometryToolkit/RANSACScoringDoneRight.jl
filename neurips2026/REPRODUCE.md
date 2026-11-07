@@ -44,9 +44,9 @@ under "Not ported".
 
 ## Data
 
-Inputs are read from `data_root()` (read-only: `CAU_DATA_ROOT`, else
+Inputs are read from `data_root()` (read-only: `VGTK_DATA_ROOT`, else
 `data/exp_raw`, else the artifact view of the published data); results are
-written under `results_root()` (`CAU_RESULTS_ROOT`, else `data/exp_pro`), one
+written under `results_root()` (`VGTK_RESULTS_ROOT`, else `data/exp_pro`), one
 directory per run key, each with its `_config.toml` and `_provenance.toml`.
 The stored runs are a results-side input: the figure configs name them by
 `[stored] dir`, relative to `results_root()`. The published data

@@ -19,7 +19,7 @@ using VisualGeometryToolkitEval.Experiments: Stage, run_stages, require_input, f
     set_project_root!, data_root, results_root, write_run_records, write_provenance, run_complete
 
 # data/exp_raw (inputs) and data/exp_pro (results) under this project, unless
-# CAU_DATA_ROOT / CAU_RESULTS_ROOT bind them elsewhere (data/README.md).
+# VGTK_DATA_ROOT / VGTK_RESULTS_ROOT bind them elsewhere (data/README.md).
 set_project_root!(projectdir(); create_results = true)
 
 include(srcdir("panels.jl"))

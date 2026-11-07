@@ -49,8 +49,8 @@ function compute()
 end
 
 macros() = write(joinpath(OUTDIR, only(ASSETS)), prose_macros(CFG, [check_prose_number(CFG, e) for e in CFG["numbers"]]))
-verify() = (verify_assets(OUTDIR, ASSETS); nothing)
-deploy() = deploy_assets(OUTDIR, ASSETS, CFG)
+verify() = (verify_assets(OUTDIR, paper_figdir(), ASSETS); nothing)
+deploy() = (deploy_assets(OUTDIR, paper_figdir(), ASSETS; replace_submitted = replace_submitted(CFG)); nothing)
 
 function report()
     lines = readlines(TABLE)[2:end]
@@ -68,8 +68,8 @@ const STAGES = [
     Stage(:compute, "the prose numbers from the stored runs, keyed by the run key",
           () -> run_complete(OUTDIR; sidecar = "numbers.tsv"), compute),
     Stage(:macros, "the generated numbers as a macro file", () -> fresher(joinpath(OUTDIR, only(ASSETS)), TABLE), macros),
-    Stage(:verify, "the macro file against the paper's copy", () -> fresher(joinpath(OUTDIR, VERIFY_FILE), joinpath(OUTDIR, only(ASSETS))), verify),
-    Stage(:deploy, "into paper/figures where nothing changes (or signed off)", () -> assets_deployed(OUTDIR, ASSETS), deploy),
+    Stage(:verify, "the macro file against the paper's copy", () -> fresher(joinpath(OUTDIR, VERIFY_REPORT), joinpath(OUTDIR, only(ASSETS))), verify),
+    Stage(:deploy, "into paper/figures where nothing changes (or signed off)", () -> assets_deployed(OUTDIR, paper_figdir(), ASSETS), deploy),
     Stage(:report, "each against the value main.tex states (prints; writes nothing)", () -> false, report),
 ]
 

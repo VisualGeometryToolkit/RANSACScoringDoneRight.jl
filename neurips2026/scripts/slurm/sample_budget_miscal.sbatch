@@ -3,7 +3,7 @@
 # published numbers were measured on (1900 GB / 224 CPU nodes in a partition
 # named `gpu`). Adapt --partition, CPUs and memory to your site. Submit from the
 # repository root (`sbatch neurips2026/scripts/slurm/<name>.sbatch`); logs go to ./logs/.
-# Data paths come from the environment: CAU_DATA_ROOT, or POOL/OUT directly.
+# Data paths come from the environment: VGTK_DATA_ROOT, or POOL/OUT directly.
 #SBATCH --partition=gpu
 #SBATCH --cpus-per-task=32
 #SBATCH --mem-per-cpu=8G
@@ -37,9 +37,9 @@ mkdir -p logs
 # where the large-memory nodes live.
 # =============================================================================
 
-POOL=${POOL:-${CAU_DATA_ROOT:?set CAU_DATA_ROOT (or POOL and OUT)}/accv2026/data/PT-E-SIFT-4K_pf3}
+POOL=${POOL:-${VGTK_DATA_ROOT:?set VGTK_DATA_ROOT (or POOL and OUT)}/accv2026/data/PT-E-SIFT-4K_pf3}
 RANGES=${RANGES:-$POOL/coarse_ranges_hierarchical.jld2}
-OUT=${OUT:-${CAU_DATA_ROOT:?set CAU_DATA_ROOT (or POOL and OUT)}/accv2026/results/sample_budget_miscal}
+OUT=${OUT:-${VGTK_DATA_ROOT:?set VGTK_DATA_ROOT (or POOL and OUT)}/accv2026/results/sample_budget_miscal}
 # Replay-derived minimal-sample starts of the pool (accv2026
 # scripts/tools/derive_pool_samples.jl): PT-E-SIFT-4K_pf3's record does not
 # certify its own sample boundaries (duplicated E roots), so it needs them.

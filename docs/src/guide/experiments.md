@@ -51,8 +51,9 @@ cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.Registry.add("General"); 
 ```
 
 The pools are read with VisualGeometryToolkitEval's `load_pool` and
-`load_pool_residuals`. The data root is `ENV["CAU_DATA_ROOT"]` (no default: set
-it, or give the drivers `--pool` and `--out`); pools are read from
+`load_pool_residuals`. The data root is VisualGeometryToolkitEval's `data_root()`
+(`ENV["VGTK_DATA_ROOT"]`, else the project's `data/exp_raw`; or give the
+drivers `--pool` and `--out`); pools are read from
 `<root>/accv2026/data/PT-E-SIFT-4K/` and heavy outputs land under
 `<root>/accv2026/results/<experiment>/`. The `.sbatch` files are example SLURM
 launchers: they carry the exact driver invocation behind the published numbers,

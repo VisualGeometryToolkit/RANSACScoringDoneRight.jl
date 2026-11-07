@@ -46,7 +46,7 @@ end
             cfg = _cfg("fig_sensitivity")
             sens = cfg["sensitivity"]
             for c in sens["cells"]
-                data = sensitivity_data(stored_table(cfg, c["run"], "summary"))
+                data = results_by_method(stored_table(cfg, c["run"], "summary"))
                 for p in sens["panels"]
                     txt = _render(io -> write_sensitivity_group(io, sensitivity_panel(p), data, sens["tune"], c["title"]))
                     @test txt == _submitted(c["assets"][p])

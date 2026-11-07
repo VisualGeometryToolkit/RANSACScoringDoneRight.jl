@@ -13,8 +13,8 @@
 # Each artifact is downloaded once into the Julia depot (sha256 and tree hash
 # verified) and linked file by file into its mount root: data artifacts into
 # data/exp_raw (made an artifact view when no data root is bound), results
-# artifacts into results_root(). An existing binding wins — CAU_DATA_ROOT /
-# CAU_RESULTS_ROOT or the author's data/exp_raw, data/exp_pro links — and is
+# artifacts into results_root(). An existing binding wins — VGTK_DATA_ROOT /
+# VGTK_RESULTS_ROOT or the author's data/exp_raw, data/exp_pro links — and is
 # never written to (VisualGeometryToolkitEval DataArtifacts `fetch_artifacts!`).
 # =============================================================================
 using DrWatson

@@ -25,17 +25,18 @@
 # =============================================================================
 using DataFrames: DataFrame
 using Printf: Printf
+# The house palette and its LaTeX colour names, and the summary's
+# per-(method, tuning criterion) bucketing, are VisualGeometryToolkitEval's.
+using VisualGeometryToolkitEval.Render: default_palette, paper_color_name, results_by_method
 
 # ---- house style (plot_val.jl STYLE / _PAPER_COLOR_HEX / PANELS) -----------------
 
-const PAPER_COLOR_HEX = Dict(
-    "RANSAC" => "ffb6c1", "MSAC" => "ffe119", "GaU" => "42d4f4", "MAGSAC" => "f58231",
-    "Jeffreys" => "e6194b", "IG-Robust" => "3cb44b", "IG-MLE" => "4363d8", "Oracle" => "808080",
-    "ransac-PerPairBest" => "ffb6c1", "msac-PerPairBest" => "ffe119",
-    "gau-PerPairBest" => "42d4f4", "magsac-PerPairBest" => "f58231",
-)
-
-paper_color_name(k::AbstractString) = "Color" * replace(k, "-" => "")
+# The house base palette, plus the per-pair-best references in their
+# baselines' hues.
+const PAPER_COLOR_HEX = let base = Dict(default_palette())
+    merge(base, Dict(k * "-PerPairBest" => base[b] for (k, b) in
+                     (("ransac", "RANSAC"), ("msac", "MSAC"), ("gau", "GaU"), ("magsac", "MAGSAC"))))
+end
 
 # (method key in the summary, display label, colour name, mark, dashed)
 const STYLE = [
@@ -260,25 +261,9 @@ end
 
 # ---- Sensitivity ---------------------------------------------------------------------
 
-"""
-    sensitivity_data(summary::DataFrame) -> Dict{(method_key, tune_key) => DataFrame}
-
-The Sensitivity summary bucketed per (method, tuning criterion), each sorted by
-the validation-set size `n` (plot_val.jl `load_results`): the method key drops
-a trailing `(median)`/`(mAA)`.
-"""
-function sensitivity_data(summary::DataFrame)
-    df = copy(summary)
-    df.method_key = [replace(strip(String(m)), r"\s*\((?:median|mAA)\)$"i => "") for m in df.method]
-    df.tune_key = String.(df.tuning_criterion)
-    df.nn = Float64.(df.n)
-    sort!(df, :nn)
-    data = Dict{Tuple{String,String},DataFrame}()
-    for key in unique(zip(df.method_key, df.tune_key))
-        data[(String(key[1]), String(key[2]))] = df[(df.method_key .== key[1]) .& (df.tune_key .== key[2]), :]
-    end
-    return data
-end
+# (`sensitivity_data`, the summary bucketed per (method, tuning criterion), is
+#  VisualGeometryToolkitEval's `results_by_method(summary)`: the same method key,
+#  `tune_key`, `nn` and sort, with SubDataFrame buckets.)
 
 function _sensitivity_style_name(k::AbstractString)
     endswith(k, "-PerPairBest") && return "ours_" * lowercase(replace(k, "-PerPairBest" => "")) * "_pairbest"
@@ -383,39 +368,5 @@ function write_sensitivity_styles(styles_io::IO, shared_io::IO, data)
     return nothing
 end
 
-# ---- comparison ----------------------------------------------------------------------
-
-"""
-    fragment_coordinates(text) -> Vector{Vector{NTuple{2,Float64}}}
-
-Every `coordinates {…}` block of a pgfplots fragment, in order, parsed to
-numbers: the quantitative content of a panel, for comparing a regenerated
-fragment with the submitted one independently of its formatting.
-"""
-function fragment_coordinates(text::AbstractString)
-    blocks = Vector{NTuple{2,Float64}}[]
-    for m in eachmatch(r"coordinates\s*\{([^}]*)\}", text)
-        pts = NTuple{2,Float64}[]
-        for p in eachmatch(r"\(\s*([^,()\s]+)\s*,\s*([^,()\s]+)\s*\)", m.captures[1])
-            push!(pts, (parse(Float64, p.captures[1]), parse(Float64, p.captures[2])))
-        end
-        push!(blocks, pts)
-    end
-    return blocks
-end
-
-"""
-    compare_fragments(new, old) -> NamedTuple
-
-How a regenerated fragment `new` differs from the submitted `old` (texts):
-`identical` (byte for byte), `same_numbers` (every coordinate block equal,
-in order), the block counts and the largest absolute coordinate difference
-over blocks of equal length (`Inf` when the structure differs).
-"""
-function compare_fragments(new::AbstractString, old::AbstractString)
-    a, b = fragment_coordinates(new), fragment_coordinates(old)
-    same_shape = length(a) == length(b) && all(length.(a) .== length.(b))
-    maxdiff = same_shape ? maximum((abs(p[i] - q[i]) for (x, y) in zip(a, b) for (p, q) in zip(x, y) for i in 1:2); init = 0.0) : Inf
-    return (identical = new == old, same_numbers = same_shape && a == b,
-            blocks_new = length(a), blocks_old = length(b), max_abs_diff = maxdiff)
-end
+# (The fragment comparison, `fragment_coordinates` and `compare_fragments`, is
+#  VisualGeometryToolkitEval's `Reproduce`, imported in assets.jl.)

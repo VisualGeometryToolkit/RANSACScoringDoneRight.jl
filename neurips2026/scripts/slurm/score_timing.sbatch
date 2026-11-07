@@ -3,7 +3,7 @@
 # published numbers were measured on (1900 GB / 224 CPU nodes in a partition
 # named `gpu`). Adapt --partition, CPUs and memory to your site. Submit from the
 # repository root (`sbatch neurips2026/scripts/slurm/<name>.sbatch`); logs go to ./logs/.
-# Data paths come from the environment: CAU_DATA_ROOT, or POOL/OUT directly.
+# Data paths come from the environment: VGTK_DATA_ROOT, or POOL/OUT directly.
 #SBATCH --partition=gpu
 #SBATCH --cpus-per-task=28
 #SBATCH --mem-per-cpu=8G
@@ -35,8 +35,8 @@ mkdir -p logs
 # itself is single-threaded by protocol.
 # =============================================================================
 
-POOL=${POOL:-${CAU_DATA_ROOT:?set CAU_DATA_ROOT (or POOL and OUT)}/accv2026/data/PT-E-SIFT-4K}
-OUT=${OUT:-${CAU_DATA_ROOT:?set CAU_DATA_ROOT (or POOL and OUT)}/accv2026/results/score_timing}
+POOL=${POOL:-${VGTK_DATA_ROOT:?set VGTK_DATA_ROOT (or POOL and OUT)}/accv2026/data/PT-E-SIFT-4K}
+OUT=${OUT:-${VGTK_DATA_ROOT:?set VGTK_DATA_ROOT (or POOL and OUT)}/accv2026/results/score_timing}
 SCENE=${SCENE:-british_museum}
 NPAIRS=${NPAIRS:-20}
 REPS=${REPS:-3}

@@ -11,7 +11,7 @@ and their generators are indexed in `../REPRODUCE.md`.
 
 Each write-up names the driver that produced it and the JLD2 it was read from.
 The JLD2 data itself is not committed (it lands under
-`$CAU_DATA_ROOT/accv2026/results/score_timing/`), since it is regenerable from
+`$VGTK_DATA_ROOT/accv2026/results/score_timing/`), since it is regenerable from
 the committed driver and does not belong in the package.
 
 Regenerate any of these with the matching `.sbatch` in `../scripts/slurm/`. Those
@@ -20,6 +20,7 @@ launchers carry the exact invocation behind the published numbers; changing
 a per-hypothesis minimum over repetitions and rows are only comparable when
 measured in one process.
 
-The data root is `ENV["CAU_DATA_ROOT"]` (no default); heavy outputs land under
+The data root is VisualGeometryToolkitEval's `data_root()` (`ENV["VGTK_DATA_ROOT"]`,
+else the project's `data/exp_raw`); heavy outputs land under
 `<root>/accv2026/results/<experiment>/`, named after the driver. The `.sbatch`
 launchers are examples: adapt their resource requests to your cluster.

@@ -3,21 +3,21 @@
 # neurips2026/scripts/studies/score_timing.jl — per-hypothesis CPU scoring cost,
 # using ONLY the package's own scorers.
 #
-# THIS FILE CONTAINS NO SCORING CODE. Every form ships in
-# src/scoring_eval_common.jl (`best_pool_model` at a loss width) and, for a
-# scorer at its width, VisualGeometryToolkitCore's generic `best_pool_model` over
-# `score!`; this driver only calls them.
+# THIS FILE CONTAINS NO SCORING CODE. Every scorer is timed through
+# VisualGeometryToolkitCore's `best_pool_model(scoring, pair, R; ws, scores)` over
+# `score!` of a scorer at its width (the loss-width families at a loss width,
+# `with_width(F(1), LossWidth(w))`); this driver only calls it.
 #
 #   EXACT (closed form, evaluated per residual)
-#     best_pool_model(scoring::StudentTUniformScoring, pair, R; ws, scores)  ours — sort-and-sweep
-#     best_pool_model(RansacScoring(), pair, R, loss_width)        inlier count
-#     best_pool_model(MsacScoring(), pair, R, loss_width)          truncated quadratic
-#     best_pool_model(MlesacScoring(), pair, R, loss_width)        softplus (log1p∘exp)
-#     best_pool_model(MagsacScoring(), pair, R, loss_width)        two incomplete gammas
+#     StudentTUniformScoring        ours — sort-and-sweep
+#     RansacScoring at w            inlier count            (VisualGeometryToolkitCore's score!)
+#     MsacScoring at w              truncated quadratic     (VisualGeometryToolkitCore's score!)
+#     MlesacScoring at w            softplus (log1p∘exp)    (this package's score!)
+#     MagsacScoring at w            two incomplete gammas   (this package's score!)
 #   (`R` is the pair's Float32 residual matrix, from the scene's residuals file)
-#   (the four loss-width families are one loop over `residual_quality`; until 2026-09-22
-#   they were score_ransac/score_msac(pair, loss_width²)/score_gau/score_magsac and
-#   score_marginal, each restating its formula)
+#   (RANSAC's and MSAC's `score!` also builds the consensus order, which the
+#   pool argmax does not read: since RANSACScoringDoneRight 0.5 their rows time
+#   that too, where the width-free 4-argument `best_pool_model` timed the sum alone)
 #
 # NOT REPORTED: approximate forms. The LogBinned histogram aggregation
 #   (`grid_evaluate` with `LogBinned()`) is Shekhovtsov 2025 Sec 6.1 Eq. 17, whose stated
@@ -51,31 +51,30 @@ const RSDR = RANSACScoringDoneRight
 # outlier-half-width call site.
 #
 # Per-pair workspace: deployed sizing, so `sweep!` takes the radix fast path
-# (RVG's `_set_n!` resizes to n for exactly this reason).
-function marginal_workspaces(pairs, loss_width::Float64)
-    outlier_halfwidth = loss_width   # same magnitude, different quantity; timing only
-    sc = RSDR.StudentTUniformScoring(1, outlier_halfwidth; codimension = 1)   # the recorded protocol's
+# (RVG's `_set_n!` resizes to n for exactly this reason); every scorer gets one,
+# so no timed call allocates its scratch.
+function timed_selection(sc, pairs)
     wsc = Dict{Int,Any}()
     for p in pairs
         n = num_points(p)
-        get!(() -> (VGC.scoring_workspace(sc, n, 1),
-                    Vector{Float64}(undef, n)), wsc, n)
+        get!(() -> (VGC.scoring_workspace(sc, n, 1), Vector{Float64}(undef, n)), wsc, n)
     end
-    return sc, wsc
+    return (p, R) -> (let (w, b) = wsc[num_points(p)]; VGC.best_pool_model(sc, p, R; ws = w, scores = b) end)
 end
 
 # The scorers timed: (name, f(pair, R)). MAGSAC++'s DOF-and-cutoff constants
 # are module constants (derived once at load), so its timing is the loop's
 # n·M `gamma_inc` pairs.
 function timed_scorers(pairs, loss_width::Float64)
-    sc, wsc = marginal_workspaces(pairs, loss_width)
-    ours(p, R) = (let (w, b) = wsc[num_points(p)]; VGC.best_pool_model(sc, p, R; ws = w, scores = b) end)
+    outlier_halfwidth = loss_width   # same magnitude, different quantity; timing only
+    ours = RSDR.StudentTUniformScoring(1, outlier_halfwidth; codimension = 1)   # the recorded protocol's
+    at(F) = VGC.with_width(F(1), VGC.LossWidth(loss_width))
     return [
-        ("Ours (exact)",     ours),
-        ("RANSAC (exact)",   (p, R) -> VGC.best_pool_model(RSDR.RansacScoring(), p, R, loss_width)),
-        ("MSAC (exact)",     (p, R) -> VGC.best_pool_model(RSDR.MsacScoring(), p, R, loss_width)),
-        ("GaU (exact)",      (p, R) -> VGC.best_pool_model(RSDR.MlesacScoring(), p, R, loss_width)),
-        ("MAGSAC++ (exact)", (p, R) -> VGC.best_pool_model(RSDR.MagsacScoring(), p, R, loss_width)),
+        ("Ours (exact)",     timed_selection(ours, pairs)),
+        ("RANSAC (exact)",   timed_selection(at(VGC.RansacScoring), pairs)),
+        ("MSAC (exact)",     timed_selection(at(VGC.MsacScoring), pairs)),
+        ("GaU (exact)",      timed_selection(at(RSDR.MlesacScoring), pairs)),
+        ("MAGSAC++ (exact)", timed_selection(at(RSDR.MagsacScoring), pairs)),
     ]
 end
 

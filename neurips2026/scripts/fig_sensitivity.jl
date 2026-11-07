@@ -45,7 +45,7 @@ function render()
     mkpath(OUTDIR)
     inputs = String[]
     for c in CELLS
-        data = sensitivity_data(stored_table(CFG, c["run"], "summary"))
+        data = results_by_method(stored_table(CFG, c["run"], "summary"))
         for p in SENS["panels"]
             open(io -> write_sensitivity_group(io, sensitivity_panel(p), data, SENS["tune"], c["title"]),
                  joinpath(OUTDIR, c["assets"][p]), "w")
@@ -61,15 +61,15 @@ function render()
     return nothing
 end
 
-verify() = (verify_assets(OUTDIR, ASSETS); nothing)
-deploy() = deploy_assets(OUTDIR, ASSETS, CFG)
+verify() = (verify_assets(OUTDIR, paper_figdir(), ASSETS); nothing)
+deploy() = (deploy_assets(OUTDIR, paper_figdir(), ASSETS; replace_submitted = replace_submitted(CFG)); nothing)
 
 const STAGES = [
     Stage(:render, "the six Sensitivity panels and the style sheets, keyed by the run key",
           () -> run_complete(OUTDIR; sidecar = first(ASSETS)) && all(a -> isfile(joinpath(OUTDIR, a)), ASSETS), render),
     Stage(:verify, "each render against the submitted asset (bytes, coordinates)",
-          () -> fresher(joinpath(OUTDIR, VERIFY_FILE), (joinpath(OUTDIR, a) for a in ASSETS)...), verify),
-    Stage(:deploy, "into paper/figures where nothing changes (or signed off)", () -> assets_deployed(OUTDIR, ASSETS), deploy),
+          () -> fresher(joinpath(OUTDIR, VERIFY_REPORT), (joinpath(OUTDIR, a) for a in ASSETS)...), verify),
+    Stage(:deploy, "into paper/figures where nothing changes (or signed off)", () -> assets_deployed(OUTDIR, paper_figdir(), ASSETS), deploy),
 ]
 
 run_stages("fig_sensitivity", STAGES)

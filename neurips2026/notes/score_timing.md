@@ -117,4 +117,4 @@ claim about the pool's central tendency.
 
 ---
 Source: `neurips2026/scripts/studies/score_timing.jl` via `neurips2026/scripts/slurm/score_timing.sbatch` (job 4841).
-Data: `$CAU_DATA_ROOT/accv2026/results/score_timing/score_timing_exact_british_museum.jld2` (not committed).
+Data: `$VGTK_DATA_ROOT/accv2026/results/score_timing/score_timing_exact_british_museum.jld2` (not committed).

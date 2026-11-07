@@ -35,8 +35,13 @@
 #
 # BUDGET AXIS
 #   Because the pool stores every hypothesis's score inputs, all budgets come
-#   from ONE scan: score all M models once, then a running argmax over prefixes
-#   gives the selection at every B simultaneously. B is in MINIMAL SAMPLES —
+#   from ONE scan: VisualGeometryToolkitEval's sample-budget engine
+#   (`evaluate_sample_budget`, every column selection only: the Jeffreys marginal a
+#   `SampleBudgetMethodSpec`, each loss-width family a `LossWidthSpec` under
+#   `NoLocalOptimization`) folds every model into a running best and records its
+#   pose error at every B. The statistic of record is that engine's `model_imc`
+#   of the selected model (until RANSACScoringDoneRight 0.5 this study recorded
+#   the pool's stored `pool_imc` from its own loop). B is in MINIMAL SAMPLES —
 #   the unit a RANSAC trial draws and its termination criterion counts. One
 #   sample yields several solver solutions occupying contiguous columns, and a
 #   repeated draw repeats them, so the boundaries are VisualGeometryToolkitEval's
@@ -47,10 +52,10 @@
 #
 # USAGE
 #   julia --project=neurips2026 -t auto neurips2026/scripts/studies/sample_budget_miscal.jl \
-#       --pool=$CAU_DATA_ROOT/accv2026/data/PT-E-SIFT-4K_pf3 \
-#       --ranges=$CAU_DATA_ROOT/accv2026/data/PT-E-SIFT-4K_pf3/coarse_ranges_hierarchical.jld2 \
+#       --pool=$VGTK_DATA_ROOT/accv2026/data/PT-E-SIFT-4K_pf3 \
+#       --ranges=$VGTK_DATA_ROOT/accv2026/data/PT-E-SIFT-4K_pf3/coarse_ranges_hierarchical.jld2 \
 #       [--pool-samples=<dir of <scene>.samples.jld2>] \
-#       --out=$CAU_DATA_ROOT/accv2026/results/sample_budget_miscal \
+#       --out=$VGTK_DATA_ROOT/accv2026/results/sample_budget_miscal \
 #       --splits=<VisualGeometryToolkitEval>/configs/splits.toml --split=phototourism \
 #       [--zetas=1,32] [--criterion=median] \
 #       [--budgets=100,500,1000,...,4000]   # MINIMAL SAMPLES
@@ -67,17 +72,17 @@
 
 using JLD2, Printf, Statistics, TOML
 using RANSACScoringDoneRight
-using RANSACScoringDoneRight: alloc_scoring_workspace
-# `best_pool_model`: VisualGeometryToolkitCore's generic (a scorer at its width) plus this
-# package's 4-argument method (a width-free loss-width family at a loss width).
-using VisualGeometryToolkitCore: width_axis, JeffreysPrior, codimension, best_pool_model
-using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_imc
+using RANSACScoringDoneRight: SCORING_TAGS
+using VisualGeometryToolkitCore: width_axis, JeffreysPrior, retired_tags
+using VisualGeometryToolkitCore.Pools: PoolPair, num_models
 using VisualGeometryToolkitCore.Synthetic: mean_average_accuracy
 using VisualGeometryToolkitEval: cli_option
 using VisualGeometryToolkitEval.Stats: maa_threshold
-using VisualGeometryToolkitEval.Pools: scene_loaders, residual_matrix, sample_starts, sample_ids
+using VisualGeometryToolkitEval.Pools: scene_loaders, residual_matrix, sample_starts
 using VisualGeometryToolkitEval.Tuning: corrupt_native
-using VisualGeometryToolkitEstimation: EssentialProblem
+using VisualGeometryToolkitEval.Evaluation: SampleBudgetConfig, SampleBudgetMethodSpec, LossWidthSpec,
+    evaluate_sample_budget
+using VisualGeometryToolkitEstimation: EssentialProblem, NoLocalOptimization
 
 # -----------------------------------------------------------------------------
 # Scorer roster — the CV sidecar's method keys (without the `_<criterion>`
@@ -92,85 +97,24 @@ const ROSTER = (:ransac, :msac, :gau, :magsac, :jeffreys)
 # the sweep needs no other change. Likewise IG-MLE / IG-robust, which
 # additionally need a fitted scale prior.
 
-# The scoring of roster key `key` at native `native`: the Jeffreys marginal
-# (outlier half-width) for `:jeffreys`, else the loss-width family of that name
-# (`loss_width_scoring` throws for an unknown one; the width is a call argument).
-# The roster/sidecar key `:gau` is the Gaussian-uniform family, whose
-# `loss_width_scoring` tag is `:mlesac` (renamed at the K+ contracts).
-family_tag(key::Symbol) = key === :gau ? :mlesac : key
+# The scoring tag of a roster/sidecar key: the sidecar predates the tag rule
+# and spells the Gaussian-uniform family by its retired tag `gau`, which
+# RANSACScoringDoneRight's `SCORING_TAGS` records as renamed `mlesac` — read from
+# the registry, never restated here.
+family_tag(key::Symbol) = get(Dict(retired_tags(SCORING_TAGS)), String(key), String(key))
+
+# The width-free scoring of a loss-width roster key (`loss_width_scoring` throws
+# for an unknown one), and the Jeffreys marginal at its outlier half-width.
+loss_width_family(key::Symbol, problem_type::Type) = loss_width_scoring(family_tag(key), problem_type)
+jeffreys_scoring(problem_type::Type, outlier_halfwidth::Float64) =
+    StudentTUniformScoring(problem_type, outlier_halfwidth; prior = JeffreysPrior())
 scoring_for(key::Symbol, problem_type::Type, native::Float64) =
-    key === :jeffreys ? StudentTUniformScoring(problem_type, native; prior = JeffreysPrior()) :
-                        loss_width_scoring(family_tag(key))
+    key === :jeffreys ? jeffreys_scoring(problem_type, native) : loss_width_family(key, problem_type)
 
-# -----------------------------------------------------------------------------
-# Per-model score vectors.
-#
-# The package's `best_pool_model` returns only the arg-best over the whole
-# pool; a budget sweep needs the score of EVERY model so the running best can
-# be read at each prefix. These are the package's own per-model scores:
-# `pool_model_score` for a loss-width family, `score_residuals!` for the
-# marginal — no formula is restated here.
-#
-# `check_roster_against_package` below asserts argmax(model_scores(...)) equals
-# the package's own `best_pool_model`, so any future divergence fails loudly
-# instead of silently changing what the curves mean.
-# -----------------------------------------------------------------------------
-function model_scores!(out::Vector{Float64}, problem_type::Type, key::Symbol,
-                       pair::PoolPair, R::AbstractMatrix{Float32}, native::Float64)
-    n = num_points(pair); M = num_models(pair)
-    length(out) == M || resize!(out, M)
-    scoring = scoring_for(key, problem_type, native)
-    if scoring isa StudentTUniformScoring
-        w = alloc_scoring_workspace(n, codimension(problem_type), scoring)
-        q = Vector{Float64}(undef, n)
-        @inbounds for j in 1:M
-            s, _ = score_residuals!(w, q, scoring, view(R, 1:n, j), n;
-                                    sample_idx = view(pair.sample_indices, :, j))
-            out[j] = isfinite(s) ? s : -Inf
-        end
-    else
-        for j in 1:M
-            out[j] = pool_model_score(scoring, pair, R, j, native)
-        end
-    end
-    return out
-end
-
-# -----------------------------------------------------------------------------
-# Running best over prefixes → pose error at every budget.
-#
-# imc pose error of a hypothesis is RSDR's `pool_imc` over the PRECOMPUTED
-# stored errors (`errors_r`, `errors_t`) — no pose decomposition happens here.
-# -----------------------------------------------------------------------------
-imc_errors(pair::PoolPair) = [pool_imc(pair, j) for j in 1:num_models(pair)]
-
-
-"""
-Selection error of the running-best-by-score model at each SAMPLE budget.
-
-`budgets[b]` counts minimal samples; the recorded entry is the running best
-over every model belonging to samples `1:budgets[b]`. Budgets beyond the pool's
-sample count carry the final running best.
-"""
-function errors_at_budgets(scores::Vector{Float64}, imc::Vector{Float64},
-                           ids::Vector{Int}, budgets::Vector{Int})
-    out = fill(NaN, length(budgets))
-    best_j = 0; best_s = -Inf; bi = 1
-    @inbounds for j in eachindex(scores)
-        # Close out every budget that the preceding samples have completed.
-        while bi <= length(budgets) && budgets[bi] < ids[j]
-            out[bi] = best_j == 0 ? NaN : imc[best_j]
-            bi += 1
-        end
-        sc = scores[j]
-        sc > best_s && (best_s = sc; best_j = j)
-    end
-    while bi <= length(budgets)
-        out[bi] = best_j == 0 ? NaN : imc[best_j]
-        bi += 1
-    end
-    return out
-end
+# (The study's own per-model score vectors, running best over sample prefixes
+#  and contract check against the package's pool scorers are deleted: the
+#  sample-budget engine of VisualGeometryToolkitEval is that loop, over the
+#  scorers' own `score!`.)
 
 # -----------------------------------------------------------------------------
 # CV sidecar → tuned natives (with the interior-argmin gate)
@@ -200,54 +144,42 @@ function load_natives(ranges_path::AbstractString, criterion::AbstractString)
 end
 
 # -----------------------------------------------------------------------------
-# CONTRACT: our per-model scores must agree with the package's pool scorers.
-# -----------------------------------------------------------------------------
-function check_roster_against_package(pair::PoolPair, R::AbstractMatrix{Float32},
-                                      nat::Dict{Symbol,Float64})
-    buf = Float64[]
-    for k in ROSTER
-        haskey(nat, k) || continue
-        v = nat[k]
-        model_scores!(buf, EssentialProblem, k, pair, R, v)
-        ours = argmax(buf)
-        theirs = k === :jeffreys ?
-                 best_pool_model(scoring_for(k, EssentialProblem, v), pair, R) :
-                 best_pool_model(loss_width_scoring(family_tag(k)), pair, R, v)
-        theirs == 0 && continue                      # no model: nothing to compare
-        ours == theirs || error("CONTRACT VIOLATION: $k per-model argmax " *
-                                "$ours ≠ package best_pool_model $theirs — the experiment's " *
-                                "score has diverged from RSDR's pool scorers")
-    end
-    return true
-end
-
-# -----------------------------------------------------------------------------
 # One scene's curves
 # -----------------------------------------------------------------------------
+# The engine column of combo `(key, ζ)`.
+combo_name(k::Symbol, ζ::Float64) = Symbol(k, "_zeta", ζ)
+
 """
     scene_curves(pairs, mats, starts, nat, combos, budgets) -> Matrix{Vector{Float64}}
 
 The pose error at every budget of every `(key, ζ)` combo (columns) for every
-pair (rows): pair `i` scored on its residual matrix `mats[i]`. Scoring is
-embarrassingly parallel over pairs: each pair owns its own score buffer and
-workspace, and writes only its own row.
+pair (rows): pair `i` scored on its residual matrix `mats[i]`, by
+VisualGeometryToolkitEval's `evaluate_sample_budget` with no local optimization —
+the Jeffreys combos as `SampleBudgetMethodSpec`s at their corrupted outlier
+half-widths, every loss-width combo a `LossWidthSpec` at its corrupted loss
+width. The checkpoints are every multiple of the budgets' common divisor up to
+the largest budget, read at `budgets`; each is the running best's `model_imc`.
+The engine threads over pairs.
 """
 function scene_curves(pairs::AbstractVector{<:PoolPair}, mats::AbstractVector{<:AbstractMatrix{Float32}},
                       starts::AbstractVector{<:AbstractVector{<:Integer}},
                       nat::Dict{Symbol,Float64}, combos, budgets::Vector{Int})
-    P = length(pairs)
-    length(mats) == P || throw(DimensionMismatch("$(length(mats)) residual matrices for $P pairs"))
-    curves = Array{Vector{Float64}}(undef, P, length(combos))
-    Threads.@threads for i in 1:P
-        pair = pairs[i]; R = mats[i]
-        imc  = imc_errors(pair)
-        ids  = sample_ids(starts[i], num_models(pair))
-        # Task-local buffer. Deliberately NOT a per-threadid() pool:
-        # threadid() is not stable across yields under dynamic scheduling.
-        buf  = Float64[]
-        for (ci, (k, ζ)) in enumerate(combos)
-            model_scores!(buf, EssentialProblem, k, pair, R, corrupt_native(nat[k], ζ))
-            curves[i, ci] = errors_at_budgets(buf, imc, ids, budgets)
+    methods = [SampleBudgetMethodSpec(combo_name(k, ζ), jeffreys_scoring(EssentialProblem, corrupt_native(nat[k], ζ)))
+               for (k, ζ) in combos if k === :jeffreys]
+    isempty(methods) && error("the sample-budget engine needs a scoring method column: the sidecar has no :jeffreys native")
+    specs = [LossWidthSpec(combo_name(k, ζ), loss_width_family(k, EssentialProblem), corrupt_native(nat[k], ζ))
+             for (k, ζ) in combos if k !== :jeffreys]
+    cap = maximum(budgets)
+    cfg = SampleBudgetConfig(; sample_cap = cap, batch_size = reduce(gcd, budgets), lo_every = cap,
+                             lo_strategy = NoLocalOptimization(), budget_unit = :samples)
+    res = evaluate_sample_budget(EssentialProblem, methods, pairs, mats; loss_width_specs = specs, cfg,
+                                 sample_starts = starts)
+    at = [findfirst(==(b), res.sample_counts) for b in budgets]
+    curves = Array{Vector{Float64}}(undef, length(pairs), length(combos))
+    for (ci, (k, ζ)) in enumerate(combos)
+        m = findfirst(==(combo_name(k, ζ)), res.methods)
+        for i in eachindex(pairs)
+            curves[i, ci] = Float64.(res.err_batch[i, m, at])
         end
     end
     return curves
@@ -284,7 +216,7 @@ function main(args = ARGS)
     flush(stderr)
 
     mkpath(outdir)
-    contract_checked = false
+    axis_reported = false
     results = Dict{Tuple{Symbol,Float64},Vector{Vector{Float64}}}()  # (method, ζ) -> per-pair curves
 
     # (key, ζ) product, materialised once — the threaded loop writes by INDEX
@@ -306,16 +238,12 @@ function main(args = ARGS)
         pairs = pool.pairs[1:P]
         mats  = [residual_matrix(res, i) for i in 1:P]
 
-        # The package-agreement contract is established ONCE, on the first
-        # pair, BEFORE any threading.
-        if !contract_checked
+        if !axis_reported
             p1 = first(pairs); ns = length(first(starts))
             @info "budget axis (SAMPLES)" budgets n_samples = ns n_models = num_models(p1)
             ns >= budgets[end] ||
                 @warn "pool holds fewer samples than the largest budget — the top points repeat the full-pool best" n_samples = ns
-            check_roster_against_package(p1, first(mats), nat)
-            contract_checked = true
-            @info "contract OK — per-model scores agree with the package pool scorers"
+            axis_reported = true
             flush(stderr)
         end
 
@@ -352,7 +280,7 @@ function main(args = ARGS)
     tsv = joinpath(outdir, "scoring_budget_miscal.tsv")
     write(tsv, join(rows, "\n") * "\n")
     jld = joinpath(outdir, "scoring_budget_miscal.jld2")
-    JLD2.jldsave(jld; budgets, budget_unit = "samples", zetas = ζs, criterion, natives = nat,
+    JLD2.jldsave(jld; budgets, budget_unit = "samples", statistic = "model_imc", zetas = ζs, criterion, natives = nat,
                  roster = [String(k) for k in ROSTER if haskey(nat, k)],
                  aggregate = agg, pool_dir, pool_samples = samples_dir, ranges_path = ranges, splits, split = split_name, scenes,
                  max_pairs)
