@@ -4,7 +4,7 @@
 # =============================================================================
 #
 # The manuscript lives INSIDE this repository at cvpr2027/paper; its Overleaf
-# project (Overleaf's git integration, branch master) is where co-authors
+# project (Overleaf's git integration, branch main) is where co-authors
 # edit it. `push` puts the prefix's tree on Overleaf's tip as one commit;
 # `pull` merges the co-authors' edits back under the prefix. The protocol is
 # radiometric-camera's cvpr2027/scripts/paper_sync.sh (the Blens subtree),
@@ -32,7 +32,7 @@ set -euo pipefail
 
 PREFIX="cvpr2027/paper"
 REMOTE="overleaf"
-REMOTE_BRANCH="master"
+REMOTE_BRANCH="main"
 BRANCH="split/cvpr2027-paper"     # the commit the last push made (local)
 ROOT=$(git rev-parse --show-toplevel)
 cd "$ROOT"
