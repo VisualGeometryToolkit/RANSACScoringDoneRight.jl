@@ -84,8 +84,8 @@ end
 µs per hypothesis of every timed scorer on each `(regime, pairs, mats)` of
 `subs`: the minimum over `reps` repetitions, compilation excluded.
 `scorers(pairs)` returns the `(name, f(pair, R))` list to time (this study's
-is `timed_scorers(pairs, loss_width)`; cvpr2027's timing driver hands it its
-own list and reuses this harness).
+is `timed_scorers(pairs, loss_width)`; another study may hand it its own list
+and reuse this harness).
 """
 function time_scorers(subs, scorers; reps::Int)
     results = NamedTuple[]
