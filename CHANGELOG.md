@@ -1,6 +1,31 @@
 # RANSACScoringDoneRight changelog
 
-## 0.5.0 (unreleased)
+## 0.6.0 (2026-11-09)
+
+On the VisualGeometryToolkit 0.8 stack, from General: VisualGeometryToolkitCore 0.8
+(neurips2026 also Estimation 0.8 and IO 0.8; Eval 0.6.1).
+
+### Breaking
+
+- **`StudentTUniformScoring{P, DG, L, O}`**: the label prior `L` and the outlier
+  model `O` are type parameters (was `{P, DG}`), so the sweep dispatches on them
+  statically. A field or method annotated `StudentTUniformScoring{P, DG}` now names
+  an abstract type. The constructors keep their forms: `outlier` (was
+  `outlier_halfwidth`) is a number or `FixedHalfwidth` (the profile-marginal score,
+  as before), and `label_prior` defaults to `FlatLabelPrior()`.
+
+### New
+
+- Label priors: `FlatLabelPrior` (γ = ½), `ProfiledLabelPrior` (γ̂ = nᵢ/N) and
+  `BetaLabelPrior` (γ integrated out); `label_prior(scoring)`.
+- Outlier models: `ExtremeValueHalfwidth` (the half-width estimated from each
+  partition's complement), `GeneralizedParetoOutliers{:prefix | :hypothesis}`
+  (the complement scored under the fitted generalized Pareto law), `TailRules`
+  and `OutlierTerm`; `outlier_model(scoring)`; public `gpd_pwm_fit`, `tail_fit`,
+  `gpd_support`, `gpd_outlier_cost`. The extreme-value sweep reuses the sweep's
+  radix sort and allocates nothing.
+
+## 0.5.0 (2026-11-07)
 
 The VisualGeometryToolkit 0.7 stack, from General: VisualGeometryToolkitCore 0.7
 (neurips2026 also Estimation 0.7, Eval 0.6 and IO 0.7).
