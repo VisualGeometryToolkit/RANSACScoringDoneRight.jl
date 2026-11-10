@@ -79,7 +79,11 @@ writes into `paper/figures` only what is identical, unless the config's
 The Sensitivity fragments are written in the `coordinates {…}` form the paper
 carries since its arXiv preparation (paper repository 98714cd converted the
 renderer's inline `table` form, same numbers); the renderer emits that form
-directly.
+directly. The appendix panels `panel_sel_miscal{,_maa}.tex` (from
+LocalOptimizationDoneRight, no driver here) were converted the same way for
+the arXiv camera-ready (2026-11-10): arXiv's file scanner reads an inline
+`table {…}` as a missing file. The PDF is pixel-identical. `make arxiv` in `paper/`
+builds the arXiv bundle.
 
 ## Coverage
 
