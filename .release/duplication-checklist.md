@@ -1,0 +1,35 @@
+# RANSACScoringDoneRight: duplicate removals of the 0.9 leg
+
+Owner decision 12 (2026-11-11) and the owner's ruling "all duplicates must be gone; all common code must be hoisted
+without exception". RSDR has no section in cascade-duplicate-removals.md; the items are the SIMFIT++ move, everything
+the duplication audit (duplication-audit.md, 2026-11-10) attributes to RSDR, and every hit of Core's
+`test_duplication` (monorepo dde0b5ca) on this repository. Each item is ticked with the commit that closes it.
+
+## Removals
+
+- [x] SIMFIT++ copy (src/simfitpp.jl, test/simfitpp_tests.jl, the train-split row sum `_loss_width_sum!`) → VisualGeometryToolkitEstimation's `SimFitPP`/`simfitpp_select` (e8f2f60)
+- [x] test/docs_gates.jl (audit 1, the docs-gate copy) → VisualGeometryToolkitCore's `test_docs` (e8f2f60)
+- [x] `_ka_upload` in src/marg_sweep_ka.jl (audit 17) → VisualGeometryToolkitCore's `ka_upload` (e8f2f60)
+- [x] `SCORING_TAGS`, a name VisualGeometryToolkitCore owns (test_duplication `[name]`) → renamed `ALL_SCORING_TAGS`, the merge of Core's `SCORING_TAGS` with this package's families that Core's docstring prescribes (e8f2f60)
+- [x] neurips2026 `prose_macros`, a `\newcommand` writer (audit 11; the paper-project item "its TeX writer → Eval's number-macro writer"; test_duplication `[pattern] tex_macro_writer`) → VisualGeometryToolkitEval's `PaperNumbers`/`add_number!`/`write_numbers` (0f91df8)
+- [x] the suite runs VisualGeometryToolkitCore's `test_duplication` (test/quality_naming_tests.jl) (e8f2f60)
+
+## Hoists into the stack
+
+Common code no stack package has yet. Not kept as a private copy by choice: each waits for its owner to land it, and
+the switch here is the line noted.
+
+- [ ] hoist `.githooks/sync-manifest.jl` (and the shell hooks `sync-manifest`, `post-checkout`, `post-merge`, `post-rewrite`, byte-identical to BlobBoards'; audit 20; test_duplication `[file]` against BlobBoards:.githooks/sync-manifest.jl) into VisualGeometryToolkitCore's quality module as `sync_manifest(mode::AbstractString = "update"; io = stdout) -> NamedTuple{(:created, :moved, :seconds)}` (re-resolve the active project — `Pkg.update` for an untracked Manifest, `Pkg.instantiate` for a tracked one — and report the direct dependencies that moved). Callers here: `.githooks/sync-manifest` (runs the .jl after checkout, merge and rewrite). The switch: `.githooks/sync-manifest.jl` becomes `using VisualGeometryToolkitCore: sync_manifest; sync_manifest(get(ARGS, 1, "update"))`; the shell hooks belong with it (Core's `quality/githooks/`, installed by a `install_githooks(repo)`), so no repository carries a copy.
+- [ ] hoist neurips2026 `paper_figdir()` (src/assets.jl:22, `projectdir("paper", "figures")`; audit 20, also RadiometricCamera:cvpr2027/src/assets.jl:24) into VisualGeometryToolkitEval's `PaperProjects` as `paper_figures_dir(project_root = DrWatson.projectdir()) -> String` (the directory the paper reads generated assets from; Eval's template already spells it `PAPER_FIGURES = projectdir({{FIGDIR_ARGS}})`). Callers here: neurips2026/src/assets.jl, scripts/fig_profile.jl, scripts/fig_sensitivity.jl, scripts/paper_numbers.jl, test/test_figures.jl. The switch: delete the definition and import `paper_figures_dir` in src/NeurIPS2026.jl under the name used.
+- [ ] hoist neurips2026 `artifact_catalog()` (src/data_artifacts.jl:21, `load_catalog(<project>/configs/data_artifacts.toml)`; audit 20, also LocalOptimizationDoneRight:accv2026/src/data_artifacts.jl:30) into VisualGeometryToolkitEval's `DataArtifacts` as `project_catalog(project_root = DrWatson.projectdir()) -> DataCatalog` (the project's `configs/data_artifacts.toml`, bound to its `Artifacts.toml` or the env override). Callers here: neurips2026/scripts/fetch_data.jl, test/test_paper_project.jl. The switch: delete the definition and import `project_catalog`.
+- [ ] hoist the `_partition_score` of src/sweep.jl (audit 7: BlobBoards:src/adapt_ka.jl:316 `_sweep_score` restates it) — RSDR owns the score, so the item here is to make it public and device-callable (`partition_score(...)`, plain Float64 arithmetic already) so BlobBoards' leg can delete its copy. Not done in this leg: it needs BlobBoards' kernel signature agreed with its leg; RSDR's own code has no copy.
+
+## Not a duplicate
+
+- The five loss-width scorer structs (`MlesacScoring`, `MagsacScoring`, `WelschCostScoring`, `SmoothTLSScoring`,
+  `GemanScoring`; audit 20 "RSDR scorer boilerplate"): extension families of Core's threshold-scoring contract, not
+  copies (the audit says so); test_duplication does not flag them. No item.
+
+## test_duplication
+
+See the leg report (/home/jpr/logs/dgx-agent/cascade-09-RANSACScoringDoneRight.md) for the run and its output.

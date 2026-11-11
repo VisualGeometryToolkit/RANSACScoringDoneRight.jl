@@ -10,3 +10,6 @@ src/.cache/
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
 .claude/worktrees/
+
+# Slurm suite logs of the port (local)
+/logs/
