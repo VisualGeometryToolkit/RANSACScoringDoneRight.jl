@@ -60,9 +60,10 @@ LogBinned
 Each scorer's hyperparameter lives on its own width axis: the outlier half-width
 for the marginal scores, the loss width for the threshold-based family.
 VisualGeometryToolkitCore's `width_axis(scoring)` names it (this package states it for
-its grid families); the scale multiple → native maps `to_native` and
-`native_map`, and the conversions `outlier_halfwidth_to_loss_width` /
-`loss_width_to_outlier_halfwidth`, are VisualGeometryToolkitCore's.
+its grid families); the maps from an efficiency constant to the native width,
+`to_native` and `native_map`, and the conversions `outlier_halfwidth_to_loss_width` /
+`loss_width_to_outlier_halfwidth` (at an `operating_efficiency_constant`), are
+VisualGeometryToolkitCore's.
 
 ## Scale marginals of redescending losses
 

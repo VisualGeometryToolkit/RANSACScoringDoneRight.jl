@@ -43,8 +43,9 @@ drivers are `neurips2026/scripts/fig_profile.jl` and `fig_sensitivity.jl`
 ## Environment
 
 `neurips2026/` is its own Julia project, not a dependency of the package: the
-drivers need pool IO (VisualGeometryToolkitEval) and the concrete problem types
-(VisualGeometryToolkitEstimation), which the package deliberately does not depend on.
+drivers need pool IO (VisualGeometryToolkitEval), which the package deliberately
+does not depend on, and the concrete problem types of
+VisualGeometryToolkitEstimation, which the package itself uses only for SIMFIT++.
 
 ```bash
 cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'

@@ -66,6 +66,34 @@ own types.
   kernels. VisualGeometryToolkitCore's generic `select_on_grid!` and
   `best_pool_model` serve any scorer at its width.
 
+## What the weights mean
+
+A robust result carries per-point weights, and what they mean is a trait of
+the scorer's type, VisualGeometryToolkitCore's `weight_kind`; its
+`inlier_mask` cuts them by that kind.
+
+- **Binary.** Every loss-width family here (MLESAC, MAGSAC++, the Welsch,
+  smooth-TLS and Geman–McClure costs) is an `AbstractThresholdScoring`, as
+  RANSAC and MSAC are, so its kind is `BinaryWeights`: a weight is the 0/1
+  consensus membership, and the inlier mask is `w > 0`. None of them has an
+  `outlier_halfwidth` (it is `nothing`), so the weights stay that membership.
+- **Posterior.** `StudentTUniformScoring`, at a fixed outlier half-width or
+  with one of this package's outlier models ([`OutlierTerm`](@ref),
+  [`GeneralizedParetoOutliers`](@ref), [`ExtremeValueHalfwidth`](@ref)), is
+  `PosteriorWeights`: posterior inlier probabilities, cut by the MAP rule
+  `is_map_inlier` (posterior > ½).
+
+```julia
+using RANSACScoringDoneRight
+using VisualGeometryToolkitCore: weight_kind
+
+weight_kind(typeof(MagsacScoring(2)))                       # BinaryWeights()
+weight_kind(typeof(loss_width_scoring("welsch_cost", 1)))   # BinaryWeights()
+```
+
+`test/weight_kind_tests.jl` holds these claims for every scorer the package
+defines.
+
 ## The scorers
 
 **The scale-free marginal score.** For a fixed inlier partition the Gaussian
@@ -122,10 +150,12 @@ heavy σ̂² tails of pairs with few inliers, the regime where the prior matters
 Every scorer has one hyperparameter, a *width*, and each family's width lives on
 its own axis: the outlier half-width for the marginal scores, the loss width for
 the threshold-based family. VisualGeometryToolkitCore's `width_axis(scoring)` names a
-scorer's axis (`OutlierHalfwidth` or `LossWidth`); its `to_native` maps a
-scale multiple onto it and `native_map` is that map curried, so that
+scorer's axis (`OutlierHalfwidth` or `LossWidth`); its `to_native` maps an
+efficiency constant (a width as a plain multiple of the noise scale) onto it and
+`native_map` is that map curried, so that
 grids for different families can be laid out over comparable neighbourhoods of
-the same noise scale. The vocabulary is fixed: `loss_width` is a loss's scale
+the same noise scale. The vocabulary is fixed: `efficiency_constant` is that
+multiple, `loss_width` is a loss's scale
 parameter, `outlier_halfwidth` the half-width of the uniform outlier support,
 `decision_boundary` the residual at which the MAP rule flips, `s2` a variance
 and `ŝ`/`s_hat_sq` the scale estimate and its square.
