@@ -12,7 +12,7 @@ using DrWatson
 include(srcdir("NeurIPS2026.jl"))
 
 _cfg(name) = TOML.parsefile(projectdir("configs", name * ".toml"))
-_submitted(name) = read(joinpath(paper_figdir(), name), String)
+_submitted(name) = read(joinpath(paper_figures_dir(), name), String)
 _render(f) = (io = IOBuffer(); f(io); String(take!(io)))
 
 const _STORED_BOUND = try

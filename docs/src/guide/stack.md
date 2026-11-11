@@ -194,14 +194,14 @@ package never depends on the project.
 
 ## Development
 
-The repository ships git hooks in `.githooks/` that keep the local
-`Manifest.toml` resolvable. After a pull, checkout or rebase that changes the
-`Project.toml` of any workspace member, they re-resolve the workspace. They
-only resolve; precompilation waits for the next `using`. The hooks are opt-in,
-once per clone:
+The stack's git hooks keep the local `Manifest.toml` resolvable: after a pull,
+checkout or rebase that changes the `Project.toml` of any workspace member,
+they re-resolve the workspace. They only resolve; precompilation waits for the
+next `using`. They are VisualGeometryToolkitCore's (its `githooks/`, one copy for
+every stack repository) and opt-in, once per clone:
 
 ```bash
-git config core.hooksPath .githooks
+julia --project=. -e 'using VisualGeometryToolkitCore; VisualGeometryToolkitCore.install_githooks()'
 ```
 
 The package's tests use ReTestItems, one item per `test/*_tests.jl` file.

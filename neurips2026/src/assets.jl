@@ -17,9 +17,8 @@
 # =============================================================================
 using VisualGeometryToolkitEval.Reproduce: verify_assets, assets_deployed, deploy_assets,
     fragment_coordinates, compare_fragments, VERIFY_REPORT
+using VisualGeometryToolkitEval.PaperProjects: paper_figures_dir   # paper/figures/: where the paper reads its generated assets
 
-"The directory the paper reads its generated assets from."
-paper_figdir() = projectdir("paper", "figures")
 
 """
     verify_paper_assets(outdir, assets)
@@ -27,12 +26,12 @@ paper_figdir() = projectdir("paper", "figures")
 
 The verify and deploy stages of every driver: `verify_assets` and
 `deploy_assets` of the renders `assets` in `outdir` against paper/figures
-(`paper_figdir()`), the deploy under the config's sign-off
+(`paper_figures_dir()`), the deploy under the config's sign-off
 (`replace_submitted(cfg)`).
 """
-verify_paper_assets(outdir::AbstractString, assets) = (verify_assets(outdir, paper_figdir(), assets); nothing)
+verify_paper_assets(outdir::AbstractString, assets) = (verify_assets(outdir, paper_figures_dir(), assets); nothing)
 deploy_paper_assets(outdir::AbstractString, cfg::AbstractDict, assets) =
-    (deploy_assets(outdir, paper_figdir(), assets; replace_submitted = replace_submitted(cfg)); nothing)
+    (deploy_assets(outdir, paper_figures_dir(), assets; replace_submitted = replace_submitted(cfg)); nothing)
 
 """
     replace_submitted(cfg) -> Bool | Vector{String}

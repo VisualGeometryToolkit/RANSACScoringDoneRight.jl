@@ -12,13 +12,11 @@
 # =============================================================================
 if !@isdefined(NEURIPS2026_DATA_ARTIFACTS_LOADED)
 
-using VisualGeometryToolkitEval.DataArtifacts: DataCatalog, load_catalog, required_artifacts, artifact_files,
+using VisualGeometryToolkitEval.DataArtifacts: DataCatalog, load_catalog, project_catalog, required_artifacts, artifact_files,
     fetch_artifacts!, pack_artifacts, zenodo_url, catalog_violations
 
-const DATA_ARTIFACTS_CATALOG = normpath(joinpath(@__DIR__, "..", "configs", "data_artifacts.toml"))
-
-"The catalog (configs/data_artifacts.toml), bound to neurips2026/Artifacts.toml or `ENV[\"NEURIPS2026_ARTIFACTS_TOML\"]`."
-artifact_catalog() = load_catalog(DATA_ARTIFACTS_CATALOG)
+# The catalog is VisualGeometryToolkitEval's `project_catalog()`: configs/data_artifacts.toml of the
+# bound project, bound to its Artifacts.toml or `ENV["NEURIPS2026_ARTIFACTS_TOML"]`.
 
 const NEURIPS2026_DATA_ARTIFACTS_LOADED = true
 end # include guard

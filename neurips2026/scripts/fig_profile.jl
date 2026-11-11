@@ -64,7 +64,7 @@ const STAGES = [
           () -> run_complete(OUTDIR; sidecar = first(ASSETS)) && all(a -> isfile(joinpath(OUTDIR, a)), ASSETS), render),
     Stage(:verify, "each render against the submitted asset (bytes, coordinates)",
           () -> fresher(joinpath(OUTDIR, VERIFY_REPORT), (joinpath(OUTDIR, a) for a in ASSETS)...), verify),
-    Stage(:deploy, "into paper/figures where nothing changes (or signed off)", () -> assets_deployed(OUTDIR, paper_figdir(), ASSETS), deploy),
+    Stage(:deploy, "into paper/figures where nothing changes (or signed off)", () -> assets_deployed(OUTDIR, paper_figures_dir(), ASSETS), deploy),
 ]
 
 run_stages("fig_profile", STAGES)

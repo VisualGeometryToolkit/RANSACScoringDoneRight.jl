@@ -6,8 +6,8 @@
 # it, and from which config of record its file list derives. The suite checks
 # the catalog against the bindings (paper_project_violations :catalog).
 #
-#   fetch: julia --project=. -e 'include("src/data_artifacts.jl"); fetch_artifacts!(artifact_catalog())'
-#   pack:  DataArtifacts.pack_artifacts(artifact_catalog(), [names]; stage = <scratch dir>)
+#   fetch: julia --project=. -e 'include("src/data_artifacts.jl"); fetch_artifacts!(project_catalog())'
+#   pack:  DataArtifacts.pack_artifacts(project_catalog(), [names]; stage = <scratch dir>)
 #
 # Two groups:
 #   * neurips2026_paper_runs — the stored runs every figure and prose number of
