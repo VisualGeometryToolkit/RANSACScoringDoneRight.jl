@@ -14,8 +14,8 @@
 # STAGES
 #   compute  every listed statistic, unrounded and rounded as stated
 #            → <results>/numbers/paper_numbers-<run key>/numbers.tsv
-#   macros   the generated numbers as \newcommand lines → paper_numbers.tex
-#            beside numbers.tsv
+#   macros   the generated numbers as VisualGeometryToolkitEval number macros
+#            (write_numbers) → paper_numbers.tex beside numbers.tsv
 #   verify   the macro file against paper/figures (verify.tsv)
 #   deploy   into paper/figures — only where that changes nothing, unless
 #            [deploy] replace_submitted
@@ -48,7 +48,9 @@ function compute()
     return nothing
 end
 
-macros() = write(joinpath(OUTDIR, only(ASSETS)), prose_macros(CFG, [check_prose_number(CFG, e) for e in CFG["numbers"]]))
+macros() = (write_numbers(joinpath(OUTDIR, only(ASSETS)),
+                          prose_numbers(CFG, [check_prose_number(CFG, e) for e in CFG["numbers"]];
+                                        run_key = KEY, commit = string(read_provenance(OUTDIR)["gitcommit"]))); nothing)
 verify() = (verify_assets(OUTDIR, paper_figdir(), ASSETS); nothing)
 deploy() = (deploy_assets(OUTDIR, paper_figdir(), ASSETS; replace_submitted = replace_submitted(CFG)); nothing)
 

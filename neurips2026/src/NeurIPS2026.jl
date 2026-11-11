@@ -16,7 +16,9 @@ using TOML: TOML
 using JLD2: JLD2
 using DataFrames: DataFrames, DataFrame
 using VisualGeometryToolkitEval.Experiments: Stage, run_stages, require_input, fresher, run_key,
-    set_project_root!, data_root, results_root, write_run_records, write_provenance, run_complete
+    set_project_root!, data_root, results_root, write_run_records, write_provenance, run_complete, read_provenance
+# The one writer of a paper's number macros (prose_numbers, numbers.jl).
+using VisualGeometryToolkitEval.Reproduce: PaperNumbers, add_number!, write_numbers
 
 # data/exp_raw (inputs) and data/exp_pro (results) under this project, unless
 # VGTK_DATA_ROOT / VGTK_RESULTS_ROOT bind them elsewhere (data/README.md).

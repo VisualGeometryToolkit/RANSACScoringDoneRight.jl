@@ -65,7 +65,12 @@ end
             for r in rows
                 @test r.ok || (@info "prose number differs from its data" r; false)
             end
-            @test prose_macros(cfg, rows) == _submitted(cfg["render"]["macros"])
+            # the generated fragment (VisualGeometryToolkitEval's writer) defines the
+            # submitted file's macros with the same values: its numbers, not its bytes
+            # (the fragment carries provenance comments the submitted copy predates)
+            fragment = joinpath(mktempdir(), cfg["render"]["macros"])
+            write_numbers(fragment, prose_numbers(cfg, rows; run_key = run_key(cfg), commit = "test"))
+            @test compare_fragments(read(fragment, String), _submitted(cfg["render"]["macros"])).same_numbers
             # the generated macros, each exactly its rounded statistic
             deployed = Dict(m[1] => parse(Float64, m[2]) for m in
                             eachmatch(r"\\newcommand\{\\(\w+)\}\{([^}]*)\}", _submitted(cfg["render"]["macros"])))
