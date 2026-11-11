@@ -99,7 +99,8 @@ using VisualGeometryToolkitCore: AbstractConstraintProblem, data_size,
     whitened_constraint_rows, IGPrior, JeffreysPrior,
     square_distances!, zero_sample!, GauInlier, decision_threshold,
     truncated_log_normaliser, consensus_s2, ScoreBuffers, residuals,
-    scoring_workspace, RansacScoring, MsacScoring, AbstractThresholdScoring
+    scoring_workspace, RansacScoring, MsacScoring, AbstractThresholdScoring,
+    exact_pm_score_kernel!, argmax_models_kernel!, support_sq_loss_width, sorted_squared_residuals   # the exact grid selection (Core's)
 import VisualGeometryToolkitCore: AbstractScoring, loss_shape, codimension, score!, score_bound,
     inlier_count, consensus_order, inlier_threshold, has_inlier_threshold, is_predictive,
     scored_model, scale_prior, outlier_halfwidth, check_workspace, with_width, width_axis, minimal_sample_size,

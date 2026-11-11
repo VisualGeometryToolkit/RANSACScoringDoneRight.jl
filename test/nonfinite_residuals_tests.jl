@@ -17,9 +17,8 @@
     using RANSACScoringDoneRight: MagsacScoring, MlesacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring,
         RansacScoring, MsacScoring,
         stage_ig_shared_from_pairs, Exact, LogBinned,
-        histogram_pm_score_kernel!, exact_pm_score_kernel!, _build_score_weight_matrix,
-        _support_sq
-    using VisualGeometryToolkitCore: best_pool_model, with_width, LossWidth
+        histogram_pm_score_kernel!, _build_score_weight_matrix
+    using VisualGeometryToolkitCore: best_pool_model, with_width, LossWidth, exact_pm_score_kernel!, support_sq_loss_width
 
     # One pair whose M models share their residuals except that model j has
     # 3(j−1) of its INLIERS replaced by `bad(j)`. Model 1 keeps every inlier, so it
@@ -84,7 +83,7 @@
                 K, M = length(cols[1]), length(cols)
                 out = zeros(1, M, length(loss_widths))
                 kx(out, reduce(vcat, cols), Int64[0, K * M], Int32[K], Int32[M], loss_widths,
-                   Int32(length(loss_widths)), Int32(0), sc, _support_sq(sc, maximum(loss_widths)); ndrange = (1, M))
+                   Int32(length(loss_widths)), Int32(0), sc, support_sq_loss_width(sc, maximum(loss_widths)); ndrange = (1, M))
                 KernelAbstractions.synchronize(backend)
                 out
             end

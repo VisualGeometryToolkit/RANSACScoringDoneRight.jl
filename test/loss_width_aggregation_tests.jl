@@ -16,8 +16,9 @@
     using RANSACScoringDoneRight
     using RANSACScoringDoneRight: stage_ig_shared_from_pairs,
         Exact, LogBinned, RansacScoring, MsacScoring, MlesacScoring, MagsacScoring,
-        WelschCostScoring, SmoothTLSScoring, GemanScoring, residual_quality, _support_sq,
-        exact_pm_score_kernel!, histogram_pm_score_kernel!, _build_score_weight_matrix
+        WelschCostScoring, SmoothTLSScoring, GemanScoring, residual_quality,
+        histogram_pm_score_kernel!, _build_score_weight_matrix
+    using VisualGeometryToolkitCore: exact_pm_score_kernel!, support_sq_loss_width
 
     const _AGG_FAMILIES = (RansacScoring(), MsacScoring(), MlesacScoring(), MagsacScoring(),
                            WelschCostScoring(), SmoothTLSScoring(), GemanScoring())
@@ -45,7 +46,7 @@
             for sc in _AGG_FAMILIES
                 Sx = zeros(1, M, T)
                 exact_pm_score_kernel!(be)(Sx, flat, sh.pair_offset, sh.K_per_pair, sh.M_per_pair,
-                    loss_widths, Int32(T), Int32(0), sc, _support_sq(sc, maximum(loss_widths)); ndrange = (1, M))
+                    loss_widths, Int32(T), Int32(0), sc, support_sq_loss_width(sc, maximum(loss_widths)); ndrange = (1, M))
                 W = _build_score_weight_matrix(sc, loss_widths, nb, d2_min, d2_max)
                 Sb = zeros(1, M, T)
                 histogram_pm_score_kernel!(be)(Sb, flat, sh.pair_offset, sh.K_per_pair, sh.M_per_pair,

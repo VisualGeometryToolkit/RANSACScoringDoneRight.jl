@@ -66,41 +66,10 @@ struct LogBinned <: Aggregation
 end
 LogBinned() = LogBinned(200)
 
-# --- Exact: per (pair, model) thread; every residual, every loss width ---
-# The quality is evaluated in Float64 and accumulated in Float64. A non-finite
-# residual is an outlier (quality 0, skipped). Residuals are sorted ascending,
-# so for a family of COMPACT support (quality 0 from loss_width on: `_support_sq`) nothing
-# past max_loss_width² can score and the loop stops there.
-@kernel function exact_pm_score_kernel!(
-        scores_out,                       # (chunk_size, M_max, T) Float64
-        @Const(sorted_sq_flat),
-        @Const(pair_offset),
-        @Const(K_per_pair),
-        @Const(M_per_pair),
-        @Const(loss_widths),               # (T,) Float64
-        T_val::Int32,
-        p_offset::Int32,                  # chunk-local p_local + p_offset → p_global
-        scoring,                          # the loss-width family (a singleton the kernel specialises on)
-        support_sq::Float64)              # max_loss_width² for compact families, Inf otherwise
-    p_local, m = @index(Global, NTuple)
-    p = Int(p_local) + Int(p_offset)
-    M = Int(M_per_pair[p])
-    if m <= M
-        K = Int(K_per_pair[p]); Tn = Int(T_val)
-        col_base = pair_offset[p] + (Int64(m) - Int64(1)) * Int64(K)
-        @inbounds for t in 1:Tn
-            scores_out[p_local, m, t] = 0.0
-        end
-        @inbounds for k in 1:K
-            d2 = Float64(sorted_sq_flat[col_base + k])
-            isfinite(d2) || continue
-            d2 >= support_sq && break
-            for t in 1:Tn
-                scores_out[p_local, m, t] += residual_quality(scoring, d2, loss_widths[t])
-            end
-        end
-    end
-end
+# --- Exact: VisualGeometryToolkitCore's `exact_pm_score_kernel!` (per (pair, model): every residual
+# through the family's `residual_quality`, at every loss width, in Float64; it stops at
+# `support_sq_loss_width` on the sorted residuals). Moved there with `argmax_models_kernel!`
+# (2026-11-11, the twin audit's V1), so Core's `select_on_grid!` runs the same selection on the CPU.
 
 # =============================================================================
 # Histogram-based score kernel (Shekhovtsov ScoreWeightsGU pattern)
@@ -122,7 +91,7 @@ end
 # signal into bin 0 and broke argmax.
 #
 # This is the `LogBinned` aggregation of every loss-width family; `Exact` is
-# `exact_pm_score_kernel!` above.
+# VisualGeometryToolkitCore's `exact_pm_score_kernel!`.
 
 # --- Kernel 1: per (pair, model) thread, LOG-spaced bins ---
 # Bin a residual d² ∈ (d²_min, d²_max] into N_bins log-spaced bins:
@@ -184,41 +153,13 @@ end
     end
 end
 
-# --- Kernel 2: per (pair, loss width) thread --- argmax over m, gather error_r.
-@kernel function argmax_models_kernel!(
-        errors_out,                       # (chunk_size, T) Float64
-        idxs_out,                         # (chunk_size, T) Int32  (0-size when unused)
-        @Const(scores_pmt),               # (chunk_size, M_max, T) Float64
-        @Const(M_per_pair),
-        @Const(errors_imc_flat),
-        @Const(errors_offset),
-        p_offset::Int32)                  # chunk_local p_local + p_offset → p_global
-    p_local, t = @index(Global, NTuple)
-    p = Int(p_local) + Int(p_offset)      # global pair index for staging-array reads
-    # GPU backends pad ndrange to workgroup multiples: padded threads MUST exit
-    # before touching memory (they read garbage M and corrupt errors/idxs rows).
-    if p_local <= size(errors_out, 1) && t <= size(errors_out, 2) && p <= length(M_per_pair)
-    M = Int(M_per_pair[p])
-    best_score = -Inf
-    best_m = Int32(1)
-    @inbounds for m in Int32(1):Int32(M)
-        s = scores_pmt[p_local, m, t]      # chunk-local read
-        if s > best_score
-            best_score = s
-            best_m = m
-        end
-    end
-    @inbounds errors_out[p_local, t] = errors_imc_flat[errors_offset[p] + best_m]
-    if size(idxs_out, 1) > 0
-        @inbounds idxs_out[p_local, t] = best_m
-    end
-    end   # ndrange padding guard
-end
+# --- Kernel 2: per (pair, loss width) thread, argmax over m and the error gather: VisualGeometryToolkitCore's
+# `argmax_models_kernel!` (every grid evaluator's, `_chunked_argmax_eval`).
 
 # -----------------------------------------------------------------------------
 # Threshold-scoring families (D): singleton types replacing the `method::Symbol`
 # + if/elseif kernel selection. `grid_evaluate` dispatches on these via
-# `residual_quality` and `_support_sq` below; a config's tag converts at the boundary with
+# `residual_quality` and `support_sq_loss_width` below; a config's tag converts at the boundary with
 # `loss_width_scoring("ransac", dg)` (the tags are `ALL_SCORING_TAGS`).
 # -----------------------------------------------------------------------------
 # The loss-width-swept scorings, split by whether a mixture sits underneath (the two
@@ -524,9 +465,11 @@ end
 # Compact support: the quality is exactly 0 from loss_width on, so on sorted residuals
 # nothing past max_loss_width² scores (the Exact kernel stops there). MLESAC and the
 # Welsch / Geman-McClure costs reach 0 only asymptotically.
-_support_sq(::Union{RansacScoring, MsacScoring, MagsacScoring, SmoothTLSScoring},
-            max_loss_width::Float64) = max_loss_width * max_loss_width
-_support_sq(::LossWidthScoring, ::Float64) = Inf
+# (VisualGeometryToolkitCore's `support_sq_loss_width`, whose default is Inf and which states RANSAC's and MSAC's.)
+VgtkCore.support_sq_loss_width(::Union{MagsacScoring, SmoothTLSScoring}, max_loss_width::Float64) = max_loss_width * max_loss_width
+# Every member of this package's loss-width families scores by the sum of its per-residual quality (Core's
+# `has_residual_quality`; RANSAC's and MSAC's are Core's).
+VgtkCore.has_residual_quality(::Union{MlesacScoring, MagsacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring}) = true
 
 """
     _build_score_weight_matrix(scoring, loss_widths, N_bins, d2_min, d2_max)
@@ -599,7 +542,7 @@ function _grid_evaluate_loss_width(::Exact, ::Type{S}, scoring, shared, loss_wid
     backend = shared.backend
     T = length(loss_widths); M_max = Int(shared.M_max)
     loss_widths_d = ka_upload(Float64, backend, loss_widths)
-    support = _support_sq(scoring, maximum(loss_widths))
+    support = support_sq_loss_width(scoring, maximum(loss_widths))
     k1 = _ka_kernel(exact_pm_score_kernel!, backend, 2)
     out = _chunked_argmax_eval(shared, T; cs, return_idxs) do scores_pmt, s, n
         k1(scores_pmt, shared.sorted_sq_flat, shared.pair_offset,

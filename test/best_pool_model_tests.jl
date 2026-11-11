@@ -10,8 +10,8 @@
     using Test, Random
     using KernelAbstractions
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: stage_ig_shared_from_pairs,
-        Exact, exact_pm_score_kernel!, _support_sq
+    using RANSACScoringDoneRight: stage_ig_shared_from_pairs, Exact
+    using VisualGeometryToolkitCore: exact_pm_score_kernel!, support_sq_loss_width
     using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, best_pool_model,
         with_width, LossWidth
     import VisualGeometryToolkitCore as VGC
@@ -40,6 +40,13 @@
         loss_widths = [0.3, 1.0, 3.0, 8.0]
         be = KernelAbstractions.CPU()
 
+        @testset "the exact kernels are VisualGeometryToolkitCore's (one kernel per job, every backend)" begin
+            @test RANSACScoringDoneRight.exact_pm_score_kernel! === VGC.exact_pm_score_kernel!
+            @test RANSACScoringDoneRight.argmax_models_kernel! === VGC.argmax_models_kernel!
+            @test all(VGC.has_residual_quality, _BP_FAMILIES)
+            @test [support_sq_loss_width(sc, 3.0) for sc in _BP_FAMILIES] == [9.0, 9.0, Inf, 9.0, Inf, 9.0, Inf]
+        end
+
         @testset "loss-width family == the Exact kernel on one pair, per model" begin
             pair, D = _bp_pair(rng)
             sh = stage_ig_shared_from_pairs([pair], [D]; backend = be)
@@ -47,7 +54,7 @@
             for sc in _BP_FAMILIES
                 Sx = zeros(1, M, T)
                 exact_pm_score_kernel!(be)(Sx, sh.sorted_sq_flat, sh.pair_offset, sh.K_per_pair,
-                    sh.M_per_pair, loss_widths, Int32(T), Int32(0), sc, _support_sq(sc, maximum(loss_widths));
+                    sh.M_per_pair, loss_widths, Int32(T), Int32(0), sc, support_sq_loss_width(sc, maximum(loss_widths));
                     ndrange = (1, M))
                 KernelAbstractions.synchronize(be)
                 for j in 1:M, (t, loss_width) in enumerate(loss_widths)

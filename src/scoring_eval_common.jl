@@ -120,15 +120,8 @@ out-of-range index THROWS, as in every other scorer) and sorted; the selection
 error `pool_imc` is kept per model.
 """
 function precompute_pair(pair::PoolPair, R::AbstractMatrix{Float32})
-    check_residual_matrix(pair, R)
-    n = num_points(pair); M = num_models(pair)
-    sorted_sq = Matrix{Float32}(undef, n, M)
-    for j in 1:M
-        col = view(sorted_sq, 1:n, j)
-        square_distances!(col, view(R, 1:n, j), n)   # in the residuals' own precision
-        zero_sample!(col, view(pair.sample_indices, :, j))
-        sort!(col)
-    end
+    sorted_sq = sorted_squared_residuals(pair, R)   # VisualGeometryToolkitCore's staging of the exact selection kernels
+    M = num_models(pair); n = num_points(pair)
     # Bake the selection metric `pool_imc` per model (rotation-only for a
     # homography pool, max(Δrot, Δtrans) otherwise). The GPU path stages only
     # this one error array (no errors_t on device), so imc must be combined
