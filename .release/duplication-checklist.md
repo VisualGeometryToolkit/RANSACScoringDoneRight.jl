@@ -28,6 +28,8 @@ the switch here is the line noted.
 
 - [x] the twin audit's V1 (cpu-gpu-twin-audit.md, owner decision 25: one KernelAbstractions kernel on every backend): `exact_pm_score_kernel!` and `argmax_models_kernel!` of src/loss_width_sweep_ka.jl, the device form of VisualGeometryToolkitCore's host selection (`select_on_grid!` → `best_pool_model` on a threaded loop) → VisualGeometryToolkitCore's `exact_pm_score_kernel!`/`argmax_models_kernel!` (monorepo 6accc512), which Core's `select_on_grid!` now launches on the CPU backend; `_support_sq` → Core's `support_sq_loss_width` (this package's methods for MAGSAC++ and smooth TLS), `has_residual_quality` for its five families, and `precompute_pair`'s sorted columns → Core's `sorted_squared_residuals`. The copies are deleted here (this commit).
 
+- [x] the twin audit's V2 (owner ruling 2026-11-11, Option A: one kernel, the slower CPU accepted): `sweep!`'s host prefix-RSS scan (src/sweep.jl) beside `ig_sweep_kernel!` → the one kernel, which now carries the per-point penalties, the prior table and the best k; `sweep!` is the driver (sort, gather, parametric path) and launches it as one CPU work item; (S*, k*) bit for bit the scan's (this commit)
+
 ## Not a duplicate
 
 - The five loss-width scorer structs (`MlesacScoring`, `MagsacScoring`, `WelschCostScoring`, `SmoothTLSScoring`,

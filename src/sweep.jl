@@ -511,21 +511,20 @@ end
 
 Low-level sort-and-sweep kernel for the scale-free marginal score (Algorithm 1).
 
-### The per-hypothesis path — deliberately not the KernelAbstractions kernel
+### The per-hypothesis path — the one KernelAbstractions kernel
 
-The batched marginal GRID is one KernelAbstractions kernel (`ig_sweep_kernel!`
-under `grid_evaluate(::StudentTUniformScoring, …)`, CPU and GPU alike). This function is kept beside
-it on purpose, as the ONE per-hypothesis path, and is not a twin of it:
-
-- It is latency-bound. A RANSAC loop scores one hypothesis at a time, and
-  routing one through the kernel on `KernelAbstractions.CPU()` (squares sorted
-  into a preallocated flat buffer, then a 1×1×1 launch) measured slower
-  (2026-09-21, BenchmarkTools, Float64): n = 200: 1.88 → 2.57 µs (1.37×);
-  n = 715: 6.16 → 10.61 µs (1.72×); n = 2500: 24.5 → 31.7 µs (1.29×).
-- It does more. The kernel scores pre-sorted, penalty-free Jeffreys/IG columns;
-  this also sorts (the radix below), carries the predictive per-point
-  penalties, the profiled-γ `prior_table`, and the exact parametric sweep
-  for heterogeneous gains.
+The prefix sweep is ONE KernelAbstractions kernel, `ig_sweep_kernel!`: the
+batched marginal GRID launches it (under `grid_evaluate(::StudentTUniformScoring, …)`,
+CPU and GPU alike) and this function launches it as one work item on the CPU
+backend over the hypothesis's sorted column (the owner's ruling on the twin
+audit's V2, 2026-11-11: the host's own scan, 1.3–1.7× faster in 2026-09, is
+gone). This function is the DRIVER around it: the sort (the radix below), the
+gather of the sorted column and its per-point penalties, the profiled-γ
+`prior_table`, and the exact parametric sweep for heterogeneous gains (a
+different enumeration, no prefix scan). Its (S*, k*) are the host scan's bit for
+bit; measured 2026-11-11 in a 224-thread process, n = 200: 4.0 → 4.6 µs,
+n = 715: 16.7 → 18.3 µs, n = 2500: 75.8 → 74.0 µs. It allocates the sorted
+column and the launch's state (the sort itself allocates nothing).
 
 Sorts points (ascending by `scores`, or `sort_key` if provided), then sweeps
 prefixes k = m+1,...,n evaluating the partition score via
@@ -597,45 +596,20 @@ function sweep!(perm::Vector{Int}, lg_table::Vector{Float64},
         end
     end
     _sort_perm!(perm, isnothing(sort_key) ? scores : sort_key, n; scratch, radix)
-
-    m = model_dof
-    # Accumulate in Float64 REGARDLESS of the scores eltype: the sweep picks
-    # k* from score differences between adjacent partitions, and a Float32
-    # running RSS (cumsum error ~ n·eps·RSS) shifts the partition boundary.
-    # Float32 storage upstream (RansacWorkspace{_, _, Float32}) is fine —
-    # per-point precision is not the issue; the running sums are.
-    dg_f = Float64(dg)
-    RSS = 0.0
-    pen_sum = 0.0
-    best_S = -Inf
-    best_k = 0
+    # The prefix sweep is the package's one kernel (`ig_sweep_kernel!`, ig_sweep_ka.jl), one work item on the CPU backend
+    # over the sorted column (the owner's one-kernel policy, 2026-11-11; the host loop it replaced was 1.3–1.7× faster). It
+    # accumulates in Float64 whatever the scores' eltype (the running RSS decides k*), and clamps a copy of the RSS.
+    sorted = Vector{T}(undef, n)
     @inbounds for k in 1:n
-        idx = perm[k]
-        RSS += Float64(scores[idx])
-        if penalties !== nothing
-            pen_sum += Float64(penalties[idx])
-        end
-        k <= m && continue
-        # Clamp a COPY: the floor guards `log(RSS)` in this partition's score,
-        # and must not leak into the running sum. It used to clamp `RSS` in
-        # place, so on a (near-)noise-free prefix — RSS < eps after the sample
-        # points — every later partition's RSS carried an extra ≈eps, and this
-        # sweep scored a different S(k) sequence than the (since deleted)
-        # soft sweep, the parametric sweep and the device kernel, which all
-        # clamp a copy.
-        S = _table_partition_score(scale_prior, lg_table, RSS, k, m, dg_f, n, log_two_outlier_halfwidth)
-        if penalties !== nothing
-            S -= pen_sum / 2
-        end
-        if prior_table !== nothing
-            S += prior_table[k]
-        end
-        if S > best_S
-            best_S = S
-            best_k = k
-        end
+        sorted[k] = scores[perm[k]]
     end
-    return best_S, best_k
+    sorted_pen = penalties === nothing ? nothing : (p = Vector{Float64}(undef, n); (@inbounds for k in 1:n; p[k] = Float64(penalties[perm[k]]); end); p)
+    best = Array{Float64, 3}(undef, 1, 1, 1); best_k = zeros(Int32, 1, 1, 1)
+    backend = KernelAbstractions.CPU()
+    ig_sweep_kernel!(backend, (1, 1, 1))(best, sorted, Int64[0], Int32[n], Int32[1], lg_table, [log_two_outlier_halfwidth],
+        Int32(model_dof), Int32(dg), scale_prior, Int32(0), sorted_pen, prior_table, best_k; ndrange = (1, 1, 1))
+    KernelAbstractions.synchronize(backend)
+    return best[1, 1, 1], Int(best_k[1, 1, 1])
 end
 
 """

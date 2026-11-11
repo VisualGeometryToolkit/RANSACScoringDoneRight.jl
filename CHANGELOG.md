@@ -8,6 +8,12 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **Changed: the prefix sweep is one KernelAbstractions kernel** (the owner's ruling on the twin audit's V2):
+  `sweep!` launches `ig_sweep_kernel!` as one CPU work item over the hypothesis's sorted column instead of its own
+  host scan; the kernel carries the per-point penalties, the prior table and the best k. Results bit for bit the
+  scan's; 1.0–1.14× the time at n = 200–2500; `sweep!` now allocates the sorted column (8 B a point) and the
+  launch's state. The exact selection kernels `exact_pm_score_kernel!`/`argmax_models_kernel!` are VisualGeometryToolkitCore's
+  (V1).
 - **New: `partition_score(prior, lg_half_dof, half_dof, RSS, outlier_cost)`** (public, not exported): the marginal
   score of one inlier/outlier partition, the one formula every sweep scores with (it was the private `_sweep_score`).
   Plain arithmetic in `RSS`'s precision, callable inside a KernelAbstractions kernel, so a downstream device sweep

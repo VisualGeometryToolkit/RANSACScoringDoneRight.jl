@@ -59,14 +59,22 @@ end
 
 """
     ig_sweep_kernel!(scores_out, sorted_sq_flat, pair_offset, K_per_pair, M_per_pair,
-                     lg_table, log_two_outlier_halfwidth_grid, model_dof, dg, prior, p_offset)
+                     lg_table, log_two_outlier_halfwidth_grid, model_dof, dg, prior, p_offset,
+                     sorted_penalties, prior_table, best_k_out)
 
 One work-item per (pair, model, grid-point): ONE sequential sweep over the
 model's K sorted squared residuals, writing the best partition score
 `max_k S(k)` to `scores_out[p_local, m, t]` (Float64). `S(k)` is sweep.jl's
-`_table_partition_score` — the one per-partition formula every sweep shares, host and
-device — at the grid point's `log(2·outlier_halfwidth)`. RSS accumulates in Float64. Work-items
-beyond a pair's model count write nothing (the chunked driver pre-fills −Inf).
+`_table_partition_score` — the one per-partition formula — at the grid point's
+`log(2·outlier_halfwidth)`, less half the running sum of `sorted_penalties`
+(per point, in the same order; `nothing`: none) and plus `prior_table[k]`
+(`nothing`: none). RSS and the penalty sum accumulate in Float64. With
+`best_k_out` of nonzero size, the first k at the best score goes to
+`best_k_out[p_local, m, t]` (0 when no partition scores above −Inf). This is
+the package's ONE prefix sweep: the marginal grid (penalty- and prior-free, no
+k) and the host's `sweep!` (one work item, its sorted column) both launch it.
+Work-items beyond a pair's model count write nothing (the chunked driver
+pre-fills −Inf).
 """
 @kernel function ig_sweep_kernel!(
         scores_out,              # (chunk, M_max, T) Float64
@@ -76,7 +84,10 @@ beyond a pair's model count write nothing (the chunked driver pre-fills −Inf).
         @Const(M_per_pair),
         @Const(lg_table),
         @Const(log_two_outlier_halfwidth_grid),   # (T,) log(2·outlier_halfwidth_t)
-        model_dof::Int32, dg::Int32, prior::IGPrior, p_offset::Int32)
+        model_dof::Int32, dg::Int32, prior::IGPrior, p_offset::Int32,
+        sorted_penalties,        # per sorted point, as sorted_sq_flat (`nothing`: none)
+        prior_table,             # (K,) added to S(k) (`nothing`: none)
+        best_k_out)              # (chunk, M_max, T) Int32 the best k (0-size: not written)
     p_local, m, t = @index(Global, NTuple)
     p = Int(p_local) + Int(p_offset)
     inbounds_thread = p_local <= size(scores_out, 1) && t <= size(scores_out, 3) &&
@@ -88,17 +99,28 @@ beyond a pair's model count write nothing (the chunked driver pre-fills −Inf).
         log_two_outlier_halfwidth = log_two_outlier_halfwidth_grid[t]
         dg_f  = Float64(dg)
         RSS = 0.0
+        pen_sum = 0.0
         bS  = -Inf
+        bk  = 0
         @inbounds for k in 1:K
             RSS += Float64(sorted_sq_flat[base + k])
+            sorted_penalties === nothing || (pen_sum += Float64(sorted_penalties[base + k]))
             if k > model_dof
                 S = _table_partition_score(prior, lg_table, RSS, k, model_dof, dg_f, K, log_two_outlier_halfwidth)
-                S > bS && (bS = S)
+                sorted_penalties === nothing || (S -= pen_sum / 2)
+                prior_table === nothing || (S += prior_table[k])
+                if S > bS
+                    bS = S
+                    bk = k
+                end
             end
         end
         @inbounds scores_out[p_local, m, t] = bS
+        length(best_k_out) > 0 && (@inbounds best_k_out[p_local, m, t] = Int32(bk))
     end
 end
+
+const _NO_BEST_K = Array{Int32, 3}(undef, 0, 0, 0)   # the grid reads no k (adapted to a device as an empty array)
 
 # =============================================================================
 # Marginal grid evaluation
@@ -165,7 +187,7 @@ function grid_evaluate(scoring::StudentTUniformScoring{P}, staged::IGSharedData,
     out = _chunked_argmax_eval(staged, T; cs, return_idxs) do scores_pmt, s, n
         sweep(scores_pmt, staged.sorted_sq_flat, staged.pair_offset,
               staged.K_per_pair, staged.M_per_pair, lg_table_d, log_two_outlier_halfwidth_d,
-              Int32(model_dof), Int32(dg), prior, Int32(s); ndrange = (n, Mm, T))
+              Int32(model_dof), Int32(dg), prior, Int32(s), nothing, nothing, _NO_BEST_K; ndrange = (n, Mm, T))
         KernelAbstractions.synchronize(backend)
     end
     _free_local!(lg_table_d, log_two_outlier_halfwidth_d)

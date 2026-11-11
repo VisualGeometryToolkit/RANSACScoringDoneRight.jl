@@ -284,3 +284,40 @@
         @test _build_lg_table(2, 1; alpha0 = 1.0)[2] ≈ 0.0 atol = 1.0e-12    # log Γ(1 + 1)
     end
 end
+
+# The prefix sweep is one kernel (the owner's ruling on the twin audit's V2): `sweep!` launches `ig_sweep_kernel!` on the
+# CPU backend over its sorted column, with the per-point penalties, the prior table and the best k the kernel now carries.
+# Its (S*, k*) are the plain prefix scan's, bit for bit (the scan is the test's oracle).
+@testitem "sweep!: the one prefix-sweep kernel, bit for bit the plain scan" begin
+    using Test, Random
+    using KernelAbstractions: KernelAbstractions
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: sweep!, ig_sweep_kernel!, IGPrior, _build_lg_table, _table_partition_score
+    rng = Xoshiro(23)
+    function scan(lg, m, l2h, dg, s, n, pen, pt, prior)
+        p = sortperm(s[1:n]); RSS = 0.0; ps = 0.0; bS = -Inf; bk = 0
+        for k in 1:n
+            RSS += Float64(s[p[k]]); pen === nothing || (ps += Float64(pen[p[k]]))
+            k <= m && continue
+            S = _table_partition_score(prior, lg, RSS, k, m, Float64(dg), n, l2h)
+            pen === nothing || (S -= ps / 2)
+            pt === nothing || (S += pt[k])
+            S > bS && (bS = S; bk = k)
+        end
+        return bS, bk
+    end
+    for n in (3, 8, 120, 900), T in (Float32, Float64), pen in (false, true), pt in (false, true)
+        s = T.(abs2.(randn(rng, n) .* ifelse.(rand(rng, n) .< 0.6, 0.3, 8.0)))
+        pens = pen ? fill(0.4, n) : nothing                   # equal gains: the sort-and-sweep path
+        prior = pt ? randn(rng, n) : nothing
+        lg = _build_lg_table(n, 1; alpha0 = IGPrior().alpha0)
+        @test sweep!(Vector{Int}(undef, n), lg, 7, log(9.0), 1, s, n; penalties = pens, prior_table = prior) ===
+              scan(lg, 7, log(9.0), 1, s, n, pens, prior, IGPrior())
+    end
+    # the kernel's best k: written where asked, the grid's 0-size array left alone
+    s = sort(abs2.(randn(rng, 50))); lg = _build_lg_table(50, 1; alpha0 = IGPrior().alpha0)
+    best = fill(-Inf, 1, 1, 1); k = zeros(Int32, 1, 1, 1); cpu = KernelAbstractions.CPU()
+    ig_sweep_kernel!(cpu, (1, 1, 1))(best, s, Int64[0], Int32[50], Int32[1], lg, [log(9.0)], Int32(7), Int32(1), IGPrior(),
+                                     Int32(0), nothing, nothing, k; ndrange = (1, 1, 1))
+    @test (best[1], Int(k[1])) === scan(lg, 7, log(9.0), 1, s, 50, nothing, nothing, IGPrior())
+end

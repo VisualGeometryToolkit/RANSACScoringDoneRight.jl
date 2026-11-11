@@ -146,7 +146,7 @@
             @test typeof(sws32).parameters[1] === UInt32
         end
 
-        @testset "sweep! radix path ≡ sortperm! path, and allocation-free" begin
+        @testset "sweep! radix path ≡ sortperm! path; the sort allocation-free, the sweep its kernel's column" begin
             for n in (50, 257, 2500)
                 sws = default_scoring_workspace(n)
                 scores = abs2.(randn(rng, n))
@@ -160,12 +160,15 @@
                 @test s_radix === s_cmp
                 @test k_radix == k_cmp
                 @test perm_radix == sws.perm
-                # zero allocations on the radix fast path (warm)
+                # the radix sort allocates nothing (warm); the sweep is the one prefix-sweep kernel (the owner's
+                # one-kernel ruling, twin audit V2), which takes the sorted column (8 B a point) and its launch's
+                # few hundred bytes
                 f(sws, scores, n) = sweep!(sws.perm, sws.lg_table, 5, log(40.0), 1,
                                            scores, n; scratch = sws.scratch,
                                            radix = sws.radix)
                 f(sws, scores, n)
-                @test (@allocated f(sws, scores, n)) == 0
+                @test (@allocated RANSACScoringDoneRight._sort_perm!(sws.perm, scores, n; scratch = sws.scratch, radix = sws.radix)) == 0
+                @test (@allocated f(sws, scores, n)) <= 8n + 2048
             end
         end
     end
