@@ -33,7 +33,7 @@
         z = sort(abs.(draw(rng)))
         n = length(z)
         T1, T2 = suffix_sums!(zeros(n + 1), zeros(n + 1), z)
-        rules = TailRules(; threshold_quantile = 0.9)
+        rules = TailRules(; pot_threshold_quantile = 0.9)
         @test tail_fit(ExtremeValueHalfwidth(), z) == _tail_fit(rules, z, 1, T1, T2)
         for lo in (1, 2, 50, 200, 330, n - 30, n - 3)
             got = _tail_fit(rules, z, lo, T1, T2)
@@ -197,7 +197,7 @@
         @test_throws ArgumentError StudentTUniformScoring(2, ExtremeValueHalfwidth(); codimension = 2, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test_throws ArgumentError StudentTUniformScoring{Predictive}(2, ExtremeValueHalfwidth(); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test_throws ArgumentError FixedHalfwidth(0.0)
-        @test_throws ArgumentError ExtremeValueHalfwidth(; threshold_quantile = 1.0)
+        @test_throws ArgumentError ExtremeValueHalfwidth(; pot_threshold_quantile = 1.0)
         @test_throws ArgumentError GeneralizedParetoOutliers(; fit_per = :pair)
         s = StudentTUniformScoring(2, ExtremeValueHalfwidth(); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test outlier_halfwidth(s) === nothing              # the scoring contract: no supplied width

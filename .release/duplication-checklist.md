@@ -60,7 +60,7 @@ before (e9545f8) → after (this commit). Pure renames: no value moved (the timi
   the saved record (`outlier_halfwidth` saved beside `loss_width`); :88 the docstring's call
 - [x] neurips2026/scripts/studies/score_timing.jl:46–51 the comment stating the reuse → :46–51 the two options
 - [x] neurips2026/scripts/slurm/score_timing.sbatch:43,45,50 `LOSS_WIDTH` only → :43–44 `LOSS_WIDTH` and
-  `OUTLIER_HALFWIDTH`, :46 logged, :51 passed as `--outlier-halfwidth`
+  `OUTLIER_HALFWIDTH`, :46 logged, :51 handed on as `--outlier-halfwidth`
 - [x] neurips2026/notes/score_timing.md:29–31 "loss width = outlier half-width … so every score sits at the same
   decision boundary" → :29–33 two quantities, two options, not one boundary
 - [x] docs/src/index.md:109 "the sweep's optimal boundary acts as a threshold" → :109–111 "the Student-t has no
@@ -69,7 +69,7 @@ before (e9545f8) → after (this commit). Pure renames: no value moved (the timi
   half-width) and `outlier_halfwidth` reaches the scorer exactly (the refusals already held through
   VisualGeometryToolkitEstimation's key check and the constructor's keywords; the test pins them)
 
-Reviewed, not a hit: `TailRules.threshold_quantile` (the peaks-over-threshold quantile of the extreme-value fit, not a
+Reviewed, not a hit: `TailRules.pot_threshold_quantile` (renamed from `threshold_quantile` by the owner's later ruling: the POT quantile level of the extreme-value fit, not a
 width); `has_inlier_threshold`/`inlier_threshold` (VisualGeometryToolkitCore's contract: the residual at which the MAP
 rule flips, `decision_threshold`, not a half-width); the loss-width families' `threshold` (their loss width, kept);
 docs/src/index.md:129 "threshold miscalibration" (the paper's abstract, verbatim; for the owner); the table and

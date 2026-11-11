@@ -8,6 +8,13 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **Renamed: `TailRules`' `threshold_quantile` is `pot_threshold_quantile`** (the owner's ruling): the quantile level
+  of the complement's residuals at which the peaks-over-threshold threshold u is set, the extreme-value literature's
+  name (Coles 2001, §4.3; Hosking & Wallis 1987). The keyword and field of `TailRules` (and the keyword
+  `ExtremeValueHalfwidth`/`GeneralizedParetoOutliers` forward to it) and configs/default.toml's `[tail_rules]` key.
+  The old name is refused with an `ArgumentError` naming the new one, as a keyword and as a `[tail_rules]` key (this
+  package has no retired-names list). Same value (0.9): results bit for bit. `min_excess` and `finite_shape_limit`
+  are unchanged.
 - **New: configs/default.toml, the stack's defaults mechanism** (the owner's ruling, via the coordinator; as
   LocalOptimizationDoneRight's): `TailRules`' keyword defaults (`[tail_rules]`: `threshold_quantile` 0.9,
   `min_excess` 5, `finite_shape_limit` -1e-3), the scale marginals' log-scale span `_MARG_L` (`[scale_marginal]`
@@ -42,7 +49,7 @@ neurips2026 also Eval and IO of that stack.
   same (this package's tests; 1026 scoring results and a PT-E pool selection sample of neurips2026, before and after).
 - **Fixed: a scored hypothesis allocates nothing again** (the supplied-width sweep's one-work-item launch is a
   statically sized kernel instance on the CPU backend, its buffers on Core's workspace), so the allocation tests that
-  failed since the one-kernel sweep (extreme_value, the scoring contract) pass.
+  failed since the one-kernel sweep (extreme_value, the scoring contract) succeed.
 - **Changed: `WelschMarginal` and `SmoothTLSMarginal` share one keyword constructor** (`_centred_marginal(K; alpha0,
   prior_loss_width, outlier_halfwidth)`), a restatement Core's `check_duplication` found once the sweep left.
 

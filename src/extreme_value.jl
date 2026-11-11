@@ -23,29 +23,40 @@
 # -----------------------------------------------------------------------------
 
 """
-    TailRules(; threshold_quantile, min_excess, finite_shape_limit)   # defaults: configs/default.toml [tail_rules]
+    TailRules(; pot_threshold_quantile, min_excess, finite_shape_limit)   # defaults: configs/default.toml [tail_rules]
 
-The peaks-over-threshold rules both extreme-value outlier models share: the
-generalized Pareto law is fitted by probability-weighted moments (Hosking &
-Wallis 1987) to the excesses over the complement's `threshold_quantile`
-quantile. Fewer than `min_excess` excesses, or a shape at or above
-`finite_shape_limit` (no finite endpoint), fall back to the largest residual
-of the complement; an endpoint below it is raised to it. The defaults (0.9, 5,
--1e-3) are configs/default.toml's `[tail_rules]`.
+The peaks-over-threshold (POT) rules both extreme-value outlier models share
+(Coles 2001, §4.3; Hosking & Wallis 1987): the generalized Pareto law is
+fitted by probability-weighted moments to the excesses over the POT threshold
+`u`, and `pot_threshold_quantile` is the quantile level of the complement's
+residuals at which the POT threshold `u` is set. Fewer than `min_excess`
+excesses, or a shape at or above `finite_shape_limit` (no finite endpoint),
+fall back to the largest residual of the complement; an endpoint below it is
+raised to it. The defaults (0.9, 5, -1e-3) are configs/default.toml's
+`[tail_rules]`. The retired keyword `threshold_quantile` is an `ArgumentError`
+naming `pot_threshold_quantile`.
+
+References: S. Coles, *An Introduction to Statistical Modeling of Extreme
+Values*, Springer, 2001, §4.3; J. R. M. Hosking and J. R. Wallis, "Parameter
+and quantile estimation for the generalized Pareto distribution",
+Technometrics 29(3), 1987.
 """
 struct TailRules
-    threshold_quantile::Float64
+    pot_threshold_quantile::Float64
     min_excess::Int
     finite_shape_limit::Float64
-    function TailRules(; threshold_quantile::Real = _config_default("tail_rules", "threshold_quantile"),
+    function TailRules(; pot_threshold_quantile::Real = _config_default("tail_rules", "pot_threshold_quantile"),
                        min_excess::Integer = _config_default("tail_rules", "min_excess"),
-                       finite_shape_limit::Real = _config_default("tail_rules", "finite_shape_limit"))
-        0 < threshold_quantile < 1 ||
-            throw(ArgumentError("threshold_quantile must lie in (0, 1), got $threshold_quantile"))
+                       finite_shape_limit::Real = _config_default("tail_rules", "finite_shape_limit"),
+                       threshold_quantile = nothing)   # retired: refused, naming its successor
+        threshold_quantile === nothing || throw(ArgumentError(_RETIRED_TAIL_KEY))
+        0 < pot_threshold_quantile < 1 ||
+            throw(ArgumentError("pot_threshold_quantile (the quantile level of the complement's residuals at which the POT " *
+                                "threshold u is set) must lie in (0, 1), got $pot_threshold_quantile"))
         min_excess >= 2 || throw(ArgumentError("min_excess must be at least 2, got $min_excess"))
         finite_shape_limit <= 0 ||
             throw(ArgumentError("finite_shape_limit must be non-positive, got $finite_shape_limit"))
-        return new(Float64(threshold_quantile), Int(min_excess), Float64(finite_shape_limit))
+        return new(Float64(pot_threshold_quantile), Int(min_excess), Float64(finite_shape_limit))
     end
 end
 
@@ -154,7 +165,7 @@ end
     zmax = z[n]
     n - lo + 1 >= 2 || return _no_tail_fit(zmax)
     tail = view(z, lo:n)
-    u = _sorted_quantile(tail, rules.threshold_quantile)
+    u = _sorted_quantile(tail, rules.pot_threshold_quantile)
     g = lo + searchsortedlast(tail, u)                  # the first value above u
     m = n - g + 1
     m >= rules.min_excess || return _no_tail_fit(zmax)

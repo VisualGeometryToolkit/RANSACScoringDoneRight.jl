@@ -14,12 +14,13 @@
 [tail_rules]
 # The peaks-over-threshold rules of the extreme-value outlier models (`TailRules`,
 # `ExtremeValueHalfwidth`, `GeneralizedParetoOutliers`): the generalized Pareto law
-# fitted by probability-weighted moments to the excesses over the complement's
-# `threshold_quantile` quantile (the peaks-over-threshold threshold, a quantile —
-# not a width); fewer than `min_excess` excesses, or a shape at or above
-# `finite_shape_limit` (no finite endpoint), fall back to the complement's largest
-# residual.
-threshold_quantile = 0.9
+# fitted by probability-weighted moments to the excesses over the POT threshold u;
+# `pot_threshold_quantile` is the quantile level of the complement's residuals at
+# which the POT threshold u is set (Coles 2001, §4.3; Hosking & Wallis 1987) — a
+# quantile level, not a width; fewer than `min_excess` excesses, or a shape at or
+# above `finite_shape_limit` (no finite endpoint), fall back to the complement's
+# largest residual. (`threshold_quantile` is retired: refused, naming this key.)
+pot_threshold_quantile = 0.9
 min_excess = 5
 finite_shape_limit = -1.0e-3
 
