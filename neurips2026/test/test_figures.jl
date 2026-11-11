@@ -16,7 +16,7 @@ _submitted(name) = read(joinpath(paper_figures_dir(), name), String)
 _render(f) = (io = IOBuffer(); f(io); String(take!(io)))
 
 const _STORED_BOUND = try
-    isdir(stored_dir(_cfg("fig_profile")))
+    all(id -> isfile(input_path(_cfg("fig_profile"), id)), keys(_cfg("fig_profile")["inputs"]))
 catch
     false
 end
@@ -30,8 +30,8 @@ end
             cfg = _cfg("fig_profile")
             crit = cfg["profile"]["criterion"]
             for c in cfg["profile"]["cells"]
-                recs = profile_records(stored_table(cfg, c["run"], "profile"), crit)
-                oy, pmb = profile_references(stored_table(cfg, c["run"], "profile_oracle"), crit)
+                recs = profile_records(input_table(cfg, c["input"], "profile"), crit)
+                oy, pmb = profile_references(input_table(cfg, c["input"], "profile_oracle"), crit)
                 txt = _render(io -> write_profile_group(io, recs, c["title"]; oracle_y = oy, per_method_best = pmb, bands = c["bands"]))
                 @test txt == _submitted(c["asset"])
                 if c["key"] == cfg["profile"]["styles_from"]
@@ -46,7 +46,7 @@ end
             cfg = _cfg("fig_sensitivity")
             sens = cfg["sensitivity"]
             for c in sens["cells"]
-                data = results_by_method(stored_table(cfg, c["run"], "summary"))
+                data = results_by_method(input_table(cfg, c["input"], "summary"))
                 for p in sens["panels"]
                     txt = _render(io -> write_sensitivity_group(io, sensitivity_panel(p), data, sens["tune"], c["title"]))
                     @test txt == _submitted(c["assets"][p])

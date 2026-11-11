@@ -13,7 +13,7 @@
 # it or holds the identical bytes, and REFUSES when they differ unless the
 # config's [deploy] replace_submitted signs the difference off (true, or the
 # names of the assets). A submitted asset is never silently replaced. This file
-# holds only where the paper and the stored runs are.
+# holds only where the paper is and how a config's inputs are read.
 # =============================================================================
 using VisualGeometryToolkitEval.Reproduce: verify_assets, assets_deployed, deploy_assets,
     fragment_coordinates, compare_fragments, VERIFY_REPORT
@@ -45,13 +45,20 @@ function replace_submitted(cfg::AbstractDict)
     return v isa AbstractVector ? String.(v) : v
 end
 
-"The stored runs of record a figure config names ([stored] dir, relative to results_root())."
-stored_dir(cfg::AbstractDict) = joinpath(results_root(), cfg["stored"]["dir"])
+"""
+    input_path(cfg, id) -> String
+    input_table(cfg, id, key)
 
-"The evaluated table `key` of a stored run (`run`, relative to the stored directory)."
-function stored_table(cfg::AbstractDict, run::AbstractString, key::AbstractString)
-    src = require_input(joinpath(stored_dir(cfg), run, "source.jld2");
-        what = "the evaluated table of stored run $run",
-        provenance = "the 2026-05-06 production runs (PROVENANCE.toml beside them); fetch the neurips2026_paper_runs artifact (data/README.md)")
-    return JLD2.load(src, key)
+The input `id` of a config of record — its `[inputs.<id>]` table: `path`
+under `data_root()` (installing its ArtifactView `tier` where the root is the
+artifact view), required to exist — and the evaluated table `key` of that
+stored run's `source.jld2`. (Eval gap, reported: Eval has no reader of a
+config's `[inputs.<id>]`, and verifies no `sha256` yet; this is the
+composition of its `data_root` and `require_input`, nothing more.)
+"""
+function input_path(cfg::AbstractDict, id::AbstractString)
+    t = cfg["inputs"][id]
+    return require_input(joinpath(data_root(; tiers = [t["tier"]]), t["path"]);
+        what = "input $id ($(t["tier"]))", provenance = t["provenance"])
 end
+input_table(cfg::AbstractDict, id::AbstractString, key::AbstractString) = JLD2.load(input_path(cfg, id), key)

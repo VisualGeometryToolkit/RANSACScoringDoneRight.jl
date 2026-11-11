@@ -45,7 +45,7 @@ function render()
     mkpath(OUTDIR)
     inputs = String[]
     for c in CELLS
-        data = results_by_method(stored_table(CFG, c["run"], "summary"))
+        data = results_by_method(input_table(CFG, c["input"], "summary"))
         for p in SENS["panels"]
             open(io -> write_sensitivity_group(io, sensitivity_panel(p), data, SENS["tune"], c["title"]),
                  joinpath(OUTDIR, c["assets"][p]), "w")
@@ -55,7 +55,7 @@ function render()
                 open(sh -> write_sensitivity_styles(s, sh, data), joinpath(OUTDIR, CFG["render"]["styles_shared"]), "w")
             end
         end
-        push!(inputs, joinpath(stored_dir(CFG), c["run"], "source.jld2"))
+        push!(inputs, input_path(CFG, c["input"]))
     end
     write_run_records(OUTDIR, CFG; driver = "fig_sensitivity.jl", config_source = CFG_PATH, key = KEY, inputs)
     return nothing

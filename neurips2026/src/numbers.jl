@@ -2,7 +2,7 @@
 # src/numbers.jl — the statistics behind the numbers the prose states about
 # the Profile and Sensitivity figures (configs/paper_numbers.toml states which
 # number, from which stored run, under which rounding). Computed from the
-# same evaluated tables the figures are drawn from (`stored_table`).
+# same evaluated tables the figures are drawn from (`input_table`).
 # =============================================================================
 
 # The rows of one method in a Sensitivity summary at the tuning criterion, by n.
@@ -30,12 +30,12 @@ value, or a `[lo, hi]` pair for the range kinds.
 """
 function prose_number(cfg::AbstractDict, e::AbstractDict)
     srcs = haskey(e, "sources") ? e["sources"] : [e["source"]]
-    runs = [cfg["runs"][s] for s in srcs]
+    runs = srcs                       # the [inputs.<id>] ids of the stored runs
     kind = e["kind"]
     if kind in ("span_max", "span_range")
         spans = Float64[]
         for run in runs, m in e["methods"]
-            y = _profile_curve(stored_table(cfg, run, "profile"), m, cfg["check"]["criterion"])
+            y = _profile_curve(input_table(cfg, run, "profile"), m, cfg["check"]["criterion"])
             push!(spans, maximum(y) - minimum(y))
         end
         return kind == "span_max" ? [maximum(spans)] : [minimum(spans), maximum(spans)]
@@ -49,7 +49,7 @@ function prose_number(cfg::AbstractDict, e::AbstractDict)
         # many times more validation data EVERY method of the first group needs
         # than EVERY method of the second.
         length(runs) == 1 || error("$(e["id"]): kind convergence_ratio takes one source")
-        s = stored_table(cfg, only(runs), "summary")
+        s = input_table(cfg, only(runs), "summary")
         function conv_n(m)
             r = _sens_rows(s, m, tune)
             y = Vector{Float64}(r[!, col])
@@ -64,7 +64,7 @@ function prose_number(cfg::AbstractDict, e::AbstractDict)
         # the runs.
         ratios = Float64[]
         for run in runs
-            s = stored_table(cfg, run, "summary")
+            s = input_table(cfg, run, "summary")
             num = minimum(_at(_sens_rows(s, m, tune), col, n) for m in e["methods"])
             den = maximum(_at(_sens_rows(s, m, tune), col, n) for m in e["against"])
             push!(ratios, num / den)
@@ -73,7 +73,7 @@ function prose_number(cfg::AbstractDict, e::AbstractDict)
     end
     vals = Float64[]
     for run in runs
-        s = stored_table(cfg, run, "summary")
+        s = input_table(cfg, run, "summary")
         for m in e["methods"]
             r = _sens_rows(s, m, tune)
             push!(vals, kind == "max_gap" ? _at(r, col, n) - _at(r, col, 0) : _at(r, col, n))

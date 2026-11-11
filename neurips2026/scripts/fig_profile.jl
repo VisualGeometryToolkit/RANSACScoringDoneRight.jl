@@ -39,9 +39,9 @@ function render()
     mkpath(OUTDIR)
     inputs = String[]
     for c in CELLS
-        records = profile_records(stored_table(CFG, c["run"], "profile"), crit)
-        isempty(records) && error("no Profile records for criterion $crit in $(c["run"])")
-        oracle_y, pmb = profile_references(stored_table(CFG, c["run"], "profile_oracle"), crit)
+        records = profile_records(input_table(CFG, c["input"], "profile"), crit)
+        isempty(records) && error("no Profile records for criterion $crit in input $(c["input"])")
+        oracle_y, pmb = profile_references(input_table(CFG, c["input"], "profile_oracle"), crit)
         open(joinpath(OUTDIR, c["asset"]), "w") do io
             write_profile_group(io, records, c["title"]; oracle_y, per_method_best = pmb, bands = c["bands"])
         end
@@ -50,7 +50,7 @@ function render()
                 open(sh -> write_profile_styles(s, sh, records, crit), joinpath(OUTDIR, CFG["render"]["styles_shared"]), "w")
             end
         end
-        push!(inputs, joinpath(stored_dir(CFG), c["run"], "source.jld2"))
+        push!(inputs, input_path(CFG, c["input"]))
     end
     write_run_records(OUTDIR, CFG; driver = "fig_profile.jl", config_source = CFG_PATH, key = KEY, inputs)
     return nothing

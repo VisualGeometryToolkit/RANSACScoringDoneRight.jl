@@ -6,7 +6,7 @@
 #
 # The prose states its numbers as literals (no generated macro): this check is
 # how they stay tied to their data. Each [[numbers]] entry: `id`; `text`, the
-# phrase of main.tex; `source`, a stored run of [runs]; `kind`, the statistic
+# phrase of main.tex; `source`, a stored run of record (an [inputs.<id>] id); `kind`, the statistic
 # (below); `methods`; the table column (`column`) and validation size (`n`)
 # where it applies; `digits`, the rounding the prose uses; `stated`, the
 # value(s) the prose states (a [lo, hi] pair for a range); `relation`, "eq"
@@ -36,9 +36,6 @@
 # A `sources` list in place of `source` pools the methods of several runs.
 # =============================================================================
 
-[stored]
-dir = "stored/paper-runs-2026-05-06"
-
 # Excluded from the run key: where the paper reads the generated macros.
 [render]
 macros = "paper_numbers.tex"
@@ -52,11 +49,29 @@ replace_submitted = true
 tune = "median"
 criterion = "median"
 
-[runs]
-pt_profile = "phototourism/sift/E/Profile/2026-05-06T130222"
-pt_sensitivity = "phototourism/sift/E/Sensitivity/2026-05-06T102716"
-eth3d_sensitivity = "eth3d/splg/F/Sensitivity/2026-05-06T140300"
-heb_sensitivity = "heb/sift/H/Sensitivity/2026-05-06T084659"
+[inputs.pt_profile]
+tier = "neurips2026_paper_runs"
+path = "neurips2026/paper_runs/phototourism/sift/E/Profile/source.jld2"
+sha256 = "d81999efa120e0588a0a0f829178507f63125387d810580aa3f8d6a73456dac9"
+provenance = "the cell's evaluated Profile table (`profile`, `profile_oracle`): RobustVisualGeometry eval/neurips2026 evaluate_val (67d76e2-dirty, committed as 6bc825d), Slurm job 845, 2026-05-06; the stored leaf phototourism/sift/E/Profile/2026-05-06T130222 (paper_runs MOVED.toml)"
+
+[inputs.pt_sensitivity]
+tier = "neurips2026_paper_runs"
+path = "neurips2026/paper_runs/phototourism/sift/E/Sensitivity/source.jld2"
+sha256 = "0991ad17f31de51813629fd0647bb7a666cc962e8d43cb6046699d00da9b9166"
+provenance = "the cell's evaluated Sensitivity table (`summary`, `trials`): RobustVisualGeometry eval/neurips2026 evaluate_val (67d76e2-dirty, committed as 6bc825d), Slurm job 844, 2026-05-06; the stored leaf phototourism/sift/E/Sensitivity/2026-05-06T102716 (paper_runs MOVED.toml)"
+
+[inputs.eth3d_sensitivity]
+tier = "neurips2026_paper_runs"
+path = "neurips2026/paper_runs/eth3d/splg/F/Sensitivity/source.jld2"
+sha256 = "ee2defad04c929a27aedcf97f118abedd52a959bba8d46f418a034eff8dcd24c"
+provenance = "the cell's evaluated Sensitivity table (`summary`, `trials`): RobustVisualGeometry eval/neurips2026 evaluate_val (67d76e2-dirty, committed as 6bc825d), Slurm job 854, 2026-05-06; the stored leaf eth3d/splg/F/Sensitivity/2026-05-06T140300 (paper_runs MOVED.toml)"
+
+[inputs.heb_sensitivity]
+tier = "neurips2026_paper_runs"
+path = "neurips2026/paper_runs/heb/sift/H/Sensitivity/source.jld2"
+sha256 = "19282b61b5c76c7fb93e2f03833f36cf220acec4ed646edfddf64483c9454b47"
+provenance = "the cell's evaluated Sensitivity table (`summary`, `trials`): RobustVisualGeometry eval/neurips2026 evaluate_val (67d76e2-dirty, committed as 6bc825d), Slurm job 842, 2026-05-06; the stored leaf heb/sift/H/Sensitivity/2026-05-06T084659 (paper_runs MOVED.toml)"
 
 [[numbers]]
 id = "pt_profile_ours_flat"
