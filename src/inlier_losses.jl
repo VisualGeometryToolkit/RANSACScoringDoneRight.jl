@@ -12,7 +12,7 @@
 # CV parameter (exactly like the Student-t's).
 #
 # The Gaussian inlier is the closed-form (conjugate) special case — it reduces
-# to `_sweep_score(::IGPrior, …)` in sweep.jl bit-for-bit.  Welsch / Geman-
+# to `partition_score(::IGPrior, …)` in sweep.jl bit-for-bit.  Welsch / Geman-
 # McClure / smooth-TLS are NON-conjugate, so ∫dw is a 1-D quadrature over the
 # log-squared-width axis t = log sq_loss_width (VGC's `s` is a squared
 # RESIDUAL — see the name note in inlier_potentials.jl).

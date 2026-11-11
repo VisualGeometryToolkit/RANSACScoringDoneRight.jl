@@ -22,7 +22,7 @@
 @testitem "parametric_sweep" begin
     using Test, Random
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: default_scoring_workspace, _sweep_score, sweep!,
+    using RANSACScoringDoneRight: default_scoring_workspace, partition_score, sweep!,
         _build_lg_table, _alpha0, _build_prior_table
     using VisualGeometryToolkitCore: IGPrior, JeffreysPrior
 
@@ -42,7 +42,7 @@
             end
             RSS = max(RSS, eps())
             ν½ = dg * (k - m) / 2
-            S = _sweep_score(prior, lg[k - m], ν½, RSS, (n - k) * dg * log_two_outlier_halfwidth) - P / 2
+            S = partition_score(prior, lg[k - m], ν½, RSS, (n - k) * dg * log_two_outlier_halfwidth) - P / 2
             prior_table !== nothing && (S += prior_table[k])
             if S > best
                 best = S
@@ -56,7 +56,7 @@
     function _subset_score(q, pen, I, n, m, dg, log_two_outlier_halfwidth, prior::IGPrior, prior_table)
         k = length(I)
         lg = _build_lg_table(n, dg; alpha0 = prior.alpha0)
-        S = _sweep_score(prior, lg[k - m], dg * (k - m) / 2, max(sum(q[I]), eps()),
+        S = partition_score(prior, lg[k - m], dg * (k - m) / 2, max(sum(q[I]), eps()),
                          (n - k) * dg * log_two_outlier_halfwidth) - sum(pen[I]) / 2
         return prior_table === nothing ? S : S + prior_table[k]
     end
@@ -165,7 +165,7 @@
                 k <= m && continue
                 RSSc = max(RSS, eps(Float64))
                 ν½ = dg_f * (k - m) / 2
-                S = _sweep_score(scale_prior, lg_table[k - m], ν½, RSSc,
+                S = partition_score(scale_prior, lg_table[k - m], ν½, RSSc,
                                  (n - k) * dg_f * log_two_outlier_halfwidth) - pens / 2
                 prior_table !== nothing && (S += Float64(prior_table[k]))
                 if S > best_S
@@ -241,7 +241,7 @@
                 RSS += q[ordμ[kk]]; pens += pen[ordμ[kk]]
                 kk <= m && continue
                 ν½ = dg * (kk - m) / 2
-                Sμ = _sweep_score(IGPrior(), lg[kk - m], ν½, max(RSS, eps()),
+                Sμ = partition_score(IGPrior(), lg[kk - m], ν½, max(RSS, eps()),
                                   (n - kk) * dg * log_two_outlier_halfwidth) - pens / 2
                 @test S >= Sμ - 1e-9
             end

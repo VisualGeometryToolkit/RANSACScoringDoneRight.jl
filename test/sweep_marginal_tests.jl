@@ -11,7 +11,7 @@
 @testitem "sweep_marginal" begin
     using Test
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: alloc_scoring_workspace, _sweep_score
+    using RANSACScoringDoneRight: alloc_scoring_workspace, partition_score
     using VisualGeometryToolkitCore: IGPrior
 
     function _brute_Sk(r, model_dof, dg, halfwidth, prior, sws, label_prior)
@@ -22,7 +22,7 @@
         for k in 1:n
             rss += sq[k]
             k <= model_dof && continue
-            S = _sweep_score(prior, sws.lg_table[k - model_dof], dg * (k - model_dof) / 2,
+            S = partition_score(prior, sws.lg_table[k - model_dof], dg * (k - model_dof) / 2,
                              max(rss, eps()), (n - k) * dg * log(2 * halfwidth))
             label_prior isa FlatLabelPrior || (S += sws.prior_table[k])
             push!(Sk, S)

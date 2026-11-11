@@ -8,6 +8,12 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **New: `partition_score(prior, lg_half_dof, half_dof, RSS, outlier_cost)`** (public, not exported): the marginal
+  score of one inlier/outlier partition, the one formula every sweep scores with (it was the private `_sweep_score`).
+  Plain arithmetic in `RSS`'s precision, callable inside a KernelAbstractions kernel, so a downstream device sweep
+  calls it instead of a copy (BlobBoards' per-blob sweep restated it as its `_sweep_score`). The size-indexed form
+  the sweeps call is `_table_partition_score` (was `_partition_score`).
+
 - **SIMFIT++ is VisualGeometryToolkitEstimation's.** This package's copy
   (`src/simfitpp.jl`) is deleted, and its names are no longer exported or public
   here: `SimFitPP`, `simfitpp_loss_width` and `simfitpp_select` are exported by

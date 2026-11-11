@@ -163,6 +163,7 @@ public loss_scale_bounds, LossSpec, loss_spec
 # Accessors of the sweep workspace (public, not exported: generic nouns).
 public sweep_order, penalties, sort_key, lg_table
 public sweep!, default_scoring_workspace, alloc_scoring_workspace
+public partition_score   # the one per-partition score of every sweep (device-callable: a downstream device sweep calls it, not a copy)
 
 # -----------------------------------------------------------------------------
 # Include order: sweep → scoring

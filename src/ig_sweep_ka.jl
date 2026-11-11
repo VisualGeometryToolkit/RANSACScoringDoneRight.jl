@@ -5,7 +5,7 @@
 # `grid_evaluate(::StudentTUniformScoring, …)` scores a pool of pairs, staged once into
 # the flat `IGSharedData` layout by `stage_ig_shared_from_pairs`, over a grid of
 # outlier half-widths: `ig_sweep_kernel!` runs the sort-and-sweep marginal score
-# (the same `_sweep_score` arithmetic as sweep.jl) for every (pair, model,
+# (the same `partition_score` arithmetic as sweep.jl) for every (pair, model,
 # outlier half-width),
 # and a gather kernel pulls the chosen model's error.
 #
@@ -64,7 +64,7 @@ end
 One work-item per (pair, model, grid-point): ONE sequential sweep over the
 model's K sorted squared residuals, writing the best partition score
 `max_k S(k)` to `scores_out[p_local, m, t]` (Float64). `S(k)` is sweep.jl's
-`_partition_score` — the one per-partition formula every sweep shares, host and
+`_table_partition_score` — the one per-partition formula every sweep shares, host and
 device — at the grid point's `log(2·outlier_halfwidth)`. RSS accumulates in Float64. Work-items
 beyond a pair's model count write nothing (the chunked driver pre-fills −Inf).
 """
@@ -92,7 +92,7 @@ beyond a pair's model count write nothing (the chunked driver pre-fills −Inf).
         @inbounds for k in 1:K
             RSS += Float64(sorted_sq_flat[base + k])
             if k > model_dof
-                S = _partition_score(prior, lg_table, RSS, k, model_dof, dg_f, K, log_two_outlier_halfwidth)
+                S = _table_partition_score(prior, lg_table, RSS, k, model_dof, dg_f, K, log_two_outlier_halfwidth)
                 S > bS && (bS = S)
             end
         end

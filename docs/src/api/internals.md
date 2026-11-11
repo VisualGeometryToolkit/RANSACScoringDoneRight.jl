@@ -13,6 +13,7 @@ interface.
 
 ```@docs
 sweep!
+partition_score
 default_scoring_workspace
 alloc_scoring_workspace
 ```

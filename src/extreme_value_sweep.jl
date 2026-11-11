@@ -2,7 +2,7 @@
 # extreme_value_sweep.jl — the sort-and-sweep of StudentTUniformScoring with an
 # outlier model that estimates the support (extreme_value.jl). The sort is the
 # sweep's own (`_sort_perm!`: the Θ(n) radix on the exact-size path), and the
-# per-partition score is `_partition_score_cost`, the one formula every sweep
+# per-partition score is `_table_partition_score_cost`, the one formula every sweep
 # shares (the inlier term, the scale prior); the label prior is the
 # workspace's `prior_table`. Only the outlier term differs per model:
 #
@@ -54,7 +54,7 @@ end
     @inbounds for k in 1:n
         RSS += q[k]
         k <= m && continue
-        S = _partition_score_cost(s.scale_prior, sws.lg_table, RSS, k, m, 1.0, k == n ? 0.0 : cost(k))
+        S = _table_partition_score_cost(s.scale_prior, sws.lg_table, RSS, k, m, 1.0, k == n ? 0.0 : cost(k))
         prior_table === nothing || (S += prior_table[k])
         if S > best_S
             best_S, best_k = S, k

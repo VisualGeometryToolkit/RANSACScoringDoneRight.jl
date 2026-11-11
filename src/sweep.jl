@@ -420,8 +420,28 @@ end
 # Per-partition score (single formula; subsumes Jeffreys at α₀=β₀=0)
 # =============================================================================
 
-@inline function _sweep_score(p::IGPrior, lg_k, ν_half, RSS::T, outlier_term) where T
-    lg_k - ν_half * log(2 * T(π)) - (ν_half + T(p.alpha0)) * log(RSS / 2 + T(p.beta0)) - outlier_term
+"""
+    partition_score(prior::IGPrior, lg_half_dof, half_dof, RSS, outlier_cost) -> T
+
+The marginal score of one inlier/outlier partition: the log evidence of its
+inliers under the Gaussian with the scale integrated out against `prior` (the
+inverse-gamma `IGPrior(α₀, β₀)`; Jeffreys at `IGPrior()`), minus the outliers'
+cost,
+
+    S = lg_half_dof − (ν/2)·log 2π − (ν/2 + α₀)·log(RSS/2 + β₀) − outlier_cost,
+
+with `half_dof = ν/2` (ν = d_g·(k − m), the inliers' residual dof),
+`lg_half_dof = log Γ(ν/2 + α₀)` (a sweep's `lg_table` entry, or a device
+lgamma's value) and `RSS` the inliers' squared residual sum, floored by the
+caller. Every sweep of the stack scores its partitions with this one formula —
+`sweep!`, the parametric and extreme-value sweeps and the device grid kernel here
+(through `_table_partition_score`, the form indexed by the partition size), and a
+downstream device sweep (BlobBoards' per-blob sweep restated it). Plain arithmetic in
+`RSS`'s precision `T` (Float32 on a device), callable inside a
+KernelAbstractions kernel.
+"""
+@inline function partition_score(p::IGPrior, lg_half_dof, half_dof, RSS::T, outlier_cost) where T
+    lg_half_dof - half_dof * log(2 * T(π)) - (half_dof + T(p.alpha0)) * log(RSS / 2 + T(p.beta0)) - outlier_cost
 end
 
 # The score S(k) of the top-k partition of n points, from its running RSS: the
@@ -430,16 +450,16 @@ end
 # (`ig_sweep_kernel!`). The RSS floor clamps a COPY, never the running sum;
 # ν = dg·(k − m) residual dof, and the n − k outliers pay (2·outlier_halfwidth)^{−dg} each.
 # Plain Float64 arithmetic, callable inside a KernelAbstractions kernel.
-@inline _partition_score(prior::IGPrior, lg_table, RSS::Float64, k::Integer, model_dof::Integer,
+@inline _table_partition_score(prior::IGPrior, lg_table, RSS::Float64, k::Integer, model_dof::Integer,
                          dg_f::Float64, n::Integer, log_two_outlier_halfwidth::Float64) =
-    _partition_score_cost(prior, lg_table, RSS, k, model_dof, dg_f,
+    _table_partition_score_cost(prior, lg_table, RSS, k, model_dof, dg_f,
                           (n - k) * dg_f * log_two_outlier_halfwidth)
 
 # The same score with the complement's cost given (an outlier model that
 # estimates its support, extreme_value_sweep.jl).
-@inline _partition_score_cost(prior::IGPrior, lg_table, RSS::Float64, k::Integer, model_dof::Integer,
+@inline _table_partition_score_cost(prior::IGPrior, lg_table, RSS::Float64, k::Integer, model_dof::Integer,
                               dg_f::Float64, outlier_cost::Float64) =
-    _sweep_score(prior, lg_table[k - model_dof], dg_f * (k - model_dof) / 2,
+    partition_score(prior, lg_table[k - model_dof], dg_f * (k - model_dof) / 2,
                  max(RSS, eps(Float64)), outlier_cost)
 
 # =============================================================================
@@ -509,7 +529,7 @@ it on purpose, as the ONE per-hypothesis path, and is not a twin of it:
 
 Sorts points (ascending by `scores`, or `sort_key` if provided), then sweeps
 prefixes k = m+1,...,n evaluating the partition score via
-`_sweep_score(scale_prior, ...)`. Returns the best score S* and optimal
+`partition_score(scale_prior, ...)`. Returns the best score S* and optimal
 inlier count k*. Mutates `perm`.
 
 ### Complexity — depends on which sort path is taken (see Sizing)
@@ -603,7 +623,7 @@ function sweep!(perm::Vector{Int}, lg_table::Vector{Float64},
         # sweep scored a different S(k) sequence than the (since deleted)
         # soft sweep, the parametric sweep and the device kernel, which all
         # clamp a copy.
-        S = _partition_score(scale_prior, lg_table, RSS, k, m, dg_f, n, log_two_outlier_halfwidth)
+        S = _table_partition_score(scale_prior, lg_table, RSS, k, m, dg_f, n, log_two_outlier_halfwidth)
         if penalties !== nothing
             S -= pen_sum / 2
         end
@@ -784,7 +804,7 @@ end
 # with the per-point penalties and the profiled-γ table).
 @inline function _prefix_score(rss, pen, k, lg_table, model_dof, log_two_outlier_halfwidth, dg,
                                prior_table, scale_prior, n)
-    S = _partition_score(scale_prior, lg_table, Float64(rss[k]), k, model_dof, Float64(dg),
+    S = _table_partition_score(scale_prior, lg_table, Float64(rss[k]), k, model_dof, Float64(dg),
                          n, log_two_outlier_halfwidth) - pen[k] / 2
     prior_table !== nothing && (S += Float64(prior_table[k]))
     return S
