@@ -99,7 +99,7 @@ WelschMarginal(; kw...) = _centred_marginal(WelschShape; kw...)
 # snapped to the absolute lattice t = i·h, and its default node count (the
 # measured accuracy and speed against the Hermite spline it replaced:
 # marg_sweep_ka.jl's header).
-const _MARG_L  = 7.0
+const _MARG_L  = _config_default("scale_marginal", "log_scale_span")::Float64   # 7.0, configs/default.toml
 const _MARG_NG = 129
 
 # The outlier support of ALL redescending marginals (Welsch / smooth-TLS /

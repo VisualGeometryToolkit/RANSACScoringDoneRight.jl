@@ -8,6 +8,13 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **New: configs/default.toml, the stack's defaults mechanism** (the owner's ruling, via the coordinator; as
+  LocalOptimizationDoneRight's): `TailRules`' keyword defaults (`[tail_rules]`: `threshold_quantile` 0.9,
+  `min_excess` 5, `finite_shape_limit` -1e-3), the scale marginals' log-scale span `_MARG_L` (`[scale_marginal]`
+  `log_scale_span` 7.0) and the canonical well depths `_default_depth` (`[inlier_potentials.depth]`, by loss tag:
+  welsch 0.5, geman_mcclure 0.5, smooth_tls 1.0) are read there through `_config_default` (VisualGeometryToolkitCore's
+  `toml_default`); the code holds no second copy. Same values: results bit for bit. MAGSAC++'s DOF = 4 stays in code
+  (the owner's ruling: part of the scorer's definition, not configurable).
 - **Moved: the Student-t + uniform marginal scorer is VisualGeometryToolkitCore's** (the owner's ruling: hoisted into
   the stack with no duplication; temporary [sources] to the unregistered 0.9 stack). `StudentTUniformScoring`
   (model-certain and `Predictive`), its sweep (`sweep!`, the parametric sweep, `partition_score`, the one prefix

@@ -43,9 +43,13 @@
 # classical scaled potential (½ for Welsch and Geman-McClure, 1 for smooth-TLS).
 # The fixed-depth users — the full-data scale marginals
 # (`loss_spec(::ScaleMarginal)`) — read their Δ here.
-@inline _default_depth(::WelschShape)       = 0.5
-@inline _default_depth(::GemanMcclureShape) = 0.5
-@inline _default_depth(::SmoothTLSShape)    = 1.0
+# The depths are configs/default.toml's [inlier_potentials.depth], keyed by the shape's loss tag.
+const _DEPTH_WELSCH        = _config_default("inlier_potentials.depth", "welsch")::Float64
+const _DEPTH_GEMAN_MCCLURE = _config_default("inlier_potentials.depth", "geman_mcclure")::Float64
+const _DEPTH_SMOOTH_TLS    = _config_default("inlier_potentials.depth", "smooth_tls")::Float64
+@inline _default_depth(::WelschShape)       = _DEPTH_WELSCH
+@inline _default_depth(::GemanMcclureShape) = _DEPTH_GEMAN_MCCLURE
+@inline _default_depth(::SmoothTLSShape)    = _DEPTH_SMOOTH_TLS
 
 # THE NAMES MATCH VisualGeometryToolkitCore: `sq_r` is its `s` (a squared RESIDUAL),
 # `sq_loss_width` its squared loss width. There is no scale multiple in this

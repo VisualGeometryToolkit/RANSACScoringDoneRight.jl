@@ -87,6 +87,8 @@ using VisualGeometryToolkitEstimation: SimFitPP, simfitpp_select
 import VisualGeometryToolkitEstimation as VgtkEstimation   # its scorer TOML reader and writer (`scoring_from_toml`, `config_dict`), extended for this package's scorers
 # The scoring families' tag registry, merged with this package's (native_widths.jl).
 using VisualGeometryToolkitCore: TagRegistry
+# The stack's defaults mechanism (config_defaults.jl): configs/default.toml, parsed once.
+using VisualGeometryToolkitCore: parse_defaults, toml_default
 # The width axes, their native maps and the native-axis conversions are
 # VisualGeometryToolkitCore's; this package states the axis of its grid families.
 using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth
@@ -166,6 +168,7 @@ public loss_scale_bounds, LossSpec, loss_spec
 # Include order: the outlier models → their hooks on Core's sweep
 # -----------------------------------------------------------------------------
 
+include("config_defaults.jl")         # configs/default.toml → `_DEFAULTS_OF_RECORD`, `_config_default` (first: every default reads it)
 include("extreme_value.jl")           # the outlier models that estimate the support, the generalized Pareto fit
 include("scoring.jl")                 # the loss-cost branch's supertype (LossCostScoring)
 include("extreme_value_sweep.jl")     # their methods of Core's estimated-support sweep hooks

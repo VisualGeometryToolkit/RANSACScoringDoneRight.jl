@@ -1,0 +1,39 @@
+# =============================================================================
+# RANSACScoringDoneRight's defaults of record (the stack's defaults mechanism, as
+# LocalOptimizationDoneRight's and VisualGeometryToolkitEstimation's configs/default.toml).
+#
+# Every keyword default and constant of the package's scorers that changes a
+# result reads THIS file through `_config_default` (src/config_defaults.jl), so
+# there is no second set of Julia literals to drift from it; a missing table or
+# key is an error, by design. Values are parsed at precompile (`include_dependency`
+# makes an edit force a recompile; a Revise session needs a restart to see one).
+# The Student-t scorer's priors are VisualGeometryToolkitEstimation's
+# [scoring.student_t_uniform] (the scorer is VisualGeometryToolkitCore's).
+# =============================================================================
+
+[tail_rules]
+# The peaks-over-threshold rules of the extreme-value outlier models (`TailRules`,
+# `ExtremeValueHalfwidth`, `GeneralizedParetoOutliers`): the generalized Pareto law
+# fitted by probability-weighted moments to the excesses over the complement's
+# `threshold_quantile` quantile (the peaks-over-threshold threshold, a quantile —
+# not a width); fewer than `min_excess` excesses, or a shape at or above
+# `finite_shape_limit` (no finite endpoint), fall back to the complement's largest
+# residual.
+threshold_quantile = 0.9
+min_excess = 5
+finite_shape_limit = -1.0e-3
+
+[scale_marginal]
+# The scale domain of every full-data scale marginal (`ScaleMarginal`, `LossSpec`):
+# t = log sq_loss_width ∈ t0 ± log_scale_span around the prior centre (e^{±7} ≈ 1000×
+# the centre scale), snapped to the absolute lattice t = i·h.
+log_scale_span = 7.0
+
+[inlier_potentials.depth]
+# The canonical well depth Δ of each redescending loss shape (a loss tag of
+# VisualGeometryToolkitEstimation's LOSS_TAGS): the Δ of the classical scaled potential
+# (½ for Welsch and Geman-McClure, 1 for smooth TLS), read by the fixed-depth users,
+# the full-data scale marginals (`loss_spec(::ScaleMarginal)`).
+welsch = 0.5
+geman_mcclure = 0.5
+smooth_tls = 1.0

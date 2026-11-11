@@ -23,21 +23,23 @@
 # -----------------------------------------------------------------------------
 
 """
-    TailRules(; threshold_quantile = 0.9, min_excess = 5, finite_shape_limit = -1e-3)
+    TailRules(; threshold_quantile, min_excess, finite_shape_limit)   # defaults: configs/default.toml [tail_rules]
 
 The peaks-over-threshold rules both extreme-value outlier models share: the
 generalized Pareto law is fitted by probability-weighted moments (Hosking &
 Wallis 1987) to the excesses over the complement's `threshold_quantile`
 quantile. Fewer than `min_excess` excesses, or a shape at or above
 `finite_shape_limit` (no finite endpoint), fall back to the largest residual
-of the complement; an endpoint below it is raised to it.
+of the complement; an endpoint below it is raised to it. The defaults (0.9, 5,
+-1e-3) are configs/default.toml's `[tail_rules]`.
 """
 struct TailRules
     threshold_quantile::Float64
     min_excess::Int
     finite_shape_limit::Float64
-    function TailRules(; threshold_quantile::Real = 0.9, min_excess::Integer = 5,
-                       finite_shape_limit::Real = -1e-3)
+    function TailRules(; threshold_quantile::Real = _config_default("tail_rules", "threshold_quantile"),
+                       min_excess::Integer = _config_default("tail_rules", "min_excess"),
+                       finite_shape_limit::Real = _config_default("tail_rules", "finite_shape_limit"))
         0 < threshold_quantile < 1 ||
             throw(ArgumentError("threshold_quantile must lie in (0, 1), got $threshold_quantile"))
         min_excess >= 2 || throw(ArgumentError("min_excess must be at least 2, got $min_excess"))
