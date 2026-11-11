@@ -83,3 +83,26 @@
         @test_throws UndefKeywordError grid_evaluate(spec, sh, hw)
     end
 end
+
+# The scorers' TOML tables on VisualGeometryToolkitEstimation's schema (`scoring_from_toml` through ALL_SCORING_TAGS):
+# every family at its width key, required; written back by `config_dict`.
+@testitem "scoring_from_toml: this package's scorers, one schema with the local optimization" begin
+    using Test
+    using RANSACScoringDoneRight
+    using RANSACScoringDoneRight: ALL_SCORING_TAGS, StudentTUniformScoring, MagsacScoring, MlesacScoring, WelschCostScoring,
+        SmoothTLSScoring, GemanScoring, outlier_halfwidth
+    using VisualGeometryToolkitEstimation: scoring_from_toml, config_dict, EssentialProblem
+    P = EssentialProblem
+    for (t, T) in (("magsac", MagsacScoring), ("mlesac", MlesacScoring), ("welsch_cost", WelschCostScoring),
+                   ("smooth_tls", SmoothTLSScoring), ("geman", GemanScoring))
+        d = Dict("type" => t, "threshold" => 1.5)
+        sc = scoring_from_toml(d; problem = P, tags = ALL_SCORING_TAGS)
+        @test sc isa T && sc.threshold == 1.5 && config_dict(sc) == d
+    end
+    d = Dict("type" => "student_t_uniform", "outlier_halfwidth" => 0.25)
+    sc = scoring_from_toml(d; problem = P, tags = ALL_SCORING_TAGS)
+    @test sc == StudentTUniformScoring(P, 0.25) && outlier_halfwidth(sc) == 0.25 && config_dict(sc) == d
+    @test_throws r"needs `outlier_halfwidth`" scoring_from_toml(Dict("type" => "student_t_uniform"); problem = P, tags = ALL_SCORING_TAGS)
+    @test_throws r"needs `threshold`" scoring_from_toml(Dict("type" => "magsac"); problem = P, tags = ALL_SCORING_TAGS)
+    @test_throws ArgumentError scoring_from_toml(Dict("type" => "magsac", "threshold" => 1.0, "sigma" => 1.0); problem = P, tags = ALL_SCORING_TAGS)
+end

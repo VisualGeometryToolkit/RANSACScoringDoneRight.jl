@@ -8,6 +8,10 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **New: this package's scorers read from TOML on the local optimization's schema**: methods of
+  VisualGeometryToolkitEstimation's `scoring_from_toml` (through `ALL_SCORING_TAGS`) and `config_dict` for the
+  loss-width families at a `threshold` and `StudentTUniformScoring` at an `outlier_halfwidth`, each key required.
+  (The Student-t scorer's scale and label priors are its constructor's defaults, Jeffreys and flat: not table keys.)
 - **Changed: the prefix sweep is one KernelAbstractions kernel** (the owner's ruling on the twin audit's V2):
   `sweep!` launches `ig_sweep_kernel!` as one CPU work item over the hypothesis's sorted column instead of its own
   host scan; the kernel carries the per-point penalties, the prior table and the best k. Results bit for bit the

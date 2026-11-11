@@ -84,6 +84,7 @@ using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_im
 # pool-selection contract (native_widths.jl, selection.jl) and re-exports
 # nothing of it: callers take both names from VisualGeometryToolkitEstimation.
 using VisualGeometryToolkitEstimation: SimFitPP, simfitpp_select
+import VisualGeometryToolkitEstimation as VgtkEstimation   # its scorer TOML reader and writer (`scoring_from_toml`, `config_dict`), extended for this package's scorers
 # The scoring families' tag registry, merged with this package's (native_widths.jl).
 using VisualGeometryToolkitCore: TagRegistry
 # The width axes, their native maps and the native-axis conversions are
