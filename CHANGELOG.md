@@ -8,6 +8,11 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **Renamed (VisualGeometryToolkitCore's, the owner's ruling): the scorer's decision point is `decision_boundary`.**
+  `inlier_threshold` → `decision_boundary`, `has_inlier_threshold` → `has_decision_boundary`, and the Gaussian–uniform
+  `decision_threshold` is a method of the same `decision_boundary`. This package's method for a Student-t scorer with an
+  `OutlierTerm` (no decision boundary) and MAGSAC++'s `score_bound` follow; the docs and tests too. Names only: results
+  bit for bit.
 - **Renamed: `TailRules`' `threshold_quantile` is `pot_threshold_quantile`** (the owner's ruling): the quantile level
   of the complement's residuals at which the peaks-over-threshold threshold u is set, the extreme-value literature's
   name (Coles 2001, §4.3; Hosking & Wallis 1987). The keyword and field of `TailRules` (and the keyword

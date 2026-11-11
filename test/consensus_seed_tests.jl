@@ -12,8 +12,8 @@
     import VisualGeometryToolkitCore as VGC
     using VisualGeometryToolkitCore: IGPrior, score!, inlier_count, consensus_order, consensus_s2, scale_prior,
         partition_student_t, partition_rss, PosteriorWeightState, s_hat_sq, student_t_dof, sq_distances,
-        inlier_prior, posterior_weights!, posterior_inlier_probs!, inlier_threshold, ScoreBuffers,
-        GauInlier, decision_threshold, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth
+        inlier_prior, posterior_weights!, posterior_inlier_probs!, decision_boundary, ScoreBuffers,
+        GauInlier, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth
     using RANSACScoringDoneRight
 
     rng = MersenneTwister(7)
@@ -58,7 +58,7 @@
         end
     end
 
-    @testset "inlier_threshold: the consensus Student-t's crossover" begin
+    @testset "decision_boundary: the consensus Student-t's crossover" begin
         s = StudentTUniformScoring(4, halfwidth; codimension = 2, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         W = VGC.scoring_workspace(s, n, 2)
         buf = ScoreBuffers{Float64}(n, W)
@@ -66,8 +66,8 @@
         score!(W, s, buf.scores, buf.residuals, n)
         k = inlier_count(s, W)
         s2 = consensus_s2(s, r, consensus_order(s, W), k; model_dof = 5, d_g = 2)
-        @test inlier_threshold(s, buf) === decision_threshold(GauInlier(s2; d_g = 2), halfwidth)
-        @test 0 < inlier_threshold(s, buf) < 5.0
+        @test decision_boundary(s, buf) === decision_boundary(GauInlier(s2; d_g = 2), halfwidth)
+        @test 0 < decision_boundary(s, buf) < 5.0
     end
 
     @testset "check_workspace and with_width" begin

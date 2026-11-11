@@ -2,7 +2,7 @@
 # The Gaussian-Uniform boundary as the loss width <-> outlier half-width maps
 # read it, and the loss-width families' per-residual quality.
 #
-# `decision_threshold` and its inverse `decision_width(::GauInlier, ·)` — the ONE
+# `decision_boundary` and its inverse `decision_width(::GauInlier, ·)` — the ONE
 # place the Eq. (2) MAP rule lives — are VisualGeometryToolkitCore's and pinned there.
 # =============================================================================
 

@@ -21,7 +21,7 @@ The scoring contract lives in VisualGeometryToolkitCore's
 sort-and-sweep of Algorithm 1), `inlier_count`, `consensus_order`,
 `scale_prior`, `outlier_halfwidth`, `check_workspace` and
 `with_width`/`width_axis` (the axis is `OutlierHalfwidth`). Its
-`inlier_threshold` is the MAP crossover of the consensus set's ŝ² against the
+`decision_boundary` is the MAP crossover of the consensus set's ŝ² against the
 uniform outlier box. `StudentTUniformScoring{Predictive}` also implements
 `is_predictive` and `scored_model`. VisualGeometryToolkitCore derives the
 consensus scale (`consensus_s2`), the soft inlier weights and the Student-t
@@ -152,8 +152,8 @@ On top of that, this package names the following quantities.
 | name | quantity |
 |------|----------|
 | `outlier_halfwidth` | the half-width of the uniform outlier component |
-| `decision_threshold` | the residual at which the MAP rule flips |
-| `decision_threshold` / `decision_width` | the one map between the two (VisualGeometryToolkitCore's generic, with the mixture's method), so a grid of outlier half-widths is never called a grid of thresholds |
+| `decision_boundary` | the residual at which the MAP rule flips |
+| `decision_boundary` / `decision_width` | the one map between the two (VisualGeometryToolkitCore's generic, with the mixture's method), so a grid of outlier half-widths is never called a grid of thresholds |
 | `operating_scale_multiple` | the scale multiple at which a protocol converts (`loss_width = operating_scale_multiple · ŝ`) |
 | `ŝ`, `s_hat_sq` | the scale estimate and its square |
 | `d_g` / `dg` | the constraint codimension |

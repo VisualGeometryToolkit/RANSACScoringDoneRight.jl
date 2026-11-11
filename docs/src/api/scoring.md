@@ -18,7 +18,7 @@ predictive scoring additionally needs `solver_covariance`, declared by
 contract (`scoring_workspace`, `score!`, `inlier_count`, `consensus_order`, …),
 and the scale prior `IGPrior` (Jeffreys: `JeffreysPrior()`), the Student-t +
 uniform mixture toolkit and the Gaussian-uniform boundary (`GauInlier`,
-`decision_threshold`) are VisualGeometryToolkitCore's too. The concrete problems
+`decision_boundary`) are VisualGeometryToolkitCore's too. The concrete problems
 (homography, fundamental and essential matrix, …) live in VisualGeometryToolkitEstimation.
 
 ## The scale-free marginal score

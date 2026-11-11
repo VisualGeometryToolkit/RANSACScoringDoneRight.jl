@@ -305,14 +305,16 @@ const _OwnLossWidthScoring{DG} = Union{MlesacScoring{DG}, MagsacScoring{DG}, Wel
 # 10³, d/w from 0 to 10³⁰): no quality above its b, none below −1 ulp of b.
 score_bound(::Union{MlesacScoring{<:Any, Float64}, WelschCostScoring{<:Any, Float64},
                     SmoothTLSScoring{<:Any, Float64}, GemanScoring{<:Any, Float64}}) = 1.0
-score_bound(sc::MagsacScoring{<:Any, Float64}) = residual_quality(sc, 0.0, inlier_threshold(sc, nothing))
+score_bound(sc::MagsacScoring{<:Any, Float64}) = residual_quality(sc, 0.0, decision_boundary(sc, nothing))
 
 codimension(::_OwnLossWidthScoring{DG}) where {DG} = DG
 
 # The constructors, VisualGeometryToolkitCore's forms of `RansacScoring`/`MsacScoring`:
 # bare `F()` is codim 1 (see above); `F(problem)` takes it from the problem,
-# exactly as `StudentTUniformScoring(problem, a)` does; `threshold` is the loss
-# width of the scorer form. `with_width` builds that form from a template.
+# exactly as `StudentTUniformScoring(problem, a)` does.
+#
+# The scorer form's keyword is `threshold`, its loss width; `with_width` builds
+# that form from a template.
 for S in (:MlesacScoring, :MagsacScoring, :WelschCostScoring, :SmoothTLSScoring, :GemanScoring)
     @eval begin
         $S{DG}() where {DG} = $S{DG, Nothing}(nothing)

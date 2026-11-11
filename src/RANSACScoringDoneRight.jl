@@ -32,8 +32,8 @@ import VisualGeometryToolkitCore as VgtkCore
 # Note VGC's `ρ(shape, s, sq_loss_width)` spells the squared RESIDUAL `s`; this
 # package spells it `sq_r`/`sq_distances` and never `s`. On top of that RSDR
 # owns one layer of its own: `outlier_halfwidth` the half-width of the uniform
-# outlier support, `decision_threshold` the residual at which the MAP rule
-# flips (`decision_threshold`/`decision_width` are the ONE map between them — a
+# outlier support, `decision_boundary` the residual at which the MAP rule
+# flips (`decision_boundary`/`decision_width` are the ONE map between them — a
 # grid of outlier half-widths is never called a grid of thresholds),
 # `ŝ`/`s_hat_sq` the scale estimate and its square, `d_g`/`dg` the codimension,
 # `inlier_prior` the scalar mixing proportion π and `inlier_posterior` the
@@ -108,7 +108,7 @@ using VisualGeometryToolkitCore: StudentTUniformScoring, AbstractLabelPrior, Fla
     AbstractOutlierModel, FixedHalfwidth, ig_sweep_kernel!, log_gamma_table,
     suffix_sums!
 import VisualGeometryToolkitCore: loss_shape, codimension, score_bound,
-    inlier_threshold, has_inlier_threshold,
+    decision_boundary, has_decision_boundary,
     scale_prior, outlier_halfwidth, with_width, width_axis, minimal_sample_size,
     residual_quality,
     # the estimated-support sweep's hooks, for this package's outlier models (extreme_value_sweep.jl)

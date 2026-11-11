@@ -44,7 +44,7 @@ The scale-free marginal score also *selects an inlier partition*: the sweep
 returns the inlier count `k` it maximized over, and the scale of that partition
 (VisualGeometryToolkitCore's `consensus_s2`) follows in closed form. That partition and scale
 seed local optimization through the scoring contract (`consensus_order`,
-`inlier_count`, `inlier_threshold`) and VisualGeometryToolkitCore's posterior-weighting
+`inlier_count`, `decision_boundary`) and VisualGeometryToolkitCore's posterior-weighting
 layer (`PosteriorWeightState`).
 
 ## The contracts this package implements
@@ -54,7 +54,7 @@ own types.
 
 - **Scoring.** [`StudentTUniformScoring`](@extref VisualGeometryToolkitCore.StudentTUniformScoring) implements `scoring_workspace`
   (a [`ScoringWorkspace`](@extref VisualGeometryToolkitCore.ScoringWorkspace)), `score!`, `inlier_count`,
-  `consensus_order`, `inlier_threshold`, `scale_prior`, `outlier_halfwidth`,
+  `consensus_order`, `decision_boundary`, `scale_prior`, `outlier_halfwidth`,
   `check_workspace` and `with_width`/`width_axis`; its `{Predictive}` form adds
   `is_predictive` and `scored_model`. Any RANSAC written against the contract,
   VisualGeometryToolkitEstimation's among them, runs it unchanged. The
@@ -90,7 +90,7 @@ carries its constraint codimension `DG`, because a loss width means a different
 multiple of the scale at each codimension.
 
 **The mixture's decision boundary.** [`GauInlier`](@extref VisualGeometryToolkitCore.GauInlier) is the
-Gaussian-uniform mixture; [`decision_threshold`](@extref VisualGeometryToolkitCore.decision_threshold) and its inverse
+Gaussian-uniform mixture; [`decision_boundary`](@extref VisualGeometryToolkitCore.decision_boundary) and its inverse
 [`decision_width`](@extref VisualGeometryToolkitCore.decision_width) are the one map between an outlier half-width and the residual
 at which the MAP inlier/outlier decision flips, so a grid of outlier half-widths
 is never confused with a grid of thresholds.
@@ -127,7 +127,7 @@ scale multiple onto it and `native_map` is that map curried, so that
 grids for different families can be laid out over comparable neighbourhoods of
 the same noise scale. The vocabulary is fixed: `loss_width` is a loss's scale
 parameter, `outlier_halfwidth` the half-width of the uniform outlier support,
-`decision_threshold` the residual at which the MAP rule flips, `s2` a variance
+`decision_boundary` the residual at which the MAP rule flips, `s2` a variance
 and `ŝ`/`s_hat_sq` the scale estimate and its square.
 
 ## The pool frame

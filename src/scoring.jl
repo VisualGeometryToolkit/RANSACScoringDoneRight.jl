@@ -47,7 +47,7 @@
 
 abstract type LossCostScoring{T} <: AbstractThresholdScoring{T} end
 
-# The Gaussian-uniform mixture's boundary, both ways — `decision_threshold`
+# The Gaussian-uniform mixture's boundary, both ways — `decision_boundary`
 # (the residual at which the MAP rule flips) and `decision_width(::GauInlier, …)`
 # (the outlier half-width that puts it there) — is VisualGeometryToolkitCore's, with
 # `GauInlier`. `outlier_halfwidth_to_loss_width`/`loss_width_to_outlier_halfwidth`

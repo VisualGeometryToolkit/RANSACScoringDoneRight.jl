@@ -46,7 +46,7 @@
         end
         for F in families      # the width-free form implements no scoring contract
             @test F() isa VGC.AbstractThresholdScoring{Nothing}
-            @test !VGC.has_inlier_threshold(F()) && VGC.score_bound(F()) === nothing
+            @test !VGC.has_decision_boundary(F()) && VGC.score_bound(F()) === nothing
             @test_throws MethodError scoring_workspace(F(), n, 1)
         end
     end

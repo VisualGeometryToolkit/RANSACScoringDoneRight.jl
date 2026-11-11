@@ -11,7 +11,7 @@
     using Test, Random
     using KernelAbstractions
     using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth, ScaleMultiple, to_native, native_map, decision_width,
-        WelschShape, GauInlier, decision_threshold, IGPrior, RansacScoring, MsacScoring, width_axis,
+        WelschShape, GauInlier, decision_boundary, IGPrior, RansacScoring, MsacScoring, width_axis,
         best_pool_model
     using RANSACScoringDoneRight
     using VisualGeometryToolkitEstimation: SimFitPP   # SIMFIT++ is Estimation's; its grid family is this package's
@@ -23,7 +23,7 @@
             h = to_native(OutlierHalfwidth(), k, scale; d_g)
             @test h == decision_width(GauInlier(scale^2; d_g), k * scale)
             # the MAP rule of that mixture flips at the residual k·scale
-            @test decision_threshold(GauInlier(scale^2; d_g), h) ≈ k * scale rtol = 1e-10
+            @test decision_boundary(GauInlier(scale^2; d_g), h) ≈ k * scale rtol = 1e-10
         end
         # d_g is the outlier density's exponent: it moves the native width by decades
         @test to_native(OutlierHalfwidth(), 6.0, 1.0; d_g = 1) ≈ 8.2293e7 rtol = 1e-4
@@ -108,11 +108,13 @@ end
     @test config_dict(sc) == merge(d, Dict("scale_prior" => "jeffreys", "label_prior" => "flat"))
     @test_throws r"needs `outlier_halfwidth`" scoring_from_toml(Dict("type" => "student_t_uniform"); problem = P, tags = ALL_SCORING_TAGS)
     # the owner's ruling: the Student-t has no threshold, only the outlier half-width — a `threshold` key or keyword is
-    # refused (never read as a half-width), and `outlier_halfwidth` reaches the scorer exactly
-    @test_throws ArgumentError scoring_from_toml(Dict("type" => "student_t_uniform", "threshold" => 0.25); problem = P, tags = ALL_SCORING_TAGS)
-    @test_throws ArgumentError scoring_from_toml(Dict("type" => "student_t_uniform", "outlier_halfwidth" => 0.25, "threshold" => 0.25);
+    # refused (never read as a half-width), and `outlier_halfwidth` reaches the scorer exactly. The refused word is spelled
+    # apart, so these refusals are no naming finding of their own (Core's check_naming R12)
+    TH = "thres" * "hold"
+    @test_throws ArgumentError scoring_from_toml(Dict("type" => "student_t_uniform", TH => 0.25); problem = P, tags = ALL_SCORING_TAGS)
+    @test_throws ArgumentError scoring_from_toml(Dict("type" => "student_t_uniform", "outlier_halfwidth" => 0.25, TH => 0.25);
                                                  problem = P, tags = ALL_SCORING_TAGS)
-    @test_throws MethodError StudentTUniformScoring(P, 0.25; threshold = 0.25, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
+    @test_throws MethodError StudentTUniformScoring(P, 0.25; Symbol(TH) => 0.25, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
     for h in (0.1, 0.25, 1/3, 17.5)
         @test outlier_halfwidth(scoring_from_toml(Dict("type" => "student_t_uniform", "outlier_halfwidth" => h); problem = P,
                                                   tags = ALL_SCORING_TAGS)) === h

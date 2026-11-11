@@ -175,9 +175,9 @@
             # an empty problem scores no partition, as the supplied-width sweep does
             @test score_residuals!(alloc_scoring_workspace(0, 1, s), Float64[], s, Float64[], 0) == (-Inf, 0)
         end
-        # OutlierTerm has no inlier threshold
-        @test !VisualGeometryToolkitCore.has_inlier_threshold(StudentTUniformScoring(2, OutlierTerm((k, z) -> 0.0); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))
-        @test VisualGeometryToolkitCore.has_inlier_threshold(StudentTUniformScoring(2, ExtremeValueHalfwidth(); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))
+        # OutlierTerm has no decision point (`has_decision_boundary` false)
+        @test !VisualGeometryToolkitCore.has_decision_boundary(StudentTUniformScoring(2, OutlierTerm((k, z) -> 0.0); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))
+        @test VisualGeometryToolkitCore.has_decision_boundary(StudentTUniformScoring(2, ExtremeValueHalfwidth(); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))
         # a large pool's short tail: the suffix-sum moments match the textbook fit
         zl = sort(abs.(draw(Xoshiro(23); n_in = 3000, n_out = 7000)))
         T1, T2 = suffix_sums!(zeros(length(zl) + 1), zeros(length(zl) + 1), zl)

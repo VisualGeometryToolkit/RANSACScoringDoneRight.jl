@@ -49,5 +49,5 @@ outlier_cost(m::OutlierTerm, _, z, S1, S2, k, n) = Float64(m.cost(k, z))
 scored_outlier_halfwidth(::OutlierTerm, _, z, S1, S2, k, n) = NaN
 
 # A caller's OutlierTerm states no uniform-equivalent width, so a scorer with
-# one has no inlier threshold (the scoring contract's `has_inlier_threshold`).
-has_inlier_threshold(::Type{<:StudentTUniformScoring{P, DG, L, <:OutlierTerm}}) where {P, DG, L<:AbstractLabelPrior} = false
+# one has no decision boundary (the scoring contract's `has_decision_boundary`).
+has_decision_boundary(::Type{<:StudentTUniformScoring{P, DG, L, <:OutlierTerm}}) where {P, DG, L<:AbstractLabelPrior} = false

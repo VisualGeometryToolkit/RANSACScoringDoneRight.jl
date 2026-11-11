@@ -82,8 +82,10 @@
             end
             @test best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), empty, De) == 0
             @test best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), nanpair, fill(NaN32, 120, 3)) == 0
-            for sc in (MsacScoring(1; threshold = 1.0), RansacScoring(1; threshold = 1.0),
-                       StudentTUniformScoring(_BPProblem, 0.1; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))
+            student_t = StudentTUniformScoring(_BPProblem, 0.1; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
+            msac = MsacScoring(1; threshold = 1.0)
+            ransac = RansacScoring(1; threshold = 1.0)
+            for sc in (msac, ransac, student_t)
                 @test best_pool_model(sc, empty, De) == 0
             end
         end

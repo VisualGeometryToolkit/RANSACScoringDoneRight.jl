@@ -70,7 +70,7 @@ before (e9545f8) → after (this commit). Pure renames: no value moved (the timi
   VisualGeometryToolkitEstimation's key check and the constructor's keywords; the test pins them)
 
 Reviewed, not a hit: `TailRules.pot_threshold_quantile` (renamed from `threshold_quantile` by the owner's later ruling: the POT quantile level of the extreme-value fit, not a
-width); `has_inlier_threshold`/`inlier_threshold` (VisualGeometryToolkitCore's contract: the residual at which the MAP
-rule flips, `decision_threshold`, not a half-width); the loss-width families' `threshold` (their loss width, kept);
+width); `has_decision_boundary`/`decision_boundary` (VisualGeometryToolkitCore's contract: the residual at which the MAP
+rule flips, `decision_boundary`, not a half-width); the loss-width families' `threshold` (their loss width, kept);
 docs/src/index.md:129 "threshold miscalibration" (the paper's abstract, verbatim; for the owner); the table and
 config files of neurips2026 (no Student-t key named a threshold: `snn_threshold` is the SIFT ratio test).

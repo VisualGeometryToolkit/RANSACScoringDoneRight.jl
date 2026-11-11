@@ -71,7 +71,7 @@ const _NO_BEST_K = Array{Int32, 3}(undef, 0, 0, 0)   # the grid reads no k (adap
 # on) takes the model argmax and gathers the selected model's error.
 #
 # (The marginal family has no loss width: its grid is of outlier half-widths;
-# `decision_threshold` converts one to the residual its MAP rule flips at.)
+# `decision_boundary` converts one to the residual its MAP rule flips at.)
 
 # (`free_ka_shared!` is deleted: the staged `IGSharedData` belongs to the
 #  caller, which drops it when done. The grid evaluators free their OWN
