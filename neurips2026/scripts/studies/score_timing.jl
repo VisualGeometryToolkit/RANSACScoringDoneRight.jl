@@ -43,12 +43,12 @@ const RSDR = RANSACScoringDoneRight
 # else the project's data/exp_raw). Needed only for the --pool/--out defaults;
 # give both to run without it.
 
-# The marginal scorer's native parameter is the outlier half-width, NOT a loss
-# width. This driver feeds it the same NUMBER as the loss-width methods' loss
-# width on purpose — it is a timing harness and the cost is what is being
-# measured, not the selection — so the binding is named `outlier_halfwidth` and
-# the deliberate reuse is stated rather than hidden behind a `loss_width` at an
-# outlier-half-width call site.
+# The marginal scorer's native parameter is the outlier half-width, never a loss
+# width or a threshold (the owner's ruling, 2026-11-11: the Student-t has only the
+# outlier half-width). It is its own option, `--outlier-halfwidth`; `--loss-width`
+# is the loss-width families' alone. The recorded protocol ran both at 1.64e-3
+# (each the default of its own option); a timing harness measures cost, and
+# neither value is read as the other.
 #
 # Per-pair workspace: deployed sizing, so `sweep!` takes the radix fast path
 # (RVG's `_set_n!` resizes to n for exactly this reason); every scorer gets one,
@@ -65,8 +65,7 @@ end
 # The scorers timed: (name, f(pair, R)). MAGSAC++'s DOF-and-cutoff constants
 # are module constants (derived once at load), so its timing is the loop's
 # n·M `gamma_inc` pairs.
-function timed_scorers(pairs, loss_width::Float64)
-    outlier_halfwidth = loss_width   # same magnitude, different quantity; timing only
+function timed_scorers(pairs; loss_width::Float64, outlier_halfwidth::Float64)
     ours = VGC.StudentTUniformScoring(1, outlier_halfwidth; codimension = 1, scale_prior = VGC.JeffreysPrior(),
                                       label_prior = VGC.FlatLabelPrior())   # the recorded protocol's
     at(F) = VGC.with_width(F(1), VGC.LossWidth(loss_width))
@@ -85,7 +84,7 @@ end
 µs per hypothesis of every timed scorer on each `(regime, pairs, mats)` of
 `subs`: the minimum over `reps` repetitions, compilation excluded.
 `scorers(pairs)` returns the `(name, f(pair, R))` list to time (this study's
-is `timed_scorers(pairs, loss_width)`; another study may hand it its own list
+is `timed_scorers(pairs; loss_width, outlier_halfwidth)`; another study may hand it its own list
 and reuse this harness).
 """
 function time_scorers(subs, scorers; reps::Int)
@@ -136,7 +135,8 @@ function main(args = ARGS)
     pool_dir   = cli_option(args, "pool", nothing)
     scene      = cli_option(args, "scene", "british_museum")
     npairs     = parse(Int, cli_option(args, "npairs", "20"))
-    loss_width = parse(Float64, cli_option(args, "loss-width", "0.00164"))
+    loss_width = parse(Float64, cli_option(args, "loss-width", "0.00164"))                  # the loss-width families'
+    outlier_halfwidth = parse(Float64, cli_option(args, "outlier-halfwidth", "0.00164"))    # the Student-t scorer's
     reps       = parse(Int, cli_option(args, "reps", "3"))
     out        = cli_option(args, "out", nothing)
 
@@ -149,10 +149,10 @@ function main(args = ARGS)
     println("loading $scene …"); flush(stdout)
     path = joinpath(pool_dir, "$scene.jld2")
     subs = timing_subsets(path, npairs)
-    results = time_scorers(subs, sub -> timed_scorers(sub, loss_width); reps)
+    results = time_scorers(subs, sub -> timed_scorers(sub; loss_width, outlier_halfwidth); reps)
 
     dst = joinpath(out, "score_timing_exact_$(scene).jld2")
-    JLD2.jldsave(dst; scene, loss_width, reps, nthreads = Threads.nthreads(), results)
+    JLD2.jldsave(dst; scene, loss_width, outlier_halfwidth, reps, nthreads = Threads.nthreads(), results)
     println("saved -> ", dst); flush(stdout)
     return 0
 end

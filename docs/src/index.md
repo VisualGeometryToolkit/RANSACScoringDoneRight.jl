@@ -106,8 +106,9 @@ one sort-and-sweep over the residuals (paper, Algorithm 1).
 </pre>
 ```
 
-No inlier threshold is set: the sweep's optimal boundary acts as a threshold that adapts
-to each hypothesis's own scale, ``\hat s = \sqrt{\mathrm{RSS}_{k^*} / \nu}``.
+The Student-t has no threshold, only the outlier half-width: the sweep selects each
+hypothesis's inlier partition, and its boundary follows that hypothesis's own scale,
+``\hat s = \sqrt{\mathrm{RSS}_{k^*} / \nu}``.
 
 ## Abstract
 

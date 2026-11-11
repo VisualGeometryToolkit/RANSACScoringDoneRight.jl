@@ -45,3 +45,32 @@ the switch here is the line noted.
 ## test_duplication
 
 See the leg report (/home/jpr/logs/dgx-agent/cascade-09-RANSACScoringDoneRight.md) for the run and its output.
+
+## Robust schema
+
+The owner's ruling (2026-11-11): "There's no such thing as a threshold for the Student-t. There's only the outlier
+half-width." Every name that called a Student-t's half-width a threshold, or used one name for both meanings,
+before (e9545f8) → after (this commit). Pure renames: no value moved (the timing protocol's defaults stay 1.64e-3 each).
+
+- [x] neurips2026/scripts/studies/score_timing.jl:68–69 `timed_scorers(pairs, loss_width)` with
+  `outlier_halfwidth = loss_width` (the loss width reinterpreted as the Student-t's half-width) →
+  :68 `timed_scorers(pairs; loss_width, outlier_halfwidth)`, two values, neither read as the other
+- [x] neurips2026/scripts/studies/score_timing.jl:139 the CLI `--loss-width` feeding both → :138–139 `--loss-width`
+  (the loss-width families') and `--outlier-halfwidth` (the Student-t's), each default 0.00164; :152 the call, :155
+  the saved record (`outlier_halfwidth` saved beside `loss_width`); :88 the docstring's call
+- [x] neurips2026/scripts/studies/score_timing.jl:46–51 the comment stating the reuse → :46–51 the two options
+- [x] neurips2026/scripts/slurm/score_timing.sbatch:43,45,50 `LOSS_WIDTH` only → :43–44 `LOSS_WIDTH` and
+  `OUTLIER_HALFWIDTH`, :46 logged, :51 passed as `--outlier-halfwidth`
+- [x] neurips2026/notes/score_timing.md:29–31 "loss width = outlier half-width … so every score sits at the same
+  decision boundary" → :29–33 two quantities, two options, not one boundary
+- [x] docs/src/index.md:109 "the sweep's optimal boundary acts as a threshold" → :109–111 "the Student-t has no
+  threshold, only the outlier half-width"
+- [x] test/native_widths_tests.jl: a `threshold` key or keyword with the Student-t is refused (never read as a
+  half-width) and `outlier_halfwidth` reaches the scorer exactly (the refusals already held through
+  VisualGeometryToolkitEstimation's key check and the constructor's keywords; the test pins them)
+
+Reviewed, not a hit: `TailRules.threshold_quantile` (the peaks-over-threshold quantile of the extreme-value fit, not a
+width); `has_inlier_threshold`/`inlier_threshold` (VisualGeometryToolkitCore's contract: the residual at which the MAP
+rule flips, `decision_threshold`, not a half-width); the loss-width families' `threshold` (their loss width, kept);
+docs/src/index.md:129 "threshold miscalibration" (the paper's abstract, verbatim; for the owner); the table and
+config files of neurips2026 (no Student-t key named a threshold: `snn_threshold` is the SIFT ratio test).

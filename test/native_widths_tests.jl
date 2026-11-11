@@ -107,6 +107,16 @@ end
     @test sc == StudentTUniformScoring(P, 0.25; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()) && outlier_halfwidth(sc) == 0.25
     @test config_dict(sc) == merge(d, Dict("scale_prior" => "jeffreys", "label_prior" => "flat"))
     @test_throws r"needs `outlier_halfwidth`" scoring_from_toml(Dict("type" => "student_t_uniform"); problem = P, tags = ALL_SCORING_TAGS)
+    # the owner's ruling: the Student-t has no threshold, only the outlier half-width — a `threshold` key or keyword is
+    # refused (never read as a half-width), and `outlier_halfwidth` reaches the scorer exactly
+    @test_throws ArgumentError scoring_from_toml(Dict("type" => "student_t_uniform", "threshold" => 0.25); problem = P, tags = ALL_SCORING_TAGS)
+    @test_throws ArgumentError scoring_from_toml(Dict("type" => "student_t_uniform", "outlier_halfwidth" => 0.25, "threshold" => 0.25);
+                                                 problem = P, tags = ALL_SCORING_TAGS)
+    @test_throws MethodError StudentTUniformScoring(P, 0.25; threshold = 0.25, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
+    for h in (0.1, 0.25, 1/3, 17.5)
+        @test outlier_halfwidth(scoring_from_toml(Dict("type" => "student_t_uniform", "outlier_halfwidth" => h); problem = P,
+                                                  tags = ALL_SCORING_TAGS)) === h
+    end
     @test_throws r"needs `threshold`" scoring_from_toml(Dict("type" => "magsac"); problem = P, tags = ALL_SCORING_TAGS)
     @test_throws ArgumentError scoring_from_toml(Dict("type" => "magsac", "threshold" => 1.0, "sigma" => 1.0); problem = P, tags = ALL_SCORING_TAGS)
 end

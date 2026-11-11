@@ -40,11 +40,12 @@ OUT=${OUT:-${VGTK_DATA_ROOT:?set VGTK_DATA_ROOT (or POOL and OUT)}/accv2026/resu
 SCENE=${SCENE:-british_museum}
 NPAIRS=${NPAIRS:-20}
 REPS=${REPS:-3}
-LOSS_WIDTH=${LOSS_WIDTH:-0.00164}
+LOSS_WIDTH=${LOSS_WIDTH:-0.00164}                  # the loss-width families'
+OUTLIER_HALFWIDTH=${OUTLIER_HALFWIDTH:-0.00164}    # the Student-t scorer's (never a loss width or a threshold)
 
-echo "[$(date +%T)] scene=$SCENE pool=$POOL npairs=$NPAIRS reps=$REPS loss_width=$LOSS_WIDTH"
+echo "[$(date +%T)] scene=$SCENE pool=$POOL npairs=$NPAIRS reps=$REPS loss_width=$LOSS_WIDTH outlier_halfwidth=$OUTLIER_HALFWIDTH"
 
 exec julia -t 1 --startup-file=no --project=neurips2026 \
     neurips2026/scripts/studies/score_timing.jl \
     --pool="$POOL" --out="$OUT" --scene="$SCENE" \
-    --npairs="$NPAIRS" --reps="$REPS" --loss-width="$LOSS_WIDTH"
+    --npairs="$NPAIRS" --reps="$REPS" --loss-width="$LOSS_WIDTH" --outlier-halfwidth="$OUTLIER_HALFWIDTH"

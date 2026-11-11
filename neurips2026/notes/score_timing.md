@@ -26,9 +26,11 @@ actually deploys (see below), so it is the honest comparison.
 
 Single-threaded (`julia -t 1`). Pool: PT-E-SIFT-4K, scene `british_museum`,
 2200 image pairs of stored minimal-sample hypotheses with precomputed pool-frame
-Sampson residuals. All methods share one operating point, loss width = outlier
-half-width = 1.64 × 10⁻³ on
-the residual-unit axis, so every score sits at the same decision boundary. One
+Sampson residuals. The loss-width methods run at loss width 1.64 × 10⁻³ and the
+Student-t scorer at outlier half-width 1.64 × 10⁻³ on the residual-unit axis, two
+quantities set by two options (`--loss-width`, `--outlier-halfwidth`) to the same
+number; the numbers are not the same decision boundary (the Student-t has no
+threshold: its boundary is the sweep's selected partition). One
 warm-up run per scorer precedes the bracket, so compilation is excluded; the
 reported figure is the **minimum of three repetitions**, each a bracket over 20
 pairs divided by the hypotheses scored, making it budget-independent.
