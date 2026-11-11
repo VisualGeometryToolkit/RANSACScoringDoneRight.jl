@@ -193,7 +193,7 @@ scene-clustered BCa bootstrap~\cite{Efron1987}.
 		so that the near-tied calibrated regime stays readable (the
 		threshold-based scores leave the panel under inflation and reach
 		$\SelThreshMedInflLo^\circ$--$\SelThreshMedInflHi^\circ$ at
-		$128\times$), and (b) mAA@$10^\circ$~\eqref{eq:maa} at the same
+		$128\times$), and (b) mAA@$10^\circ$~\eqref{eq:maa} at the same % reproduce: literal-ok (128x the scale inflation zeta, not \ConvRatioPT)
 		operating points, which are tuned on the median. The baselines are
 		\ransac~\cite{Fischler1981}, \msac~\cite{Torr1998},
 		\magsacpp~\cite{Barath2020}, \gau~\cite{Shekhovtsov2025}, and
@@ -206,7 +206,7 @@ scene-clustered BCa bootstrap~\cite{Efron1987}.
 At calibration ($\zeta=1$) the scores are nearly tied
 (\cref{fig:supp-sel-miscal}): the profile-marginal score and \simfitpp reach
 median errors of $\SelStuMedCal^\circ$ and $\SelSimfitMedCal^\circ$ and mAA
-of $\SelStuMAACal$ and $\SelSimfitMAACal$. At $128\times$ inflation, the
+of $\SelStuMAACal$ and $\SelSimfitMAACal$. At $128\times$ inflation, the % reproduce: literal-ok (128x the scale inflation zeta, not \ConvRatioPT)
 profile-marginal score reaches a median error of $\SelStuMedInfl^\circ$ and
 $\SelStuMAAInfl$ mAA, while \simfitpp reaches $\SelSimfitMedInfl^\circ$ and
 $\SelSimfitMAAInfl$ mAA; the other threshold-based scores have median
@@ -217,7 +217,7 @@ data-dependent partition selection and scale estimation; by
 \eqref{eq:corrupted-cutoff}, the equivalent coordinate of the half-width also
 changes only with~$\log\zeta$, $(q_a')^2 = (q^*)^2 + 2d_g\log\zeta$, and the
 experiment does not isolate these effects. Re-estimating the threshold per pair (\simfitpp) does not
-remove the dependence on the supplied scale: at $128\times$ inflation its
+remove the dependence on the supplied scale: at $128\times$ inflation its % reproduce: literal-ok (128x the scale inflation zeta, not \ConvRatioPT)
 median error of $\SelSimfitMedInfl^\circ$ is close to that of the other
 threshold-based scores, against $\SelStuMedInfl^\circ$ for the
 profile-marginal score.
@@ -247,7 +247,7 @@ reduces the median pose error from $\EtoESRMed^\circ$ to
 $\EtoEOursMed^\circ$ and raises mAA@$10^\circ$ from $\EtoESRMAA$ to
 $\EtoEOursMAA$. Under corruption, our median error stays within
 $\EtoEOursRange^\circ$, whereas \superansac's reaches $\EtoESRRangeHi^\circ$
-under deflation and $\EtoESRInflMed^\circ$ at $128\times$ inflation. We
+under deflation and $\EtoESRInflMed^\circ$ at $128\times$ inflation. We % reproduce: literal-ok (128x the scale inflation zeta, not \ConvRatioPT)
 postulate that the calibrated gain has the same origin: a threshold tuned
 on validation pairs is effectively miscalibrated for test pairs whose noise
 scale lies outside the validation distribution, whereas partition anchoring
@@ -303,7 +303,7 @@ $\zeta = 1$.
 	\smallskip
 	\begin{tabular}{lrrr}
 		\toprule
-		\poselib TLS-LM                                & $\zeta = 1$ & $\zeta = 16$ & $\zeta = 128$ \\
+		\poselib TLS-LM                                & $\zeta = 1$ & $\zeta = 16$ & $\zeta = 128$ \\ % reproduce: literal-ok (128x the scale inflation zeta, not \ConvRatioPT)
 		\midrule
 		fixed ($\tau_{\mathrm{ref}}$)                 & 1.8         & 4.0          & 22.0          \\
 		anchored ($\tau = \lambda\hat s$)          & 1.9         & 2.4          & 4.2           \\
