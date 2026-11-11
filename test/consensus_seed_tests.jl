@@ -6,6 +6,7 @@
 # The seeds themselves are pinned in VisualGeometryToolkitCore (fit_scale_tests.jl).
 
 @testitem "consensus_seed" begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, FlatLabelPrior, ProfiledLabelPrior, label_prior, sweep_order, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
     using Test
     using Random: MersenneTwister
     import VisualGeometryToolkitCore as VGC
@@ -14,7 +15,6 @@
         inlier_prior, posterior_weights!, posterior_inlier_probs!, inlier_threshold, ScoreBuffers,
         GauInlier, decision_threshold, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: alloc_scoring_workspace, sweep_order
 
     rng = MersenneTwister(7)
     n_in, n_out = 80, 20
@@ -26,7 +26,7 @@
 
     @testset "the seed reads the scorer's partition under its prior" begin
         for prior in (IGPrior(0.0, 0.0), IGPrior(1.0, 0.25))
-            s = StudentTUniformScoring(4, halfwidth; prior, codimension = 2)
+            s = StudentTUniformScoring(4, halfwidth; scale_prior = prior, codimension = 2, label_prior = FlatLabelPrior())
             @test scale_prior(s) === prior
             W = VGC.scoring_workspace(s, n, 2)
             q = Vector{Float64}(undef, n)
@@ -59,7 +59,7 @@
     end
 
     @testset "inlier_threshold: the consensus Student-t's crossover" begin
-        s = StudentTUniformScoring(4, halfwidth; codimension = 2)
+        s = StudentTUniformScoring(4, halfwidth; codimension = 2, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         W = VGC.scoring_workspace(s, n, 2)
         buf = ScoreBuffers{Float64}(n, W)
         buf.residuals .= r
@@ -71,12 +71,12 @@
     end
 
     @testset "check_workspace and with_width" begin
-        s = StudentTUniformScoring(4, halfwidth; codimension = 2)
+        s = StudentTUniformScoring(4, halfwidth; codimension = 2, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test check_workspace(s, VGC.scoring_workspace(s, n, 2)) === nothing
         @test_throws ArgumentError check_workspace(StudentTUniformScoring(4, halfwidth; codimension = 2,
-                                                   prior = IGPrior(1.0, 0.25)), VGC.scoring_workspace(s, n, 2))
+                                                   scale_prior = IGPrior(1.0, 0.25), label_prior = FlatLabelPrior()), VGC.scoring_workspace(s, n, 2))
         @test_throws ArgumentError check_workspace(StudentTUniformScoring(4, halfwidth; codimension = 2,
-                                                   label_prior = ProfiledLabelPrior()), VGC.scoring_workspace(s, n, 2))
+                                                   label_prior = ProfiledLabelPrior(), scale_prior = JeffreysPrior()), VGC.scoring_workspace(s, n, 2))
         s2 = with_width(s, OutlierHalfwidth(3.0))
         @test s2 isa typeof(s) && outlier_halfwidth(s2) === 3.0
         @test VGC.minimal_sample_size(s2) == 4 && VGC.codimension(s2) == 2

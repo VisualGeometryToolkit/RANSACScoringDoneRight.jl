@@ -157,7 +157,8 @@ best score with its inlier count, whose scale estimate follows in closed form.
 
 ```julia
 using RANSACScoringDoneRight
-using VisualGeometryToolkitCore: scoring_workspace, score!, inlier_count, consensus_order, consensus_s2
+using VisualGeometryToolkitCore: StudentTUniformScoring, JeffreysPrior, FlatLabelPrior,
+    scoring_workspace, score!, inlier_count, consensus_order, consensus_s2
 using Random
 
 # The residuals of one line hypothesis (codimension 1): 80 inliers with noise
@@ -166,7 +167,8 @@ rng = Xoshiro(7)
 n = 100
 r = [0.01 .* randn(rng, 80); rand(rng, 20) .- 0.5]
 
-scoring = StudentTUniformScoring(2, 0.5)  # a line has 2 parameters; outlier half-width 0.5
+# a line has 2 parameters; outlier half-width 0.5; the scale and label priors (Jeffreys, flat) are required
+scoring = StudentTUniformScoring(2, 0.5; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
 W = scoring_workspace(scoring, n, 1)      # sweep buffers, reusable across hypotheses
 q = Vector{Float64}(undef, n)
 S = score!(W, scoring, q, r, n)           # the score, with the scale integrated out
@@ -175,7 +177,7 @@ s2 = consensus_s2(scoring, r, consensus_order(scoring, W), k; model_dof = 2, d_g
 sqrt(s2)                                  # the partition's scale ŝ: about 0.01
 ```
 
-`StudentTUniformScoring(2, 0.5; prior = IGPrior(α₀, β₀))` scores under an
+`StudentTUniformScoring(2, 0.5; scale_prior = IGPrior(α₀, β₀), label_prior = FlatLabelPrior())` scores under an
 informative prior instead (its workspace is built from the scoring, so it
 carries that prior).
 

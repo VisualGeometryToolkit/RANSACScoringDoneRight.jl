@@ -5,7 +5,7 @@
 # `grid_evaluate(::StudentTUniformScoring, …)` scores a pool of pairs, staged once into
 # the flat `IGSharedData` layout by `stage_ig_shared_from_pairs`, over a grid of
 # outlier half-widths: `ig_sweep_kernel!` runs the sort-and-sweep marginal score
-# (the same `partition_score` arithmetic as sweep.jl) for every (pair, model,
+# (VisualGeometryToolkitCore's one `partition_score` arithmetic) for every (pair, model,
 # outlier half-width),
 # and a gather kernel pulls the chosen model's error.
 #
@@ -54,71 +54,10 @@ struct IGSharedData{Backend, F32A, F64A, I64A, I32A}
 end
 
 # =============================================================================
-# Kernel
+# Kernel: VisualGeometryToolkitCore's `ig_sweep_kernel!`, the stack's one prefix
+# sweep (moved there 2026-11-11 with StudentTUniformScoring): one work item per
+# (pair, model, outlier half-width) over this layout.
 # =============================================================================
-
-"""
-    ig_sweep_kernel!(scores_out, sorted_sq_flat, pair_offset, K_per_pair, M_per_pair,
-                     lg_table, log_two_outlier_halfwidth_grid, model_dof, dg, prior, p_offset,
-                     sorted_penalties, prior_table, best_k_out)
-
-One work-item per (pair, model, grid-point): ONE sequential sweep over the
-model's K sorted squared residuals, writing the best partition score
-`max_k S(k)` to `scores_out[p_local, m, t]` (Float64). `S(k)` is sweep.jl's
-`_table_partition_score` — the one per-partition formula — at the grid point's
-`log(2·outlier_halfwidth)`, less half the running sum of `sorted_penalties`
-(per point, in the same order; `nothing`: none) and plus `prior_table[k]`
-(`nothing`: none). RSS and the penalty sum accumulate in Float64. With
-`best_k_out` of nonzero size, the first k at the best score goes to
-`best_k_out[p_local, m, t]` (0 when no partition scores above −Inf). This is
-the package's ONE prefix sweep: the marginal grid (penalty- and prior-free, no
-k) and the host's `sweep!` (one work item, its sorted column) both launch it.
-Work-items beyond a pair's model count write nothing (the chunked driver
-pre-fills −Inf).
-"""
-@kernel function ig_sweep_kernel!(
-        scores_out,              # (chunk, M_max, T) Float64
-        @Const(sorted_sq_flat),
-        @Const(pair_offset),
-        @Const(K_per_pair),
-        @Const(M_per_pair),
-        @Const(lg_table),
-        @Const(log_two_outlier_halfwidth_grid),   # (T,) log(2·outlier_halfwidth_t)
-        model_dof::Int32, dg::Int32, prior::IGPrior, p_offset::Int32,
-        sorted_penalties,        # per sorted point, as sorted_sq_flat (`nothing`: none)
-        prior_table,             # (K,) added to S(k) (`nothing`: none)
-        best_k_out)              # (chunk, M_max, T) Int32 the best k (0-size: not written)
-    p_local, m, t = @index(Global, NTuple)
-    p = Int(p_local) + Int(p_offset)
-    inbounds_thread = p_local <= size(scores_out, 1) && t <= size(scores_out, 3) &&
-                      p <= length(M_per_pair)
-    M = inbounds_thread ? Int(M_per_pair[p]) : 0
-    if m <= M
-        K     = Int(K_per_pair[p])
-        base  = pair_offset[p] + (Int64(m) - Int64(1)) * Int64(K)
-        log_two_outlier_halfwidth = log_two_outlier_halfwidth_grid[t]
-        dg_f  = Float64(dg)
-        RSS = 0.0
-        pen_sum = 0.0
-        bS  = -Inf
-        bk  = 0
-        @inbounds for k in 1:K
-            RSS += Float64(sorted_sq_flat[base + k])
-            sorted_penalties === nothing || (pen_sum += Float64(sorted_penalties[base + k]))
-            if k > model_dof
-                S = _table_partition_score(prior, lg_table, RSS, k, model_dof, dg_f, K, log_two_outlier_halfwidth)
-                sorted_penalties === nothing || (S -= pen_sum / 2)
-                prior_table === nothing || (S += prior_table[k])
-                if S > bS
-                    bS = S
-                    bk = k
-                end
-            end
-        end
-        @inbounds scores_out[p_local, m, t] = bS
-        length(best_k_out) > 0 && (@inbounds best_k_out[p_local, m, t] = Int32(bk))
-    end
-end
 
 const _NO_BEST_K = Array{Int32, 3}(undef, 0, 0, 0)   # the grid reads no k (adapted to a device as an empty array)
 
@@ -179,7 +118,7 @@ function grid_evaluate(scoring::StudentTUniformScoring{P}, staged::IGSharedData,
     # the table's length, so any length covering every pair gives the same sweep).
     N_max = Pn == 0 ? 0 : Int(maximum(Array(staged.K_per_pair)))
 
-    lg_table_d = ka_upload(Float64, backend, _build_lg_table(N_max, dg; alpha0 = prior.alpha0))
+    lg_table_d = ka_upload(Float64, backend, log_gamma_table(N_max, dg; alpha0 = prior.alpha0))
     log_two_outlier_halfwidth_d = ka_upload(Float64, backend,
                                              [log(2.0 * Float64(h)) for h in outlier_halfwidths])
 

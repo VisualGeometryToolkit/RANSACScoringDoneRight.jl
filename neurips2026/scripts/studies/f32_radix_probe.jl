@@ -3,7 +3,7 @@
 # neurips2026/scripts/studies/f32_radix_probe.jl — DECISION PROBE for the Float32 scoring hypothesis.
 #
 # The scoring hot loop's dominant structure is an LSD radix `sortperm` over
-# monotone UInt64 keys (sweep.jl `_radix_sortperm!`): 8 byte iterations, each
+# monotone UInt64 keys (VisualGeometryToolkitCore's `radix_sortperm!`, robust/partition_sweep.jl; RSDR's sweep.jl until 2026-11-11): 8 byte iterations, each
 # scattering an 8-byte key + an 8-byte Int perm entry. A Float32 sort key is
 # UInt32 — 4 iterations at half the key width — and an Int32 perm halves the
 # scatter payload again. This probe measures whether that structural
@@ -18,7 +18,7 @@
 # Usage: julia -t 1 --project=neurips2026 neurips2026/scripts/studies/f32_radix_probe.jl
 # =============================================================================
 using RANSACScoringDoneRight
-const RSDR = RANSACScoringDoneRight
+import VisualGeometryToolkitCore as VgtkCore   # the sweep's radix sort (Core's)
 import JLD2
 using Printf
 using VisualGeometryToolkitCore.Pools: num_points
@@ -114,19 +114,19 @@ end
 
 function bench(sets, label)
     n = length(first(sets))
-    perm64 = Vector{Int}(undef, n); rb64 = RSDR.RadixPermBuffers{UInt64}(n)   # V1 is the UInt64 path; the bare default is UInt32 since this probe
+    perm64 = Vector{Int}(undef, n); rb64 = VgtkCore.RadixPermBuffers{UInt64}(n)   # V1 is the UInt64 path; the bare default is UInt32 since this probe
     perm32 = Vector{Int}(undef, n); rb32 = Radix32{Int}(n)
     permI32 = Vector{Int32}(undef, n); rbI32 = Radix32{Int32}(n)
     sets32 = [Float32.(s) for s in sets]
 
     # warmup
-    RSDR._radix_sortperm!(perm64, sets[1], rb64, n)
+    VgtkCore.radix_sortperm!(perm64, sets[1], rb64, n)
     radix32_sortperm!(perm32, sets32[1], rb32, n)
     radix32_sortperm!(permI32, sets32[1], rbI32, n)
 
     t64 = Inf; t32 = Inf; tI32 = Inf
     for _ in 1:REPS
-        t0 = time_ns(); for s in sets;   RSDR._radix_sortperm!(perm64, s, rb64, n) end
+        t0 = time_ns(); for s in sets;   VgtkCore.radix_sortperm!(perm64, s, rb64, n) end
         t64 = min(t64, (time_ns() - t0) / length(sets))
         t0 = time_ns(); for s in sets32; radix32_sortperm!(perm32, s, rb32, n) end
         t32 = min(t32, (time_ns() - t0) / length(sets))
@@ -139,7 +139,7 @@ function bench(sets, label)
     # the worst |Δ| between the F64-sorted and F32-sorted residual sequences)
     agree = 0; worst = 0.0
     for (s, s32) in zip(sets, sets32)
-        RSDR._radix_sortperm!(perm64, s, rb64, n)
+        VgtkCore.radix_sortperm!(perm64, s, rb64, n)
         radix32_sortperm!(perm32, s32, rb32, n)
         agree += (perm64 == perm32)
         for i in 1:n

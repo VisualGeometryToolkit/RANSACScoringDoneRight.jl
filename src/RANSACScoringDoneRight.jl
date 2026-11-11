@@ -6,9 +6,13 @@ import VisualGeometryToolkitCore as VgtkCore
 # RANSACScoringDoneRight — scale-free marginal RANSAC scoring
 # =============================================================================
 #
-# The paper scorers on VisualGeometryToolkitCore's scoring contract: the sort-and-sweep
-# Student-t + uniform marginal score (Algorithm 1, `StudentTUniformScoring`), its
-# CPU/GPU grids, and the paper baselines. The scoring core
+# The paper's research scorers on VisualGeometryToolkitCore's contracts. The
+# sort-and-sweep Student-t + uniform marginal score itself (Algorithm 1,
+# `StudentTUniformScoring`: its sweep and the one prefix kernel, its workspace,
+# label priors, the supplied half-width) is VisualGeometryToolkitCore's (moved
+# there 2026-11-11, the owner's ruling); this package extends it by dispatch —
+# the outlier models that estimate the support, its CPU/GPU grids — and adds the
+# paper baselines. The scoring core
 # depends on VisualGeometryToolkitCore (for Uncertain and the constraint-problem protocol)
 # and StaticArrays/SpecialFunctions; the GPU sweep port adds KernelAbstractions
 # (and GPUArrays, to free its device scratch eagerly),
@@ -43,10 +47,8 @@ import VisualGeometryToolkitCore as VgtkCore
 # A bare `using VisualGeometryToolkitCore` once sat in a pool-record file and pulled
 # VGC's whole export list into this namespace — its `m` and `mm` are the metre
 # and millimetre UNITS, and several local variables here share those names.
-using LinearAlgebra: I, det, dot, norm
-using StaticArrays: SMatrix, SVector, StaticMatrix, StaticVector
-using SpecialFunctions: loggamma, logbeta, gamma, gamma_inc
-using LogExpFunctions: log1pexp # log(1 + eˣ) (MLESAC's quality)
+using SpecialFunctions: gamma, gamma_inc
+using LogExpFunctions: log1pexp   # log(1 + eˣ) (MLESAC's quality)
 using Statistics: Statistics
 
 # GPU scoring (KernelAbstractions port — CPU + CUDA backends).  The loss-width
@@ -63,12 +65,10 @@ using GPUArrays: GPUArrays
 # is VisualGeometryToolkitCore's.
 using VisualGeometryToolkitCore: ka_upload
 
-# VisualGeometryToolkitCore's `whitened_residual` / `whitened_constraint_rows`
-# (a problem's point, by `(problem, model, i)`) are the ONE whitening and degeneracy
-# rule of the residual path: this package computes no Sampson residual of its own.
-using VisualGeometryToolkitCore: VisualGeometryToolkitCore, Uncertain, CovMat, geom
-# Geometry the evaluation subsystem scores against (scoring_eval_common.jl).
-using VisualGeometryToolkitCore:
+# This package computes no residual of its own: the whitened residuals and the
+# predictive score are VisualGeometryToolkitCore's (with its StudentTUniformScoring).
+using VisualGeometryToolkitCore: VisualGeometryToolkitCore,
+    # Geometry the evaluation subsystem scores against (scoring_eval_common.jl):
     # the loss shapes the inlier-loss layer and the scale marginals dispatch on
     AbstractLossShape, WelschShape, GemanMcclureShape, SmoothTLSShape
 # The benchmark pool record and its accessors are VisualGeometryToolkitCore's (its
@@ -91,21 +91,26 @@ using VisualGeometryToolkitCore: TagRegistry
 # VisualGeometryToolkitCore's; this package states the axis of its grid families.
 using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth
 # The contracts this package implements are VisualGeometryToolkitCore's: the
-# constraint-problem protocol, the scoring contract, and the robust-statistics
-# toolkit (scale, the Student-t + uniform mixture, the posterior-weight state).
-# RSDR implements the scoring contract for its own scorers and adds its grid
-# algorithms and paper baselines; it re-exports nothing VGC owns.
-using VisualGeometryToolkitCore: AbstractConstraintProblem, data_size,
-    solver_covariance, provides_solver_covariance, sq_norm, whitened_residual,
-    whitened_constraint_rows, IGPrior, JeffreysPrior,
-    square_distances!, zero_sample!, GauInlier, decision_threshold,
-    truncated_log_normaliser, consensus_s2, ScoreBuffers, residuals,
-    scoring_workspace, RansacScoring, MsacScoring, AbstractThresholdScoring,
+# constraint-problem protocol, the scoring contract, the pool-selection contract
+# and the robust-statistics toolkit. RSDR implements the scoring contract for
+# its own scorers and adds its grid algorithms and paper baselines; it
+# re-exports nothing VGC owns.
+using VisualGeometryToolkitCore: AbstractConstraintProblem,
+    IGPrior,
+    truncated_log_normaliser,
+    RansacScoring, MsacScoring, AbstractThresholdScoring,
     exact_pm_score_kernel!, argmax_models_kernel!, support_sq_loss_width, sorted_squared_residuals   # the exact grid selection (Core's)
-import VisualGeometryToolkitCore: AbstractScoring, loss_shape, codimension, score!, score_bound,
-    inlier_count, consensus_order, inlier_threshold, has_inlier_threshold, is_predictive,
-    scored_model, scale_prior, outlier_halfwidth, check_workspace, with_width, width_axis, minimal_sample_size,
-    residual_quality, scoring_workspace,
+# The Student-t + uniform marginal scorer and its partition sweep (Core's): this package's grids,
+# outlier models and paper baselines use and extend them.
+using VisualGeometryToolkitCore: StudentTUniformScoring, AbstractLabelPrior, FlatLabelPrior,
+    AbstractOutlierModel, FixedHalfwidth, ig_sweep_kernel!, log_gamma_table,
+    suffix_sums!
+import VisualGeometryToolkitCore: loss_shape, codimension, score_bound,
+    inlier_threshold, has_inlier_threshold,
+    scale_prior, outlier_halfwidth, with_width, width_axis, minimal_sample_size,
+    residual_quality,
+    # the estimated-support sweep's hooks, for this package's outlier models (extreme_value_sweep.jl)
+    outlier_context!, outlier_cost, scored_outlier_halfwidth,
     # the pool-selection contract (VisualGeometryToolkitCore robust/pool_selection.jl):
     # the staged grid selection (a scorer at its width selects through
     # VisualGeometryToolkitCore's `best_pool_model`, by `score!`)
@@ -115,19 +120,14 @@ import VisualGeometryToolkitCore: AbstractScoring, loss_shape, codimension, scor
 # Exports
 # -----------------------------------------------------------------------------
 
-# The sweep and its workspace.
-export ScoringWorkspace
+# The pool record's per-pair staging precompute.
 public precompute_pair
 
-# The Student-t + uniform scorer (scoring.jl): model-certain, or Predictive.
-export StudentTUniformScoring, Predictive
-# Its label priors and outlier models (extreme_value.jl).
-export AbstractLabelPrior, FlatLabelPrior, ProfiledLabelPrior, BetaLabelPrior
-export AbstractOutlierModel, FixedHalfwidth, TailRules, ExtremeValueHalfwidth, GeneralizedParetoOutliers,
-    OutlierTerm
-export outlier_model, label_prior
+# The outlier models that estimate the support of VisualGeometryToolkitCore's
+# StudentTUniformScoring (extreme_value.jl; the scorer, its label priors and the
+# supplied half-width `FixedHalfwidth` are Core's).
+export TailRules, ExtremeValueHalfwidth, GeneralizedParetoOutliers, OutlierTerm
 public gpd_pwm_fit, tail_fit, gpd_support, gpd_outlier_cost
-export score_residuals!, score_sq_residuals!
 
 # GPU scoring (KernelAbstractions): flat-layout staging + THE grid verb.
 # `grid_evaluate` dispatches on the scoring: the loss-width families
@@ -162,19 +162,13 @@ public Aggregation, Exact, LogBinned
 # Track B — inlier/outlier mixture reformulation of redescending losses
 public loss_scale_bounds, LossSpec, loss_spec
 
-# Accessors of the sweep workspace (public, not exported: generic nouns).
-public sweep_order, penalties, sort_key, lg_table
-public sweep!, default_scoring_workspace, alloc_scoring_workspace
-public partition_score   # the one per-partition score of every sweep (device-callable: a downstream device sweep calls it, not a copy)
-
 # -----------------------------------------------------------------------------
-# Include order: sweep → scoring
+# Include order: the outlier models → their hooks on Core's sweep
 # -----------------------------------------------------------------------------
 
-include("extreme_value.jl")           # label priors, outlier models, the generalized Pareto fit
-include("sweep.jl")                   # ScoringWorkspace, sweep!
-include("scoring.jl")                 # StudentTUniformScoring + its scoring contract + score_residuals!/score_sq_residuals!
-include("extreme_value_sweep.jl")     # the sweep with an extreme-value outlier model
+include("extreme_value.jl")           # the outlier models that estimate the support, the generalized Pareto fit
+include("scoring.jl")                 # the loss-cost branch's supertype (LossCostScoring)
+include("extreme_value_sweep.jl")     # their methods of Core's estimated-support sweep hooks
 
 # -----------------------------------------------------------------------------
 # GPU scoring (KernelAbstractions port)
@@ -191,7 +185,7 @@ include("extreme_value_sweep.jl")     # the sweep with an extreme-value outlier 
 const _MAGSAC_DOF = 4
 const _MAGSAC_SCALE_MULTIPLE = 3.644173432
 
-include("ig_sweep_ka.jl")             # IGSharedData, ig_sweep_kernel!, grid_evaluate(::StudentTUniformScoring), staging
+include("ig_sweep_ka.jl")             # IGSharedData, grid_evaluate(::StudentTUniformScoring) on Core's ig_sweep_kernel!, staging
 include("loss_width_sweep_ka.jl")     # RANSAC/MSAC/GaU/MAGSAC++ device kernels + grid_evaluate(::LossWidthScoring)
 
 # -----------------------------------------------------------------------------

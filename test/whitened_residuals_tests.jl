@@ -8,12 +8,11 @@
 # there (constraint_problem_tests.jl).
 
 @testitem "whitened_residuals" setup = [LineProblems] begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, Predictive, FlatLabelPrior, label_prior, alloc_scoring_workspace, sweep_order, penalties, score_sq_residuals!, JeffreysPrior   # the Student-t scorer (Core's)
     using Test, StaticArrays, LinearAlgebra
     import VisualGeometryToolkitCore as VGC
     using VisualGeometryToolkitCore: AbstractConstraintProblem
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: alloc_scoring_workspace, score_sq_residuals!, sweep_order, penalties,
-        Predictive
 
     # A problem that IS its list of constraint tuples (g, ∂ₓg, ∂_θg).
     struct _CDProblem{C} <: AbstractConstraintProblem
@@ -47,7 +46,7 @@
         cds[n] = _scalar(3.0, (0.6, 0.8))               # an ordinary outlier
         p = _CDProblem(cds)
 
-        s = StudentTUniformScoring(2, 5.0)
+        s = StudentTUniformScoring(2, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         sws = alloc_scoring_workspace(n, 1, s); q = zeros(n)
         S, k = score_sq_residuals!(sws, q, s, p, nothing, n)
         @test q[5] === Inf
@@ -56,7 +55,7 @@
         @test k == n - 2                                 # both outliers out
 
         # predictive: whitened_constraint_rows' zero rows give V = 1, so q = Inf, ℓ = 0
-        sp = StudentTUniformScoring{Predictive}(2, 5.0)
+        sp = StudentTUniformScoring{Predictive}(2, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         swp = alloc_scoring_workspace(n, 1, sp); qp = zeros(n)
         Sp, kp = score_sq_residuals!(swp, qp, sp, p, nothing, [1, 2], n)
         @test qp[5] === Inf
@@ -72,7 +71,7 @@
         r = zeros(n); VGC.mahalanobis_distances!(r, p, nothing)
         @test all(>=(0), r)                              # a distance, never the signed residual
         @test r == abs.([VGC.whitened_residual(p, nothing, i) for i in 1:n])
-        sp = StudentTUniformScoring{Predictive}(2, 5.0)
+        sp = StudentTUniformScoring{Predictive}(2, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         swp = alloc_scoring_workspace(n, 1, sp); qp = zeros(n); rp = zeros(n)
         Σ̃ = VGC.solver_covariance(p, nothing, [1, 2])
         score_sq_residuals!(swp, qp, sp, p, nothing, Σ̃, nothing, n; residuals = rp)
@@ -90,7 +89,7 @@
             p = _FRProblem(cs)
             n = length(cs)
             d = [VGC.sampson_distance(F, c) for c in cs]
-            s = StudentTUniformScoring(2, 5.0)
+            s = StudentTUniformScoring(2, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
             sws = alloc_scoring_workspace(n, 1, s); q = zeros(n)
             score_sq_residuals!(sws, q, s, p, F, n)
             @test q == d .^ 2

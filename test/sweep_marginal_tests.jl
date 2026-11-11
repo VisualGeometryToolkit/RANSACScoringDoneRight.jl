@@ -9,9 +9,9 @@
 #  force's maximum exactly.)
 
 @testitem "sweep_marginal" begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, FlatLabelPrior, ProfiledLabelPrior, BetaLabelPrior, label_prior, alloc_scoring_workspace, sweep!, partition_score, score_residuals!, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
     using Test
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: alloc_scoring_workspace, partition_score
     using VisualGeometryToolkitCore: IGPrior
 
     function _brute_Sk(r, model_dof, dg, halfwidth, prior, sws, label_prior)
@@ -38,10 +38,10 @@
         # running RSS sits below the floor for many partitions.
         r0 = [zeros(model_dof); 1e-10 .* (1:14); [1.3, -1.7, 0.9, 1.9, -1.1, 0.7]]
         @test maximum(abs2, r0[1:model_dof+14]) < eps()
-        for data in (r, r0), label_prior in (FlatLabelPrior(), ProfiledLabelPrior(), BetaLabelPrior()),
+        for data in (r, r0), label_prior in (FlatLabelPrior(), ProfiledLabelPrior(), BetaLabelPrior(0.5, 0.5)),
             prior in (IGPrior(), IGPrior(1.5, 0.01))
             n = length(data)
-            s = StudentTUniformScoring(model_dof, halfwidth; prior, label_prior)
+            s = StudentTUniformScoring(model_dof, halfwidth; scale_prior = prior, label_prior)
             sws = alloc_scoring_workspace(n, dg, s)
             S_hard, k_hard = score_residuals!(sws, zeros(n), s, data, n)
             Sk = _brute_Sk(data, model_dof, dg, halfwidth, prior, sws, label_prior)
@@ -51,8 +51,8 @@
 
         # The profiled prior changes the score.
         n = length(r)
-        s0 = StudentTUniformScoring(model_dof, halfwidth; label_prior = FlatLabelPrior())
-        s1 = StudentTUniformScoring(model_dof, halfwidth; label_prior = ProfiledLabelPrior())
+        s0 = StudentTUniformScoring(model_dof, halfwidth; label_prior = FlatLabelPrior(), scale_prior = JeffreysPrior())
+        s1 = StudentTUniformScoring(model_dof, halfwidth; label_prior = ProfiledLabelPrior(), scale_prior = JeffreysPrior())
         S0, _ = score_residuals!(alloc_scoring_workspace(n, dg, s0), zeros(n), s0, r, n)
         S1, _ = score_residuals!(alloc_scoring_workspace(n, dg, s1), zeros(n), s1, r, n)
         @test S0 != S1

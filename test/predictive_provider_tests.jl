@@ -4,10 +4,10 @@
 # HandEyeProblem ran "predictive" without it doing anything (until 2026-09-22).
 
 @testitem "predictive_provider" setup = [LineProblems] begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, Predictive, FlatLabelPrior, label_prior, alloc_scoring_workspace, penalties, sort_key, score_sq_residuals!, JeffreysPrior   # the Student-t scorer (Core's)
     using Test, StaticArrays
     import VisualGeometryToolkitCore as VGC
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: Predictive, alloc_scoring_workspace, score_sq_residuals!, penalties, sort_key
     using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, scored_model, solver_covariance,
         provides_solver_covariance
 
@@ -29,24 +29,24 @@
         end
 
         @testset "construction refuses a problem type with no provider" begin
-            @test_throws ArgumentError StudentTUniformScoring{Predictive}(none, 5.0)
-            @test_throws ArgumentError StudentTUniformScoring{Predictive}(none, 5.0; prior = JeffreysPrior())
-            @test_throws ArgumentError StudentTUniformScoring{Predictive}(LineProblem, 5.0)
-            msg = _message(() -> StudentTUniformScoring{Predictive}(none, 5.0))
+            @test_throws ArgumentError StudentTUniformScoring{Predictive}(none, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
+            @test_throws ArgumentError StudentTUniformScoring{Predictive}(none, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
+            @test_throws ArgumentError StudentTUniformScoring{Predictive}(LineProblem, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
+            msg = _message(() -> StudentTUniformScoring{Predictive}(none, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))
             @test occursin("LineProblem provides none", msg)
             @test occursin("solver_covariance(::LineProblem, model, sample_indices)", msg)
             @test occursin("provides_solver_covariance(::Type{<:LineProblem}) = true", msg)
             @test occursin("or score LineProblem model-certain", msg)
             # the model-certain spec needs no provider; a provider constructs
-            @test StudentTUniformScoring(none, 5.0) isa StudentTUniformScoring{Nothing}
-            @test StudentTUniformScoring(LineProblem, 5.0) isa StudentTUniformScoring{Nothing}
-            @test StudentTUniformScoring{Predictive}(prov, 5.0) isa StudentTUniformScoring{Predictive}
-            @test StudentTUniformScoring{Predictive}(ProviderLineProblem, 5.0) isa StudentTUniformScoring{Predictive}
+            @test StudentTUniformScoring(none, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()) isa StudentTUniformScoring{Nothing}
+            @test StudentTUniformScoring(LineProblem, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()) isa StudentTUniformScoring{Nothing}
+            @test StudentTUniformScoring{Predictive}(prov, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()) isa StudentTUniformScoring{Predictive}
+            @test StudentTUniformScoring{Predictive}(ProviderLineProblem, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()) isa StudentTUniformScoring{Predictive}
         end
 
         # The model_dof constructors carry no problem: the fallback method refuses
         # at the first scored sample, with the same message.
-        sp = StudentTUniformScoring{Predictive}(2, 5.0; codimension = 1)
+        sp = StudentTUniformScoring{Predictive}(2, 5.0; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
 
         @testset "the fallback solver_covariance refuses too" begin
             sws = alloc_scoring_workspace(n, 1, sp); q = zeros(n)
@@ -54,9 +54,9 @@
             @test_throws ArgumentError scored_model(sp, none, θ, idx)
             @test_throws ArgumentError score_sq_residuals!(sws, q, sp, none, θ, idx, n)
             @test _message(() -> solver_covariance(none, θ, idx)) ==
-                  _message(() -> StudentTUniformScoring{Predictive}(none, 5.0))
+                  _message(() -> StudentTUniformScoring{Predictive}(none, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))
             # the model-certain wrap never consults a provider
-            @test scored_model(StudentTUniformScoring(2, 5.0), none, θ, idx) === θ
+            @test scored_model(StudentTUniformScoring(2, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), none, θ, idx) === θ
         end
 
         @testset "a degenerate sample is no hypothesis" begin

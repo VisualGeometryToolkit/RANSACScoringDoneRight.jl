@@ -5,11 +5,11 @@
 # cause.
 
 @testitem "sample_index_bounds" setup = [PoolFixtures, LineProblems] begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, Predictive, FlatLabelPrior, label_prior, alloc_scoring_workspace, score_residuals!, score_sq_residuals!, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
     using Test, StaticArrays
     import VisualGeometryToolkitCore as VGC
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: alloc_scoring_workspace,
-        score_residuals!, score_sq_residuals!, precompute_pair
+    using RANSACScoringDoneRight: precompute_pair
     using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, IGPrior
 
     # the scalar-constraint problem with a solver covariance (LineProblems)
@@ -17,14 +17,14 @@
     @testset "sample indices are bounds-checked" begin
         n = 8
         r = collect(range(0.01, 0.1; length = n))
-        s = StudentTUniformScoring(2, 5.0)
+        s = StudentTUniformScoring(2, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         sws = alloc_scoring_workspace(n, 1, s); q = zeros(n)
         @test_throws BoundsError score_residuals!(sws, q, s, r, n; sample_idx = [0, 1])
         @test_throws BoundsError score_residuals!(sws, q, s, r, n; sample_idx = [1, n + 1])
         S, k = score_residuals!(sws, q, s, r, n; sample_idx = [1, 2])
         @test isfinite(S) && q[1] == 0.0 && q[2] == 0.0
 
-        sp = StudentTUniformScoring{Predictive}(2, 5.0; codimension = 1)
+        sp = StudentTUniformScoring{Predictive}(2, 5.0; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         swp = alloc_scoring_workspace(n, 1, sp); qp = zeros(n)
         p = ProviderLineProblem(r, false); θ = SVector(0.0, 0.0)
         @test_throws BoundsError score_sq_residuals!(swp, qp, sp, p, θ, [0, 1], n)

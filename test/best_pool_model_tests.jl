@@ -7,6 +7,7 @@
 # pool-scorer handles, and the 4-argument width-free form, are retired.)
 
 @testitem "best_pool_model" setup = [PoolFixtures] begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, FlatLabelPrior, label_prior, JeffreysPrior   # the Student-t scorer (Core's)
     using Test, Random
     using KernelAbstractions
     using RANSACScoringDoneRight
@@ -79,10 +80,10 @@
             for sc in _BP_FAMILIES
                 @test best_pool_model(_at(sc, 1.0), empty, De) == 0
             end
-            @test best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1), empty, De) == 0
-            @test best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1), nanpair, fill(NaN32, 120, 3)) == 0
+            @test best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), empty, De) == 0
+            @test best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), nanpair, fill(NaN32, 120, 3)) == 0
             for sc in (MsacScoring(1; threshold = 1.0), RansacScoring(1; threshold = 1.0),
-                       StudentTUniformScoring(_BPProblem, 0.1))
+                       StudentTUniformScoring(_BPProblem, 0.1; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))
                 @test best_pool_model(sc, empty, De) == 0
             end
         end
@@ -113,7 +114,7 @@
             # and scratch is the allocating one
             pair, D = _bp_pair(rng)
             for halfwidth in (0.05, 0.5, 5.0)
-                sc = StudentTUniformScoring(_BPProblem, halfwidth)
+                sc = StudentTUniformScoring(_BPProblem, halfwidth; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
                 ws = VGC.scoring_workspace(sc, VGC.Pools.num_points(pair), 1)
                 @test best_pool_model(sc, pair, D) ==
                       best_pool_model(sc, pair, D; ws, scores = Vector{Float64}(undef, VGC.Pools.num_points(pair)))
@@ -124,13 +125,13 @@
             bad, Db = _bp_pair(rng; sample = :zero)
             @test_throws BoundsError best_pool_model(MsacScoring(1; threshold = 1.0), bad, Db)
             @test_throws BoundsError best_pool_model(MagsacScoring(1; threshold = 1.0), bad, Db)
-            @test_throws BoundsError best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1), bad, Db)
+            @test_throws BoundsError best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), bad, Db)
         end
 
         @testset "a residual matrix of another pair is refused" begin
             pair, D = _bp_pair(rng)
             @test_throws DimensionMismatch best_pool_model(MlesacScoring(1; threshold = 1.0), pair, D[1:end-1, :])
-            @test_throws DimensionMismatch best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1), pair, D[:, 1:end-1])
+            @test_throws DimensionMismatch best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), pair, D[:, 1:end-1])
             @test_throws DimensionMismatch stage_ig_shared_from_pairs([pair], [D[:, 1:end-1]])
             @test_throws DimensionMismatch stage_ig_shared_from_pairs([pair], [D, D])
         end

@@ -23,30 +23,33 @@ uniform mixture toolkit and the Gaussian-uniform boundary (`GauInlier`,
 
 ## The scale-free marginal score
 
-[`StudentTUniformScoring`](@ref) carries the configuration (outlier half-width,
-model degrees of freedom, scale prior, the profile-prior flag);
-[`ScoringWorkspace`](@ref) carries the scratch buffers of the sort-and-sweep —
-the scoring contract's `scoring_workspace`. `StudentTUniformScoring{Predictive}`
-scores a model with its solver covariance.
+The Student-t + uniform marginal score itself is VisualGeometryToolkitCore's
+(moved there on 2026-11-11):
+[`StudentTUniformScoring`](@extref VisualGeometryToolkitCore.StudentTUniformScoring)
+carries the configuration (outlier model, model degrees of freedom, the scale
+and label priors, both required: the stack's defaults are
+VisualGeometryToolkitEstimation's `[scoring.student_t_uniform]`, read by
+`scoring_from_toml`), [`ScoringWorkspace`](@extref VisualGeometryToolkitCore.ScoringWorkspace)
+the scratch buffers of the sort-and-sweep, and
+`StudentTUniformScoring{Predictive}` scores a model with its solver covariance.
+This package extends it by dispatch: its grids (`grid_evaluate`,
+`select_on_grid!`) and the outlier models below.
+
+## Outlier models that estimate the support
+
+Core's estimated-support sweep scores these through their methods of its
+hooks (`outlier_cost`, `scored_outlier_halfwidth`, `outlier_context!`);
+model-certain, codimension 1.
 
 ```@docs
-StudentTUniformScoring
-Predictive
-ScoringWorkspace
-score_residuals!
-score_sq_residuals!
-```
-
-### Its methods of the scoring contract
-
-The generic functions are VisualGeometryToolkitCore's; these are the methods
-for the marginal score and its workspace.
-
-```@docs
-outlier_halfwidth(::StudentTUniformScoring)
-scale_prior(::ScoringWorkspace)
-with_width(::StudentTUniformScoring{P, DG}, ::OutlierHalfwidth{Float64}) where {P, DG}
-scored_model(::StudentTUniformScoring{Predictive}, ::Any, ::Any, ::Any)
+TailRules
+ExtremeValueHalfwidth
+GeneralizedParetoOutliers
+OutlierTerm
+tail_fit
+gpd_pwm_fit
+gpd_support
+gpd_outlier_cost
 ```
 
 ## Loss-width scorings

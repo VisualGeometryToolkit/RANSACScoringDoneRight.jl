@@ -14,11 +14,10 @@
 #   * in every scorer the stored values at the sample indices are ignored.
 
 @testitem "sample_point_rule" setup = [PoolFixtures, LineProblems] begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, Predictive, FlatLabelPrior, label_prior, alloc_scoring_workspace, score_residuals!, score_sq_residuals!, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
     using Test, Random, StaticArrays
     import VisualGeometryToolkitCore as VGC
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: alloc_scoring_workspace,
-        score_residuals!, score_sq_residuals!
     using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, IGPrior, RansacScoring, MsacScoring,
         residual_quality, best_pool_model, with_width, LossWidth
 
@@ -32,7 +31,7 @@
 
     @testset "marginal: zero residual, m dof subtracted" begin
         for prior in (JeffreysPrior(), IGPrior(2.0, 0.5))
-            s_m = StudentTUniformScoring(m, halfwidth; prior); s_0 = StudentTUniformScoring(0, halfwidth; prior)
+            s_m = StudentTUniformScoring(m, halfwidth; scale_prior = prior, label_prior = FlatLabelPrior()); s_0 = StudentTUniformScoring(0, halfwidth; scale_prior = prior, label_prior = FlatLabelPrior())
             sws = alloc_scoring_workspace(n, 1, s_m); q = zeros(n)
             S_m, k_m = score_residuals!(sws, q, s_m, r, n; sample_idx = S)
             @test all(q[S] .== 0)
@@ -49,8 +48,8 @@
     @testset "predictive marginal: zero residual and penalty, m dof subtracted" begin
         Σ̃ = SMatrix{2,2,Float64,4}(2e-3, 3e-4, 3e-4, 1e-3)
         θ = SVector(0.1, -0.2)
-        s_m = StudentTUniformScoring{Predictive}(m, halfwidth; codimension = 1)
-        s_0 = StudentTUniformScoring{Predictive}(0, halfwidth; codimension = 1)
+        s_m = StudentTUniformScoring{Predictive}(m, halfwidth; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
+        s_0 = StudentTUniformScoring{Predictive}(0, halfwidth; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         sws = alloc_scoring_workspace(n, 1, s_m); q = zeros(n)
         S_m, k_m = score_sq_residuals!(sws, q, s_m, LineProblem(r), θ, Σ̃, S, n)
         @test all(q[S] .== 0) && all(sws.penalties[S] .== 0)
@@ -80,7 +79,7 @@
             end
             @test best_pool_model(with_width(sc, LossWidth(loss_width)), pair_j, Dj) == best_pool_model(with_width(sc, LossWidth(loss_width)), pair, D)
         end
-        sm = StudentTUniformScoring(m, halfwidth)
+        sm = StudentTUniformScoring(m, halfwidth; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test best_pool_model(sm, pair_j, Dj) == best_pool_model(sm, pair, D)
     end
 end

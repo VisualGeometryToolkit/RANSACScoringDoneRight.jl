@@ -30,6 +30,12 @@ the switch here is the line noted.
 
 - [x] the twin audit's V2 (owner ruling 2026-11-11, Option A: one kernel, the slower CPU accepted): `sweep!`'s host prefix-RSS scan (src/sweep.jl) beside `ig_sweep_kernel!` → the one kernel, which now carries the per-point penalties, the prior table and the best k; `sweep!` is the driver (sort, gather, parametric path) and launches it as one CPU work item; (S*, k*) bit for bit the scan's (this commit)
 
+- [x] the owner's ruling (2026-11-11): the Student-t + uniform scorer hoisted into the stack with no duplication →
+  VisualGeometryToolkitCore's `StudentTUniformScoring` with its sweep, prefix kernel, workspace, label priors and
+  supplied half-width (monorepo c7b8106e); the defaults of its priors in VisualGeometryToolkitEstimation's
+  default.toml and its TOML table read there (74db20d2). src/sweep.jl and the scorer's half of src/scoring.jl,
+  extreme_value.jl and ig_sweep_ka.jl deleted here; the research outlier models extend Core's hooks (this commit)
+
 ## Not a duplicate
 
 - The five loss-width scorer structs (`MlesacScoring`, `MagsacScoring`, `WelschCostScoring`, `SmoothTLSScoring`,

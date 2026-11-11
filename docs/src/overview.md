@@ -31,8 +31,8 @@ A RANSAC *score* assigns a value to one model hypothesis from its residuals;
 *selection* keeps the hypothesis with the best score. This package does both, at
 two granularities:
 
-- **one hypothesis**: [`score_residuals!`](@ref) (from residuals) or
-  [`score_sq_residuals!`](@ref) (from a problem and a model) returns the score
+- **one hypothesis**: [`score_residuals!`](@extref VisualGeometryToolkitCore.score_residuals!) (from residuals) or
+  [`score_sq_residuals!`](@extref VisualGeometryToolkitCore.score_sq_residuals!) (from a problem and a model) returns the score
   and the inlier count of the best partition;
 - **a pool of hypotheses**: VisualGeometryToolkitCore's
   [`best_pool_model`](@extref VisualGeometryToolkitCore.best_pool_model) selects the best stored
@@ -52,8 +52,8 @@ layer (`PosteriorWeightState`).
 Both contracts are VisualGeometryToolkitCore's; this package implements them for its
 own types.
 
-- **Scoring.** [`StudentTUniformScoring`](@ref) implements `scoring_workspace`
-  (a [`ScoringWorkspace`](@ref)), `score!`, `inlier_count`,
+- **Scoring.** [`StudentTUniformScoring`](@extref VisualGeometryToolkitCore.StudentTUniformScoring) implements `scoring_workspace`
+  (a [`ScoringWorkspace`](@extref VisualGeometryToolkitCore.ScoringWorkspace)), `score!`, `inlier_count`,
   `consensus_order`, `inlier_threshold`, `scale_prior`, `outlier_halfwidth`,
   `check_workspace` and `with_width`/`width_axis`; its `{Predictive}` form adds
   `is_predictive` and `scored_model`. Any RANSAC written against the contract,
@@ -73,8 +73,9 @@ inlier scale is integrated out under a conjugate inverse-gamma prior, leaving a
 closed form in the residual sum of squares, the inlier count and the outlier
 half-width `a` of the uniform outlier component. Sorting the residuals once lets
 one sweep score every partition, so a hypothesis costs O(N log N).
-[`StudentTUniformScoring`](@ref) is the spec (its scale prior a keyword,
-Jeffreys by default), [`ScoringWorkspace`](@ref) the sweep buffers.
+[`StudentTUniformScoring`](@extref VisualGeometryToolkitCore.StudentTUniformScoring) is the spec (VisualGeometryToolkitCore's; its scale and label priors
+required keywords, the stack's defaults a configuration's: VisualGeometryToolkitEstimation's
+`[scoring.student_t_uniform]`), [`ScoringWorkspace`](@extref VisualGeometryToolkitCore.ScoringWorkspace) the sweep buffers.
 `StudentTUniformScoring{Predictive}` adds the model's
 estimation covariance to every point's residual covariance; it is an option, not
 the default (see [Conventions](conventions.md)).

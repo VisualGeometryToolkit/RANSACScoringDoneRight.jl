@@ -51,8 +51,7 @@
     # rho instead of hand-written closed forms. Pin BOTH the agreement and the
     # assumption it rests on.
     # =============================================================================
-    using RANSACScoringDoneRight: WelschCostScoring, SmoothTLSScoring, GemanScoring,
-        MlesacScoring, MagsacScoring
+    using RANSACScoringDoneRight: WelschCostScoring, SmoothTLSScoring, GemanScoring, MlesacScoring, MagsacScoring
     using VisualGeometryToolkitCore: MsacScoring, RansacScoring, residual_quality
     import VisualGeometryToolkitCore as VGC
     using VisualGeometryToolkitCore: loss_shape      # the owner's accessor, which RSDR extends

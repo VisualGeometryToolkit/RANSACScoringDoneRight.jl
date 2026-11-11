@@ -67,7 +67,8 @@ end
 # n·M `gamma_inc` pairs.
 function timed_scorers(pairs, loss_width::Float64)
     outlier_halfwidth = loss_width   # same magnitude, different quantity; timing only
-    ours = RSDR.StudentTUniformScoring(1, outlier_halfwidth; codimension = 1)   # the recorded protocol's
+    ours = VGC.StudentTUniformScoring(1, outlier_halfwidth; codimension = 1, scale_prior = VGC.JeffreysPrior(),
+                                      label_prior = VGC.FlatLabelPrior())   # the recorded protocol's
     at(F) = VGC.with_width(F(1), VGC.LossWidth(loss_width))
     return [
         ("Ours (exact)",     timed_selection(ours, pairs)),

@@ -59,7 +59,12 @@
     # are treated as RSDR's own here. So is VisualGeometryToolkitEstimation's
     # `SimFitPP`: Estimation owns SIMFIT++ and leaves its GRID on the
     # pool-selection contract (`width_axis`, `selection_staging`,
-    # `select_on_grid!`) to this package, whose grid families those are.
+    # `select_on_grid!`) to this package, whose grid families those are. And so
+    # is VisualGeometryToolkitCore's `StudentTUniformScoring` (moved there from
+    # this package, 2026-11-11): Core owns the scorer, its sweep and the one
+    # prefix kernel, and leaves its pool GRID (`selection_staging`,
+    # `select_on_grid!` over the device staging, `grid_evaluate`) to this
+    # package, as for RANSAC and MSAC.
     #
     # K+ (2026-10): two qualified accesses into VisualGeometryToolkitCore came with the
     # toolkit's move there — `VisualGeometryToolkitCore.cov` (VGC's method of
@@ -73,6 +78,7 @@
     # an abstract `Type` — the abstract-stub class of the problem protocol,
     # implemented downstream (as `data_size`/`codimension` above).
     test_quality_gates(RANSACScoringDoneRight; jet_bound = 8,
-                       treat_as_own = [VgtkCore.RansacScoring, VgtkCore.MsacScoring, VgtkEstimation.SimFitPP],
+                       treat_as_own = [VgtkCore.RansacScoring, VgtkCore.MsacScoring, VgtkCore.StudentTUniformScoring,
+                                       VgtkEstimation.SimFitPP],
                        qualified_ignore = (:maxthreadid,))
 end

@@ -14,10 +14,7 @@
     using Test, Random
     using KernelAbstractions
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: stage_ig_shared_from_pairs,
-        Exact, LogBinned, RansacScoring, MsacScoring, MlesacScoring, MagsacScoring,
-        WelschCostScoring, SmoothTLSScoring, GemanScoring, residual_quality,
-        histogram_pm_score_kernel!, _build_score_weight_matrix
+    using RANSACScoringDoneRight: stage_ig_shared_from_pairs, Exact, LogBinned, RansacScoring, MsacScoring, MlesacScoring, MagsacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring, residual_quality, histogram_pm_score_kernel!, _build_score_weight_matrix
     using VisualGeometryToolkitCore: exact_pm_score_kernel!, support_sq_loss_width
 
     const _AGG_FAMILIES = (RansacScoring(), MsacScoring(), MlesacScoring(), MagsacScoring(),

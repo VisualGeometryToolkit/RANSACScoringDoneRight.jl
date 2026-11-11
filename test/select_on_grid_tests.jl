@@ -10,6 +10,7 @@
 # threshold scorers (MSAC/RANSAC at a threshold are no grid family).
 
 @testitem "select_on_grid" setup = [PoolFixtures] begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, FlatLabelPrior, label_prior, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
     using Test, Random, LinearAlgebra
     using StaticArrays
     using KernelAbstractions
@@ -52,7 +53,7 @@
     sh = stage_ig_shared_from_pairs(pairs, Rs; backend = be)
 
     @testset "the one :rsdr staging" begin
-        fams = (StudentTUniformScoring(5, 1.0; codimension = 1), MsacScoring(), RansacScoring(), MlesacScoring(),
+        fams = (StudentTUniformScoring(5, 1.0; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), MsacScoring(), RansacScoring(), MlesacScoring(),
                 MagsacScoring(), WelschCostScoring(), SmoothTLSScoring(), GemanScoring(),
                 loss_spec(WelschShape(), IGPrior(); Δ = 0.5, t_lo = -10.0, t_hi = 0.0, NG = 33),
                 WelschMarginal(; prior_loss_width = 0.1, outlier_halfwidth = 1.0), SimFitPP())
@@ -66,7 +67,7 @@
         hw = [0.5, 2.0, 8.0, 40.0]
         lw = [0.3, 1.0, 3.0, 8.0]
         for prior in (IGPrior(), IGPrior(2.0, 0.05)), dg in (1, 2)
-            sc = StudentTUniformScoring(5, 1.0; prior, codimension = dg)
+            sc = StudentTUniformScoring(5, 1.0; scale_prior = prior, codimension = dg, label_prior = FlatLabelPrior())
             @test _select(sc, hw, pairs, Rs) == last(grid_evaluate(sc, sh, hw; return_idxs = true))
         end
         for sc in (MsacScoring(), RansacScoring(), MlesacScoring(), MagsacScoring(),
@@ -149,7 +150,7 @@
         end
         # and for the marginal on its own axis: the per-pair generic selection
         hw = [0.5, 2.0, 8.0, 40.0]
-        sc = StudentTUniformScoring(5, 1.0; codimension = 1)
+        sc = StudentTUniformScoring(5, 1.0; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         idxs = fill(Int32(-1), length(pairs), length(hw))
         generic!(idxs, sc, hw, st)
         @test idxs == last(grid_evaluate(sc, sh, hw; return_idxs = true))

@@ -1,102 +1,26 @@
 # =============================================================================
-# extreme_value.jl — the label priors and the outlier models of
-# StudentTUniformScoring, and the generalized Pareto fit they use.
+# extreme_value.jl — the outlier models that ESTIMATE the support, for
+# VisualGeometryToolkitCore's StudentTUniformScoring, and the generalized Pareto
+# fit they use. The scorer, its label priors, the supplied half-width
+# (`FixedHalfwidth`) and the abstract `AbstractOutlierModel` are
+# VisualGeometryToolkitCore's (moved there 2026-11-11); this package's models
+# extend them by dispatch:
 #
-#   label priors    the prior of a partition's labels, a table over the inlier
-#                   count k (the workspace's `prior_table`): flat γ = ½, γ
-#                   profiled at k/N, or γ integrated out under Beta(α, β)
-#   outlier models  the outlier term of a partition: a supplied half-width
-#                   (the profile-marginal score), the half-width estimated as
-#                   the endpoint of a peaks-over-threshold fit to the
-#                   complement's upper tail, or the fitted generalized Pareto
-#                   law itself as the outlier density
+#   ExtremeValueHalfwidth      the half-width estimated as the endpoint of a
+#                              peaks-over-threshold fit to the complement's
+#                              upper tail
+#   GeneralizedParetoOutliers  the fitted generalized Pareto law itself as the
+#                              outlier density
+#   OutlierTerm                a caller's outlier term
 #
-# The sweep that uses them is in extreme_value_sweep.jl. Every rule here is
-# equivariant under a change of the residuals' units, so the selected partition
-# is invariant to it.
+# Core's estimated-support sweep scores them through their methods of its hooks
+# (extreme_value_sweep.jl). Every rule here is equivariant under a change of the
+# residuals' units, so the selected partition is invariant to it.
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Label priors
+# Outlier models (VisualGeometryToolkitCore's `AbstractOutlierModel`)
 # -----------------------------------------------------------------------------
-
-"""
-    AbstractLabelPrior
-
-The prior of a partition's labels in [`StudentTUniformScoring`](@ref): it adds
-a term that depends on the partition only through its inlier count `k`, held
-in the workspace's `prior_table`, so the sort-and-sweep stays exact.
-"""
-abstract type AbstractLabelPrior end
-
-"""
-    FlatLabelPrior()
-
-The inlier probability fixed at γ = ½: every partition has prior weight
-`2^{-N}`, so the label prior adds nothing (the profile-marginal score's choice).
-"""
-struct FlatLabelPrior <: AbstractLabelPrior end
-
-"""
-    ProfiledLabelPrior()
-
-The inlier probability profiled at γ̂ = k/N: the partition gains
-`k log(k/N) + (N-k) log((N-k)/N)`.
-"""
-struct ProfiledLabelPrior <: AbstractLabelPrior end
-
-"""
-    BetaLabelPrior(alpha = 0.5, beta = 0.5)
-
-The inlier probability integrated out under its conjugate prior
-`Beta(alpha, beta)` (Jeffreys' by default): the partition gains
-`log B(k + alpha, N - k + beta) - log B(alpha, beta)`.
-"""
-struct BetaLabelPrior <: AbstractLabelPrior
-    alpha::Float64
-    beta::Float64
-    function BetaLabelPrior(alpha::Real = 0.5, beta::Real = 0.5)
-        (alpha > 0 && beta > 0) ||
-            throw(ArgumentError("BetaLabelPrior: alpha and beta must be positive, got ($alpha, $beta)"))
-        return new(Float64(alpha), Float64(beta))
-    end
-end
-
-# The workspace's table of the label term for k = 1..n (empty for the flat prior).
-_build_prior_table(n::Int, ::FlatLabelPrior) = Float64[]
-_build_prior_table(n::Int, ::ProfiledLabelPrior) = _build_prior_table(n)
-function _build_prior_table(n::Int, p::BetaLabelPrior)
-    c = logbeta(p.alpha, p.beta)
-    return [logbeta(k + p.alpha, n - k + p.beta) - c for k in 1:n]
-end
-
-# -----------------------------------------------------------------------------
-# Outlier models
-# -----------------------------------------------------------------------------
-
-"""
-    AbstractOutlierModel
-
-The outlier component of [`StudentTUniformScoring`](@ref): what a partition's
-complement pays.
-"""
-abstract type AbstractOutlierModel end
-
-"""
-    FixedHalfwidth(outlier_halfwidth)
-
-The uniform outlier density at a supplied half-width per axis (the
-profile-marginal score): the complement pays `log(2·outlier_halfwidth)` per
-point and axis.
-"""
-struct FixedHalfwidth <: AbstractOutlierModel
-    outlier_halfwidth::Float64
-    function FixedHalfwidth(outlier_halfwidth::Real)
-        outlier_halfwidth > 0 ||
-            throw(ArgumentError("outlier_halfwidth must be positive, got $outlier_halfwidth"))
-        return new(Float64(outlier_halfwidth))
-    end
-end
 
 """
     TailRules(; threshold_quantile = 0.9, min_excess = 5, finite_shape_limit = -1e-3)
@@ -169,12 +93,6 @@ struct OutlierTerm{F} <: AbstractOutlierModel
     cost::F
 end
 
-# The models that estimate the support from the residuals (they need the
-# sweep's sorted distances and prefix sums).
-const _EstimatedOutliers = Union{ExtremeValueHalfwidth, GeneralizedParetoOutliers, OutlierTerm}
-_needs_tail(::AbstractOutlierModel) = true
-_needs_tail(::FixedHalfwidth) = false
-
 # -----------------------------------------------------------------------------
 # The generalized Pareto fit
 # -----------------------------------------------------------------------------
@@ -224,7 +142,7 @@ _no_tail_fit(zmax) = (; outlier_halfwidth = zmax, fitted_endpoint = -Inf, shape 
 end
 
 # The fit of `rules` to the upper part z[lo:end] of the sorted values z, from
-# the suffix sums of `_suffix_sums!` (T1[g] = Σ_{l≥g} z[l], T2[g] =
+# the suffix sums of Core's `suffix_sums!` (T1[g] = Σ_{l≥g} z[l], T2[g] =
 # Σ_{l≥g} (n-l+1)·z[l], ranks counted from the top, so a short tail's moments
 # never come from a difference of two large sums): O(1) for the threshold,
 # O(log n) for the first value above it (bisection, ties included), O(1) for
@@ -246,17 +164,6 @@ end
     return (; outlier_halfwidth = max(endpoint, zmax), fitted_endpoint = endpoint, shape)
 end
 
-# The suffix sums of the sorted values z into T1 and T2 (length n + 1, T·[n+1] = 0).
-function _suffix_sums!(T1, T2, z)
-    n = length(z)
-    T1[n+1] = 0.0; T2[n+1] = 0.0
-    @inbounds for l in n:-1:1
-        T1[l] = T1[l+1] + z[l]
-        T2[l] = T2[l+1] + (n - l + 1) * z[l]
-    end
-    return T1, T2
-end
-
 _rules(m::Union{ExtremeValueHalfwidth, GeneralizedParetoOutliers}) = m.rules
 _rules(r::TailRules) = r
 
@@ -272,7 +179,7 @@ complement the same way, in O(log n) each, from suffix sums it builds once.
 """
 function tail_fit(rules, z::AbstractVector{Float64})
     n = length(z)
-    T1, T2 = _suffix_sums!(Vector{Float64}(undef, n + 1), Vector{Float64}(undef, n + 1), z)
+    T1, T2 = suffix_sums!(Vector{Float64}(undef, n + 1), Vector{Float64}(undef, n + 1), z)
     return _tail_fit(_rules(rules), z, 1, T1, T2)
 end
 

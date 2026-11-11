@@ -16,8 +16,8 @@ VisualGeometryToolkitCore owns the contracts. This package implements them for
 its own types and re-exports nothing VisualGeometryToolkitCore owns.
 
 The scoring contract lives in VisualGeometryToolkitCore's
-`robust/estimation.jl`. [`StudentTUniformScoring`](@ref) implements
-`scoring_workspace` (its [`ScoringWorkspace`](@ref)), `score!` (the
+`robust/estimation.jl`. [`StudentTUniformScoring`](@extref VisualGeometryToolkitCore.StudentTUniformScoring) implements
+`scoring_workspace` (its [`ScoringWorkspace`](@extref VisualGeometryToolkitCore.ScoringWorkspace)), `score!` (the
 sort-and-sweep of Algorithm 1), `inlier_count`, `consensus_order`,
 `scale_prior`, `outlier_halfwidth`, `check_workspace` and
 `with_width`/`width_axis` (the axis is `OutlierHalfwidth`). Its
@@ -47,7 +47,8 @@ LocalOptimizationDoneRight's. A caller composes them, for example
 
 ```julia
 find_essential(camera1, camera2, cs;
-               scoring = StudentTUniformScoring(EssentialProblem, a),
+               scoring = scoring_from_toml(Dict("type" => "student_t_uniform", "outlier_halfwidth" => a);
+                                           problem = EssentialProblem),   # priors from the stack defaults
                local_optimization = …)
 ```
 
@@ -71,7 +72,7 @@ dispatches on the scoring:
   The `aggregation` is [`Exact`](@ref) (every residual, the reference) or
   [`LogBinned`](@ref) (`bins_per_decade = 200`, the fast cross-validation path
   and the default).
-- `grid_evaluate(StudentTUniformScoring(problem_type, h; prior), staged, outlier_halfwidths)`
+- `grid_evaluate(StudentTUniformScoring(problem_type, h; scale_prior, label_prior), staged, outlier_halfwidths)`
   is the IG/Jeffreys marginal sweep. The grid replaces the scoring's own `h`.
 - `grid_evaluate([S,] loss_spec(shape, prior; Δ, …), staged, outlier_halfwidths; model_dof, dg)`
   is the Track-B redescending-loss mixture marginal.
@@ -134,7 +135,7 @@ The layer is problem-agnostic. The concrete problem types
 (`HomographyProblem`, `FundMatProblem`, `EssentialProblem`) stay in the
 consumer. A scorer that needs one takes it as a leading `problem_type`
 argument, as in
-`best_pool_model(StudentTUniformScoring(problem_type, outlier_halfwidth), pair, R)`.
+`best_pool_model(StudentTUniformScoring(problem_type, outlier_halfwidth; scale_prior, label_prior), pair, R)`.
 
 ## Names of quantities
 

@@ -8,6 +8,37 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **Moved: the Student-t + uniform marginal scorer is VisualGeometryToolkitCore's** (the owner's ruling: hoisted into
+  the stack with no duplication; temporary [sources] to the unregistered 0.9 stack). `StudentTUniformScoring`
+  (model-certain and `Predictive`), its sweep (`sweep!`, the parametric sweep, `partition_score`, the one prefix
+  kernel `ig_sweep_kernel!`, the radix sort), `ScoringWorkspace` and its accessors (`sweep_order`, `penalties`,
+  `sort_key`, `lg_table`), `alloc_scoring_workspace`, `default_scoring_workspace`, `score_residuals!`,
+  `score_sq_residuals!`, the label priors (`AbstractLabelPrior`, `FlatLabelPrior`, `ProfiledLabelPrior`,
+  `BetaLabelPrior`), `AbstractOutlierModel` and `FixedHalfwidth` moved there, and src/sweep.jl with them; this package
+  no longer exports them (it re-exports nothing VGC owns): import them from VisualGeometryToolkitCore. Its tests of
+  the moved code (radix_sortperm, parametric_sweep, partition_score) moved with it. Renamed with the move: the
+  constructors' `prior` keyword is `scale_prior`; `_build_lg_table` → `log_gamma_table`, `_build_prior_table` →
+  `label_prior_table`, `_radix_sortperm!`/`_radix_key` → `radix_sortperm!`/`radix_key`, `_suffix_sums!` →
+  `suffix_sums!` (public there). The empty `GauScoring` supertype is gone (nothing dispatched on it).
+- **Breaking: the scorer's priors are required** (the owner's ruling (c)): `StudentTUniformScoring(…; scale_prior,
+  label_prior)` has no defaults, nor `default_scoring_workspace`'s `scale_prior` or `BetaLabelPrior`'s parameters
+  (`BetaLabelPrior(0.5, 0.5)` is the former default). The stack's default (Jeffreys, flat) is VisualGeometryToolkitEstimation's
+  `configs/default.toml` `[scoring.student_t_uniform]`, read by its `scoring_from_toml`, which now reads the Student-t
+  table (`outlier_halfwidth`, `scale_prior`, `label_prior` and their parameters) and `config_dict` writes it; this
+  package's methods for it are deleted, and `"student_t_uniform"` is Core's `SCORING_TAGS`' (still in
+  `ALL_SCORING_TAGS`, the merge). Downstream callers (BlobBoards, CaliBlobs, RadiometricCamera) switch to Core's names.
+- **Kept here, extending Core's types by dispatch**: the outlier models that estimate the support (`TailRules`,
+  `ExtremeValueHalfwidth`, `GeneralizedParetoOutliers`, `OutlierTerm`, the generalized Pareto fit) implement Core's
+  estimated-support hooks (`outlier_cost`, `scored_outlier_halfwidth`, `outlier_context!`); the marginal grid
+  (`grid_evaluate(::StudentTUniformScoring, …)`, `stage_ig_shared_from_pairs`, `select_on_grid!`) launches Core's
+  `ig_sweep_kernel!`; the loss-width families and the scale marginals are unchanged. Every result is bit for bit the
+  same (this package's tests; 1026 scoring results and a PT-E pool selection sample of neurips2026, before and after).
+- **Fixed: a scored hypothesis allocates nothing again** (the supplied-width sweep's one-work-item launch is a
+  statically sized kernel instance on the CPU backend, its buffers on Core's workspace), so the allocation tests that
+  failed since the one-kernel sweep (extreme_value, the scoring contract) pass.
+- **Changed: `WelschMarginal` and `SmoothTLSMarginal` share one keyword constructor** (`_centred_marginal(K; alpha0,
+  prior_loss_width, outlier_halfwidth)`), a restatement Core's `check_duplication` found once the sweep left.
+
 - **New: this package's scorers read from TOML on the local optimization's schema**: methods of
   VisualGeometryToolkitEstimation's `scoring_from_toml` (through `ALL_SCORING_TAGS`) and `config_dict` for the
   loss-width families at a `threshold` and `StudentTUniformScoring` at an `outlier_halfwidth`, each key required.

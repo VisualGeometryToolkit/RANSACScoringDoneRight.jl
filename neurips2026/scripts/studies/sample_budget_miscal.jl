@@ -73,7 +73,7 @@
 using JLD2, Printf, Statistics, TOML
 using RANSACScoringDoneRight
 using RANSACScoringDoneRight: ALL_SCORING_TAGS
-using VisualGeometryToolkitCore: width_axis, JeffreysPrior, retired_tags
+using VisualGeometryToolkitCore: width_axis, JeffreysPrior, FlatLabelPrior, StudentTUniformScoring, retired_tags
 using VisualGeometryToolkitCore.Pools: PoolPair, num_models
 using VisualGeometryToolkitCore.Synthetic: mean_average_accuracy
 using VisualGeometryToolkitEval: cli_option
@@ -107,7 +107,7 @@ family_tag(key::Symbol) = get(Dict(retired_tags(ALL_SCORING_TAGS)), String(key),
 # for an unknown one), and the Jeffreys marginal at its outlier half-width.
 loss_width_family(key::Symbol, problem_type::Type) = loss_width_scoring(family_tag(key), problem_type)
 jeffreys_scoring(problem_type::Type, outlier_halfwidth::Float64) =
-    StudentTUniformScoring(problem_type, outlier_halfwidth; prior = JeffreysPrior())
+    StudentTUniformScoring(problem_type, outlier_halfwidth; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
 scoring_for(key::Symbol, problem_type::Type, native::Float64) =
     key === :jeffreys ? jeffreys_scoring(problem_type, native) : loss_width_family(key, problem_type)
 

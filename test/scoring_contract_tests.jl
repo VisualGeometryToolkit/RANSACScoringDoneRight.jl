@@ -8,6 +8,7 @@
 # package's) scores by the one summed quality, bit for bit.
 
 @testitem "scoring_contract" setup = [PoolFixtures] begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, FlatLabelPrior, label_prior, JeffreysPrior   # the Student-t scorer (Core's)
     using Test, Random
     import VisualGeometryToolkitCore as VGC
     using VisualGeometryToolkitCore: test_scoring_contract, scoring_workspace, score!, inlier_count,
@@ -25,9 +26,9 @@
     sample = [3, 11, 29, 40]
 
     @testset "StudentTUniformScoring (d_g = $dg)" for dg in (1, 2)
-        for r in vecs, smp in (nothing, sample), s in (StudentTUniformScoring(4, 6.0; codimension = dg),
+        for r in vecs, smp in (nothing, sample), s in (StudentTUniformScoring(4, 6.0; codimension = dg, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()),
                                                        StudentTUniformScoring(4, 6.0; codimension = dg,
-                                                                              prior = VGC.IGPrior(1.5, 0.01)))
+                                                                              scale_prior = VGC.IGPrior(1.5, 0.01), label_prior = FlatLabelPrior()))
             test_scoring_contract(s, r; d_g = dg, sample = smp)
         end
     end

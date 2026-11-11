@@ -79,8 +79,7 @@
     # (1) is the guard — the scalar against the paper's ρ above.
     # -----------------------------------------------------------------------------
     using KernelAbstractions
-    using RANSACScoringDoneRight: residual_quality, stage_ig_shared_from_pairs,
-        Exact, LogBinned
+    using RANSACScoringDoneRight: residual_quality, stage_ig_shared_from_pairs, Exact, LogBinned
 
     @testset "MAGSAC++: the paper's quality; Exact and LogBinned agree" begin
         # (1) Per residual

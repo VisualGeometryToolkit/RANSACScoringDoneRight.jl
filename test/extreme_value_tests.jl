@@ -1,7 +1,7 @@
 @testitem "extreme_value" begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, Predictive, FlatLabelPrior, ProfiledLabelPrior, BetaLabelPrior, label_prior_table, FixedHalfwidth, outlier_model, label_prior, suffix_sums!, alloc_scoring_workspace, score_residuals!, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: alloc_scoring_workspace, tail_fit, gpd_pwm_fit, gpd_support,
-        gpd_outlier_cost, _build_prior_table, _tail_fit, _suffix_sums!, _sorted_quantile
+    using RANSACScoringDoneRight: tail_fit, gpd_pwm_fit, gpd_support, gpd_outlier_cost, _tail_fit, _sorted_quantile
     using VisualGeometryToolkitCore
     using VisualGeometryToolkitCore: IGPrior, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth
     using Distributions: GeneralizedPareto, logpdf
@@ -32,7 +32,7 @@
         rng = Xoshiro(1)
         z = sort(abs.(draw(rng)))
         n = length(z)
-        T1, T2 = _suffix_sums!(zeros(n + 1), zeros(n + 1), z)
+        T1, T2 = suffix_sums!(zeros(n + 1), zeros(n + 1), z)
         rules = TailRules(; threshold_quantile = 0.9)
         @test tail_fit(ExtremeValueHalfwidth(), z) == _tail_fit(rules, z, 1, T1, T2)
         for lo in (1, 2, 50, 200, 330, n - 30, n - 3)
@@ -62,14 +62,14 @@
 
     @testset "the extreme-value sweep == the brute-force max of its partition score" begin
         m = 2
-        for seed in 1:4, label_prior in (FlatLabelPrior(), BetaLabelPrior())
+        for seed in 1:4, label_prior in (FlatLabelPrior(), BetaLabelPrior(0.5, 0.5))
             r = draw(Xoshiro(seed))
             n = length(r)
-            s = StudentTUniformScoring(m, ExtremeValueHalfwidth(); label_prior)
+            s = StudentTUniformScoring(m, ExtremeValueHalfwidth(); label_prior, scale_prior = JeffreysPrior())
             sws = alloc_scoring_workspace(n, 1, s)
             S, k = score_residuals!(sws, zeros(n), s, r, n)
             z = sort(abs.(r))
-            pt = _build_prior_table(n, label_prior)
+            pt = label_prior_table(n, label_prior)
             Sk = map(m+1:n) do k
                 a = k == n ? z[n] : naive_tail(z[k+1:n], 0.9).outlier_halfwidth
                 jeffreys(k, m, sum(abs2, z[1:k])) - (n - k) * log(2a) + (isempty(pt) ? 0.0 : pt[k])
@@ -88,7 +88,7 @@
         support(f, zs) = f.fitted_endpoint > zs[end] ? f.fitted_endpoint :
                          (length(zs) > 1 && zs[end] > zs[1] ? zs[end] + (zs[end] - zs[1]) / (length(zs) - 1) : 2 * zs[end])
         for fit_per in (:prefix, :hypothesis)
-            s = StudentTUniformScoring(m, GeneralizedParetoOutliers(; fit_per))
+            s = StudentTUniformScoring(m, GeneralizedParetoOutliers(; fit_per); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
             sws = alloc_scoring_workspace(n, 1, s)
             S, k = score_residuals!(sws, zeros(n), s, r, n)
             whole = naive_tail(z, 0.9)
@@ -119,10 +119,10 @@
     @testset "every outlier model and label prior is invariant to the residuals' units" begin
         for model in (ExtremeValueHalfwidth(), GeneralizedParetoOutliers(),
                       GeneralizedParetoOutliers(; fit_per = :hypothesis)),
-            label_prior in (FlatLabelPrior(), ProfiledLabelPrior(), BetaLabelPrior()), seed in 1:3
+            label_prior in (FlatLabelPrior(), ProfiledLabelPrior(), BetaLabelPrior(0.5, 0.5)), seed in 1:3
             r = draw(Xoshiro(seed))
             n = length(r)
-            s = StudentTUniformScoring(2, model; label_prior)
+            s = StudentTUniformScoring(2, model; label_prior, scale_prior = JeffreysPrior())
             k1 = score_residuals!(alloc_scoring_workspace(n, 1, s), zeros(n), s, r, n)[2]
             k2 = score_residuals!(alloc_scoring_workspace(n, 1, s), zeros(n), s, 1000 .* r, n)[2]
             @test k1 == k2
@@ -132,8 +132,8 @@
     @testset "OutlierTerm with a constant density is the supplied width" begin
         r = draw(Xoshiro(9))
         n = length(r)
-        fixed = StudentTUniformScoring(2, 40.0)
-        term = StudentTUniformScoring(2, OutlierTerm((k, z) -> (length(z) - k) * log(80.0)))
+        fixed = StudentTUniformScoring(2, 40.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
+        term = StudentTUniformScoring(2, OutlierTerm((k, z) -> (length(z) - k) * log(80.0)); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test score_residuals!(alloc_scoring_workspace(n, 1, term), zeros(n), term, r, n) ==
               score_residuals!(alloc_scoring_workspace(n, 1, fixed), zeros(n), fixed, r, n)
     end
@@ -144,8 +144,8 @@
         q = zeros(n)
         for model in (40.0, ExtremeValueHalfwidth(), GeneralizedParetoOutliers(),
                       GeneralizedParetoOutliers(; fit_per = :hypothesis)),
-            label_prior in (FlatLabelPrior(), BetaLabelPrior())
-            s = StudentTUniformScoring(2, model; label_prior)
+            label_prior in (FlatLabelPrior(), BetaLabelPrior(0.5, 0.5))
+            s = StudentTUniformScoring(2, model; label_prior, scale_prior = JeffreysPrior())
             sws = alloc_scoring_workspace(n, 1, s)
             score_residuals!(sws, q, s, r, n)
             @test (@allocated score_residuals!(sws, q, s, r, n)) == 0
@@ -167,7 +167,7 @@
         r = draw(Xoshiro(22))
         n = length(r)
         for model in (ExtremeValueHalfwidth(), GeneralizedParetoOutliers(), GeneralizedParetoOutliers(; fit_per = :hypothesis))
-            s = StudentTUniformScoring(2, model)
+            s = StudentTUniformScoring(2, model; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
             S0, k0 = score_residuals!(alloc_scoring_workspace(n, 1, s), zeros(n), s, r, n)
             rbad = [r; Inf]
             S1, k1 = score_residuals!(alloc_scoring_workspace(n + 1, 1, s), zeros(n + 1), s, rbad, n + 1)
@@ -176,11 +176,11 @@
             @test score_residuals!(alloc_scoring_workspace(0, 1, s), Float64[], s, Float64[], 0) == (-Inf, 0)
         end
         # OutlierTerm has no inlier threshold
-        @test !VisualGeometryToolkitCore.has_inlier_threshold(StudentTUniformScoring(2, OutlierTerm((k, z) -> 0.0)))
-        @test VisualGeometryToolkitCore.has_inlier_threshold(StudentTUniformScoring(2, ExtremeValueHalfwidth()))
+        @test !VisualGeometryToolkitCore.has_inlier_threshold(StudentTUniformScoring(2, OutlierTerm((k, z) -> 0.0); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))
+        @test VisualGeometryToolkitCore.has_inlier_threshold(StudentTUniformScoring(2, ExtremeValueHalfwidth(); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))
         # a large pool's short tail: the suffix-sum moments match the textbook fit
         zl = sort(abs.(draw(Xoshiro(23); n_in = 3000, n_out = 7000)))
-        T1, T2 = _suffix_sums!(zeros(length(zl) + 1), zeros(length(zl) + 1), zl)
+        T1, T2 = suffix_sums!(zeros(length(zl) + 1), zeros(length(zl) + 1), zl)
         for lo in (length(zl) - 60, length(zl) - 200)
             @test _tail_fit(rules, zl, lo, T1, T2).outlier_halfwidth ≈ naive_tail(zl[lo:end], 0.9).outlier_halfwidth rtol = 1e-12
         end
@@ -188,24 +188,24 @@
 
     @testset "label priors" begin
         n = 50
-        @test _build_prior_table(n, FlatLabelPrior()) == Float64[]
-        @test _build_prior_table(n, BetaLabelPrior(0.5, 0.5))[20] ≈ logbeta(20.5, 30.5) - logbeta(0.5, 0.5)
+        @test label_prior_table(n, FlatLabelPrior()) == Float64[]
+        @test label_prior_table(n, BetaLabelPrior(0.5, 0.5))[20] ≈ logbeta(20.5, 30.5) - logbeta(0.5, 0.5)
         @test_throws ArgumentError BetaLabelPrior(0.0, 1.0)
     end
 
     @testset "guards" begin
-        @test_throws ArgumentError StudentTUniformScoring(2, ExtremeValueHalfwidth(); codimension = 2)
-        @test_throws ArgumentError StudentTUniformScoring{Predictive}(2, ExtremeValueHalfwidth())
+        @test_throws ArgumentError StudentTUniformScoring(2, ExtremeValueHalfwidth(); codimension = 2, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
+        @test_throws ArgumentError StudentTUniformScoring{Predictive}(2, ExtremeValueHalfwidth(); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test_throws ArgumentError FixedHalfwidth(0.0)
         @test_throws ArgumentError ExtremeValueHalfwidth(; threshold_quantile = 1.0)
         @test_throws ArgumentError GeneralizedParetoOutliers(; fit_per = :pair)
-        s = StudentTUniformScoring(2, ExtremeValueHalfwidth())
+        s = StudentTUniformScoring(2, ExtremeValueHalfwidth(); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test outlier_halfwidth(s) === nothing              # the scoring contract: no supplied width
         @test_throws ArgumentError with_width(s, OutlierHalfwidth(1.0))
-        fixed = StudentTUniformScoring(2, 1.0)
+        fixed = StudentTUniformScoring(2, 1.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test_throws ArgumentError check_workspace(s, alloc_scoring_workspace(10, 1, fixed))
         @test check_workspace(s, alloc_scoring_workspace(10, 1, s)) === nothing
         @test outlier_model(fixed) === FixedHalfwidth(1.0) && label_prior(fixed) === FlatLabelPrior()
-        @test StudentTUniformScoring(2, FixedHalfwidth(1.0)) === fixed
+        @test StudentTUniformScoring(2, FixedHalfwidth(1.0); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()) === fixed
     end
 end

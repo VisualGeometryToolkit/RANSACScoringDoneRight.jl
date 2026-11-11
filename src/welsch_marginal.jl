@@ -70,6 +70,9 @@ end
 _centred_marginal(::Type{K}, alpha0::Real, prior_loss_width::Real, outlier_halfwidth::Real) where {K} =
     ScaleMarginal{K}(alpha0, alpha0 * prior_loss_width^2; outlier_halfwidth,
                      t0 = log(prior_loss_width^2))
+# Its keyword form, the one signature of the centred constructors (`WelschMarginal`, `SmoothTLSMarginal`).
+_centred_marginal(::Type{K}; alpha0::Real = 1.0, prior_loss_width::Real, outlier_halfwidth::Real) where {K} =
+    _centred_marginal(K, alpha0, prior_loss_width, outlier_halfwidth)
 
 """
     WelschMarginal(; alpha0=1.0, prior_loss_width, outlier_halfwidth)
@@ -85,8 +88,7 @@ centre, [`ScaleMarginal{WelschShape}`](@ref ScaleMarginal)`(alpha0, beta0; outli
 The evidence is the trapezoid scale quadrature of
 [`loss_spec`](@ref)`(::ScaleMarginal)`.
 """
-WelschMarginal(; alpha0::Real = 1.0, prior_loss_width::Real, outlier_halfwidth::Real) =
-    _centred_marginal(WelschShape, alpha0, prior_loss_width, outlier_halfwidth)
+WelschMarginal(; kw...) = _centred_marginal(WelschShape; kw...)
 
 # (`welsch_sq_scale_mle` — the per-pair Welsch squared-scale MLE, the argmax of
 #  the Hermite-interpolated integrand — is deleted with its `_hermite_peak`: no

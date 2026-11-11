@@ -79,7 +79,7 @@ The empirical-Bayes variants of the paper fit VisualGeometryToolkitCore's `IGPri
 from per-pair noise-variance estimates on a validation set: IG-MLE by type-II
 maximum likelihood, IG-Robust with `α₀ = 1` and a median-anchored `β₀`. The
 fits (`PriorSpec`, `fit_prior`, `ALL_PRIOR_SPECS`) are VisualGeometryToolkitEval's
-`Tuning`; a fitted prior enters a scorer as `StudentTUniformScoring(P, a; prior)`.
+`Tuning`; a fitted prior enters a scorer as `StudentTUniformScoring(P, a; scale_prior, label_prior)`.
 
 ## SIMFIT++ loss-width estimation
 

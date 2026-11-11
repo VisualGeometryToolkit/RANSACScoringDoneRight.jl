@@ -22,8 +22,7 @@ required, no default).
 `alpha0`/`beta0` match `IGPrior`, as for `WelschMarginal`.  The evidence is the
 trapezoid scale quadrature of [`loss_spec`](@ref)`(::ScaleMarginal)`.
 """
-SmoothTLSMarginal(; alpha0::Real = 1.0, prior_loss_width::Real, outlier_halfwidth::Real) =
-    _centred_marginal(SmoothTLSShape, alpha0, prior_loss_width, outlier_halfwidth)
+SmoothTLSMarginal(; kw...) = _centred_marginal(SmoothTLSShape; kw...)
 
 # The evidence of this spec is evaluated by the ONE device kernel
 # (`grid_evaluate(::ScaleMarginal, …)`, marg_sweep_ka.jl), on CPU() or a GPU backend.

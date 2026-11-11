@@ -16,7 +16,7 @@ updates (`PosteriorWeightState`, `update_scale!`, `update_nu!`,
 VisualGeometryToolkitCore's, documented there.
 
 A scored partition seeds it through the scoring contract: after `score!` on a
-[`StudentTUniformScoring`](@ref), the first `inlier_count` entries of
+[`StudentTUniformScoring`](@extref VisualGeometryToolkitCore.StudentTUniformScoring), the first `inlier_count` entries of
 `consensus_order` are the swept partition, and
 `PosteriorWeightState(sq_distances, n, model_dof, k; order, prior = scale_prior(scoring), …)`
 is its Student-t with the E-step run once.

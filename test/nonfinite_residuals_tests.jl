@@ -14,10 +14,7 @@
     using Test, Random
     using KernelAbstractions
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: MagsacScoring, MlesacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring,
-        RansacScoring, MsacScoring,
-        stage_ig_shared_from_pairs, Exact, LogBinned,
-        histogram_pm_score_kernel!, _build_score_weight_matrix
+    using RANSACScoringDoneRight: MagsacScoring, MlesacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring, RansacScoring, MsacScoring, stage_ig_shared_from_pairs, Exact, LogBinned, histogram_pm_score_kernel!, _build_score_weight_matrix
     using VisualGeometryToolkitCore: best_pool_model, with_width, LossWidth, exact_pm_score_kernel!, support_sq_loss_width
 
     # One pair whose M models share their residuals except that model j has

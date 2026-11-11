@@ -24,6 +24,7 @@
 # (test/gate_marg_mix_ka.jl).
 
 @testitem "loss_parity" begin
+    using VisualGeometryToolkitCore: IGPrior   # the Student-t scorer (Core's)
     using Test
     import VisualGeometryToolkitCore as VGC
     using RANSACScoringDoneRight

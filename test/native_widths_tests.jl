@@ -6,6 +6,7 @@
 # marginal's method of the one grid verb against the per-pair selection.
 
 @testitem "native_widths" setup = [PoolFixtures] begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, Predictive, FlatLabelPrior, ProfiledLabelPrior, label_prior, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
     import VisualGeometryToolkitCore as VgtkCore
     using Test, Random
     using KernelAbstractions
@@ -41,7 +42,7 @@
     end
 
     @testset "width_axis of the grid families" begin
-        m = StudentTUniformScoring(5, 0.1; codimension = 1)
+        m = StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         spec = loss_spec(WelschShape(), IGPrior(); Δ = 0.5, t_lo = -10.0, t_hi = 0.0, NG = 33)
         @test width_axis(m) === OutlierHalfwidth()
         @test width_axis(spec) === OutlierHalfwidth()
@@ -52,7 +53,7 @@
         @test width_axis(WelschMarginal(; prior_loss_width = 0.1, outlier_halfwidth = 1.0)) === LossWidth()
         @test width_axis(SimFitPP()) === LossWidth()
         # the axis is the one `with_width` rebuilds the marginal on
-        @test VgtkCore.with_width(m, OutlierHalfwidth(0.7)) == StudentTUniformScoring(5, 0.7; codimension = 1)
+        @test VgtkCore.with_width(m, OutlierHalfwidth(0.7)) == StudentTUniformScoring(5, 0.7; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         # the retired per-type trait is gone, not aliased
         @test !isdefined(RANSACScoringDoneRight, Symbol("native", "_axis"))   # in fragments: a retired name
     end
@@ -68,16 +69,16 @@
         sh = stage_ig_shared_from_pairs(first.(pool), last.(pool); backend = KernelAbstractions.CPU())
         hw = [0.5, 2.0, 8.0, 40.0]
         for prior in (IGPrior(), IGPrior(2.0, 0.05)), dg in (1, 2)
-            sc = StudentTUniformScoring(5, 1.0; prior, codimension = dg)
+            sc = StudentTUniformScoring(5, 1.0; scale_prior = prior, codimension = dg, label_prior = FlatLabelPrior())
             errs, idxs = grid_evaluate(sc, sh, hw; return_idxs = true)
-            ref = [best_pool_model(StudentTUniformScoring(5, h; prior, codimension = dg), p, D) for (p, D) in pool, h in hw]
+            ref = [best_pool_model(StudentTUniformScoring(5, h; scale_prior = prior, codimension = dg, label_prior = FlatLabelPrior()), p, D) for (p, D) in pool, h in hw]
             @test idxs == ref
             @test all(!iszero, ref)
             @test errs == [pool[i][1].errors_r[ref[i, t]] for i in eachindex(pool), t in eachindex(hw)]
         end
         # what the device sweep cannot score is refused, never scored as something else
-        @test_throws ArgumentError grid_evaluate(StudentTUniformScoring{Predictive}(5, 1.0; codimension = 1), sh, hw)
-        @test_throws ArgumentError grid_evaluate(StudentTUniformScoring(5, 1.0; codimension = 1, label_prior = ProfiledLabelPrior()), sh, hw)
+        @test_throws ArgumentError grid_evaluate(StudentTUniformScoring{Predictive}(5, 1.0; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), sh, hw)
+        @test_throws ArgumentError grid_evaluate(StudentTUniformScoring(5, 1.0; codimension = 1, label_prior = ProfiledLabelPrior(), scale_prior = JeffreysPrior()), sh, hw)
         # the mixture marginal needs the problem's minimal sample size and codimension
         spec = loss_spec(WelschShape(), IGPrior(); Δ = 0.5, t_lo = -10.0, t_hi = 0.0, NG = 33)
         @test_throws UndefKeywordError grid_evaluate(spec, sh, hw)
@@ -87,10 +88,10 @@ end
 # The scorers' TOML tables on VisualGeometryToolkitEstimation's schema (`scoring_from_toml` through ALL_SCORING_TAGS):
 # every family at its width key, required; written back by `config_dict`.
 @testitem "scoring_from_toml: this package's scorers, one schema with the local optimization" begin
+    using VisualGeometryToolkitCore: StudentTUniformScoring, FlatLabelPrior, JeffreysPrior, outlier_halfwidth   # the Student-t scorer (Core's)
     using Test
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: ALL_SCORING_TAGS, StudentTUniformScoring, MagsacScoring, MlesacScoring, WelschCostScoring,
-        SmoothTLSScoring, GemanScoring, outlier_halfwidth
+    using RANSACScoringDoneRight: ALL_SCORING_TAGS, MagsacScoring, MlesacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring
     using VisualGeometryToolkitEstimation: scoring_from_toml, config_dict, EssentialProblem
     P = EssentialProblem
     for (t, T) in (("magsac", MagsacScoring), ("mlesac", MlesacScoring), ("welsch_cost", WelschCostScoring),
@@ -101,7 +102,10 @@ end
     end
     d = Dict("type" => "student_t_uniform", "outlier_halfwidth" => 0.25)
     sc = scoring_from_toml(d; problem = P, tags = ALL_SCORING_TAGS)
-    @test sc == StudentTUniformScoring(P, 0.25) && outlier_halfwidth(sc) == 0.25 && config_dict(sc) == d
+    # the Student-t scorer is Core's, read through the merged registry; its priors inherit the stack's defaults
+    # (VisualGeometryToolkitEstimation's [scoring.student_t_uniform]) and config_dict states them
+    @test sc == StudentTUniformScoring(P, 0.25; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()) && outlier_halfwidth(sc) == 0.25
+    @test config_dict(sc) == merge(d, Dict("scale_prior" => "jeffreys", "label_prior" => "flat"))
     @test_throws r"needs `outlier_halfwidth`" scoring_from_toml(Dict("type" => "student_t_uniform"); problem = P, tags = ALL_SCORING_TAGS)
     @test_throws r"needs `threshold`" scoring_from_toml(Dict("type" => "magsac"); problem = P, tags = ALL_SCORING_TAGS)
     @test_throws ArgumentError scoring_from_toml(Dict("type" => "magsac", "threshold" => 1.0, "sigma" => 1.0); problem = P, tags = ALL_SCORING_TAGS)
