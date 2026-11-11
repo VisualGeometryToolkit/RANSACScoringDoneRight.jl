@@ -60,7 +60,7 @@ abstract type LossCostScoring{T} <: AbstractThresholdScoring{T} end
 #
 # The labels `z` are eliminated by profiling (a max: MSAC, and RANSAC keeping
 # only the count) or by marginalising (a sum: MLESAC); the scale `sigma` is
-# either supplied as a loss width `scale_multiple*sigma` or integrated out under the conjugate
+# either supplied as a loss width `efficiency_constant*sigma` or integrated out under the conjugate
 # Inverse-Gamma prior. The paper's contribution is the cell nothing else
 # occupies:
 #

@@ -124,7 +124,7 @@ const POOL_FRAME_R_MAX = 1.0
 # Fair common-cutoff map for the outlier half-width.
 #
 # Puts an outlier half-width on the SAME scale-multiple axis (σ-units) as MSAC's
-# loss width (`scale_multiple·ŝ`).  The scale multiple is the inlier/outlier
+# loss width (`efficiency_constant·ŝ`).  The scale multiple is the inlier/outlier
 # density-crossover point in σ-units; the marginals share the uniform outlier
 # model, so their native map IS the Gaussian-Uniform boundary — `GauInlier`
 # plus `decision_width` (scoring.jl).  No closed form is restated here.

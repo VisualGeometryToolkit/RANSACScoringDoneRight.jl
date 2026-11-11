@@ -49,7 +49,7 @@ LocalOptimizationDoneRight's. A caller composes them, for example
 find_essential(camera1, camera2, cs;
                scoring = scoring_from_toml(Dict("type" => "student_t_uniform", "outlier_halfwidth" => a);
                                            problem = EssentialProblem),   # priors from the stack defaults
-               local_optimization = …)
+               local_optimization_strategy = …)
 ```
 
 RANSAC and MSAC at a threshold (`RansacScoring`, `MsacScoring`) are
@@ -82,7 +82,7 @@ dispatches on the scoring:
 VisualGeometryToolkitCore's `width_axis(scoring)` names the axis a scoring's
 grid is native on (`OutlierHalfwidth` or `LossWidth`), and this package states
 it for its grid families. VisualGeometryToolkitCore's
-`to_native(axis, scale_multiple, scale; d_g)` maps a scale multiple onto that
+`to_native(axis, efficiency_constant, scale; d_g)` maps a scale multiple onto that
 axis, and `native_map(axis; d_g)` is the same map curried.
 
 The kernels run on `CPU()` or `CUDA.CUDABackend()`. The Float64 device path is
@@ -140,10 +140,10 @@ argument, as in
 ## Names of quantities
 
 VisualGeometryToolkitCore's robust layer is authoritative for the loss words.
-The shape math is `ρ`, `ψ` and `weight`. A `scale_multiple` is the
+The shape math is `ρ`, `ψ` and `weight`. An `efficiency_constant` is the
 dimensionless multiple of the scale at which a width sits, `s2` is the noise
 variance, `loss_width` is a loss's scale parameter and `sq_loss_width` is its
-square (`scale_multiple² · s2` for a deployed loss). VisualGeometryToolkitCore
+square (`efficiency_constant² · s2` for a deployed loss). VisualGeometryToolkitCore
 writes the squared residual as `s` in `ρ(shape, s, sq_loss_width)`. This
 package writes it `sq_r` or `sq_distances`, never `s`.
 
@@ -154,7 +154,7 @@ On top of that, this package names the following quantities.
 | `outlier_halfwidth` | the half-width of the uniform outlier component |
 | `decision_boundary` | the residual at which the MAP rule flips |
 | `decision_boundary` / `decision_width` | the one map between the two (VisualGeometryToolkitCore's generic, with the mixture's method), so a grid of outlier half-widths is never called a grid of thresholds |
-| `operating_scale_multiple` | the scale multiple at which a protocol converts (`loss_width = operating_scale_multiple · ŝ`) |
+| `operating_efficiency_constant` | the scale multiple at which a protocol converts (`loss_width = operating_efficiency_constant · ŝ`) |
 | `ŝ`, `s_hat_sq` | the scale estimate and its square |
 | `d_g` / `dg` | the constraint codimension |
 | `inlier_prior` / `inlier_posterior` | the scalar mixing proportion π and the per-point `P(inlier \| r)` |

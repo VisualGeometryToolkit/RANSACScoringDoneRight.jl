@@ -23,7 +23,7 @@ It sits in a stack of Julia packages:
 
 A caller composes them: VisualGeometryToolkitEstimation's `find_*` take a scorer from
 this package and a strategy from LocalOptimizationDoneRight as
-`scoring = …, local_optimization = …`.
+`scoring = …, local_optimization_strategy = …`.
 
 ## Scoring versus selection
 

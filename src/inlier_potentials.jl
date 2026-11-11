@@ -36,7 +36,7 @@
 # RSDR-owned (methods on the VGC tags — RSDR owns the functions, no piracy).
 # Every method dispatches on the bare, fieldless tag and takes the squared loss
 # width and the depth explicitly; VGC's deployed loss
-# (`deploy(shape, s2; scale_multiple)`) composes a width on instead, and this
+# (`deploy(shape, s2; efficiency_constant)`) composes a width on instead, and this
 # facet does not use it.
 
 # Holy trait — the canonical (fixed) well depth of each shape: the Δ of the
@@ -54,8 +54,8 @@ const _DEPTH_SMOOTH_TLS    = _config_default("inlier_potentials.depth", "smooth_
 # THE NAMES MATCH VisualGeometryToolkitCore: `sq_r` is its `s` (a squared RESIDUAL),
 # `sq_loss_width` its squared loss width. There is no scale multiple in this
 # facet: these losses MARGINALISE the loss width rather than deploy a shape at
-# `scale_multiple·σ`, so `sq_loss_width` is the whole width, not
-# `scale_multiple^2 * s2` decomposed — which is why `deploy` and `retune` do not
+# `efficiency_constant·σ`, so `sq_loss_width` is the whole width, not
+# `efficiency_constant^2 * s2` decomposed — which is why `deploy` and `retune` do not
 # appear here.
 
 # -----------------------------------------------------------------------------

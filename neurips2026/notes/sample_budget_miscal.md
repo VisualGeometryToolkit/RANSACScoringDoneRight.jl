@@ -159,8 +159,8 @@ exactly with no extrapolation at the top.
 
 **Miscalibration** is `corrupt_native(nat, ζ) = ζ·nat`, applied identically to
 every scorer. It is principled across both families because both natives are
-linear in the noise scale ŝ: `loss_width = scale_multiple·ŝ` for the threshold
-scores and `outlier_halfwidth = ŝ·√(π/2)·exp(scale_multiple²/2)` for ours, where the exponential factor depends only on
+linear in the noise scale ŝ: `loss_width = efficiency_constant·ŝ` for the threshold
+scores and `outlier_halfwidth = ŝ·√(π/2)·exp(efficiency_constant²/2)` for ours, where the exponential factor depends only on
 the standardized cutoff. So a scale wrong by 32× multiplies every scorer's
 tuned parameter by exactly 32 — nobody gets a special case.
 

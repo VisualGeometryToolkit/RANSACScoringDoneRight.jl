@@ -26,9 +26,9 @@ import VisualGeometryToolkitCore as VgtkCore
 #
 # VOCABULARY. VisualGeometryToolkitCore's robust layer is authoritative for the loss
 # words this package shares with it: the shape math ρ/ψ/weight,
-# `scale_multiple` the dimensionless multiple of the scale a width sits at,
+# `efficiency_constant` the dimensionless multiple of the scale a width sits at,
 # `s2` the noise VARIANCE, `loss_width` a loss's scale parameter and
-# `sq_loss_width` its square (`scale_multiple^2 * s2` for a deployed loss).
+# `sq_loss_width` its square (`efficiency_constant^2 * s2` for a deployed loss).
 # Note VGC's `ρ(shape, s, sq_loss_width)` spells the squared RESIDUAL `s`; this
 # package spells it `sq_r`/`sq_distances` and never `s`. On top of that RSDR
 # owns one layer of its own: `outlier_halfwidth` the half-width of the uniform

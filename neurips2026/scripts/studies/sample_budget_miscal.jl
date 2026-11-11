@@ -21,9 +21,9 @@
 #   `corrupt_native(nat, ζ) = ζ·nat` (VisualGeometryToolkitEval.Tuning's, the one
 #   miscalibration map of the stack). It is principled for BOTH scorer families because both
 #   natives are linear in the noise scale ŝ:
-#       loss-width family       : loss_width = scale_multiple·ŝ
-#       outlier-half-width family: outlier_halfwidth = ŝ·√(π/2)·exp(scale_multiple²/2)
-#                                  (the exp factor depends only on scale_multiple)
+#       loss-width family       : loss_width = efficiency_constant·ŝ
+#       outlier-half-width family: outlier_halfwidth = ŝ·√(π/2)·exp(efficiency_constant²/2)
+#                                  (the exp factor depends only on efficiency_constant)
 #   so a scale mis-estimated by ζ multiplies either native by exactly ζ. We run
 #   ζ = 1 (calibrated) and ζ = 32 (miscalibrated).
 #
@@ -38,7 +38,7 @@
 #   from ONE scan: VisualGeometryToolkitEval's sample-budget engine
 #   (`evaluate_sample_budget`, every column selection only: the Jeffreys marginal a
 #   `SampleBudgetMethodSpec`, each loss-width family a `LossWidthSpec` under
-#   `NoLocalOptimization`) folds every model into a running best and records its
+#   no local optimization, `lo_strategy = nothing`) folds every model into a running best and records its
 #   pose error at every B. The statistic of record is that engine's `model_imc`
 #   of the selected model (until RANSACScoringDoneRight 0.5 this study recorded
 #   the pool's stored `pool_imc` from its own loop). B is in MINIMAL SAMPLES —
@@ -82,7 +82,7 @@ using VisualGeometryToolkitEval.Pools: scene_loaders, residual_matrix, sample_st
 using VisualGeometryToolkitEval.Tuning: corrupt_native
 using VisualGeometryToolkitEval.Evaluation: SampleBudgetConfig, SampleBudgetMethodSpec, LossWidthSpec,
     evaluate_sample_budget
-using VisualGeometryToolkitEstimation: EssentialProblem, NoLocalOptimization
+using VisualGeometryToolkitEstimation: EssentialProblem
 
 # -----------------------------------------------------------------------------
 # Scorer roster — the CV sidecar's method keys (without the `_<criterion>`
@@ -171,7 +171,7 @@ function scene_curves(pairs::AbstractVector{<:PoolPair}, mats::AbstractVector{<:
              for (k, ζ) in combos if k !== :jeffreys]
     cap = maximum(budgets)
     cfg = SampleBudgetConfig(; sample_cap = cap, batch_size = reduce(gcd, budgets), lo_every = cap,
-                             lo_strategy = NoLocalOptimization(), budget_unit = :samples)
+                             lo_strategy = nothing, budget_unit = :samples)
     res = evaluate_sample_budget(EssentialProblem, methods, pairs, mats; loss_width_specs = specs, cfg,
                                  sample_starts = starts)
     at = [findfirst(==(b), res.sample_counts) for b in budgets]

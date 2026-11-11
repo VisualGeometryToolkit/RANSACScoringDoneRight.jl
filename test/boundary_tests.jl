@@ -17,31 +17,31 @@
     # gau_inlier_boundary_tests.jl there.)
     @testset "the loss width <-> outlier half-width maps ride the GauInlier boundary" begin
         @testset "outlier half-width <-> loss width round trip at the protocol scale multiple" begin
-            for operating_scale_multiple in (1.0, 2.5, 4.0), outlier_halfwidth in (0.7, 5.0, 120.0), d_g in (1, 2)
-                loss_width = outlier_halfwidth_to_loss_width(outlier_halfwidth; operating_scale_multiple, d_g)
-                @test loss_width_to_outlier_halfwidth(loss_width; operating_scale_multiple, d_g) ≈
+            for operating_efficiency_constant in (1.0, 2.5, 4.0), outlier_halfwidth in (0.7, 5.0, 120.0), d_g in (1, 2)
+                loss_width = outlier_halfwidth_to_loss_width(outlier_halfwidth; operating_efficiency_constant, d_g)
+                @test loss_width_to_outlier_halfwidth(loss_width; operating_efficiency_constant, d_g) ≈
                       outlier_halfwidth rtol = 1.0e-12
             end
         end
 
         @testset "outlier half-width <-> loss width honour the codimension" begin
             # d_g = 1 (F/E) is BIT-identical to the form that hard-coded it
-            uh1(scale_multiple) = decision_width(GauInlier(1.0; d_g = 1), Float64(scale_multiple))
-            for operating_scale_multiple in (1.0, 2.5, 4.0), x in (0.004, 0.05, 0.7, 120.0)
-                @test outlier_halfwidth_to_loss_width(x; operating_scale_multiple, d_g = 1) ===
-                      Float64(operating_scale_multiple) * x / uh1(operating_scale_multiple)
-                @test loss_width_to_outlier_halfwidth(x; operating_scale_multiple, d_g = 1) ===
-                      uh1(operating_scale_multiple) * x / Float64(operating_scale_multiple)
+            uh1(efficiency_constant) = decision_width(GauInlier(1.0; d_g = 1), Float64(efficiency_constant))
+            for operating_efficiency_constant in (1.0, 2.5, 4.0), x in (0.004, 0.05, 0.7, 120.0)
+                @test outlier_halfwidth_to_loss_width(x; operating_efficiency_constant, d_g = 1) ===
+                      Float64(operating_efficiency_constant) * x / uh1(operating_efficiency_constant)
+                @test loss_width_to_outlier_halfwidth(x; operating_efficiency_constant, d_g = 1) ===
+                      uh1(operating_efficiency_constant) * x / Float64(operating_efficiency_constant)
             end
             # d_g = 2 (H) is the codim-2 crossover: the loss width is
-            # operating_scale_multiple·ŝ where the outlier half-width is the codim-2
+            # operating_efficiency_constant·ŝ where the outlier half-width is the codim-2
             # half-width at scale ŝ — the boundary itself, not a codim-1 stand-in
-            for operating_scale_multiple in (1.0, 2.5, 4.0), ŝ in (0.01, 0.3, 2.0)
-                outlier_halfwidth = decision_width(GauInlier(ŝ^2; d_g = 2), operating_scale_multiple * ŝ)
-                @test outlier_halfwidth_to_loss_width(outlier_halfwidth; operating_scale_multiple, d_g = 2) ≈
-                      operating_scale_multiple * ŝ rtol = 1.0e-12
+            for operating_efficiency_constant in (1.0, 2.5, 4.0), ŝ in (0.01, 0.3, 2.0)
+                outlier_halfwidth = decision_width(GauInlier(ŝ^2; d_g = 2), operating_efficiency_constant * ŝ)
+                @test outlier_halfwidth_to_loss_width(outlier_halfwidth; operating_efficiency_constant, d_g = 2) ≈
+                      operating_efficiency_constant * ŝ rtol = 1.0e-12
             end
-            @test_throws UndefKeywordError outlier_halfwidth_to_loss_width(1.0; operating_scale_multiple = 2.5)   # no default d_g
+            @test_throws UndefKeywordError outlier_halfwidth_to_loss_width(1.0; operating_efficiency_constant = 2.5)   # no default d_g
         end
     end
 

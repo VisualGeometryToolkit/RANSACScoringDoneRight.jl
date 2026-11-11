@@ -10,7 +10,7 @@
     import VisualGeometryToolkitCore as VgtkCore
     using Test, Random
     using KernelAbstractions
-    using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth, ScaleMultiple, to_native, native_map, decision_width,
+    using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth, EfficiencyConstant, to_native, native_map, decision_width,
         WelschShape, GauInlier, decision_boundary, IGPrior, RansacScoring, MsacScoring, width_axis,
         best_pool_model
     using RANSACScoringDoneRight
@@ -38,7 +38,7 @@
             f = native_map(axis; d_g)
             @test f(3.0, 0.2) == to_native(axis, 3.0, 0.2; d_g)
         end
-        @test_throws MethodError native_map(ScaleMultiple(); d_g = 1)
+        @test_throws MethodError native_map(EfficiencyConstant(); d_g = 1)
     end
 
     @testset "width_axis of the grid families" begin

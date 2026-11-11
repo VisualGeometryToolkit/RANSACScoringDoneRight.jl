@@ -340,7 +340,7 @@ end
 
 # The cost branch scores by a VisualGeometryToolkitCore shape. All three carry a
 # 95%-efficiency constant in VGC (`efficiency_constant(shape, codim)`), so each
-# has its own loss width `scale_multiple·ŝ`. `SmoothTLSShape` is not an `AbstractMEstimator` (a
+# has its own loss width `efficiency_constant·ŝ`. `SmoothTLSShape` is not an `AbstractMEstimator` (a
 # truncation has no influence function), but VGC tabulates its constant anyway,
 # so membership of that supertype is not what decides whether a loss width exists.
 loss_shape(::WelschCostScoring) = VgtkCore.WelschShape()

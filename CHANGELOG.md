@@ -8,6 +8,11 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **Renamed (VisualGeometryToolkitCore's and Estimation's, the owner's rulings): the robust-estimation contract's names.**
+  A width's multiple of the scale is the `efficiency_constant` (was `scale_multiple`; the `EfficiencyConstant` width axis,
+  was `ScaleMultiple`; the protocol's `operating_efficiency_constant`), always the plain multiple; find_*'s strategy
+  keyword is `local_optimization_strategy`, and no local optimization is `nothing` (no `NoLocalOptimization`). This
+  package's docs, tests and the neurips2026 sample-budget study follow. No scorer changes: results bit for bit.
 - **Renamed (VisualGeometryToolkitCore's, the owner's ruling): the scorer's decision point is `decision_boundary`.**
   `inlier_threshold` → `decision_boundary`, `has_inlier_threshold` → `has_decision_boundary`, and the Gaussian–uniform
   `decision_threshold` is a method of the same `decision_boundary`. This package's method for a Student-t scorer with an
