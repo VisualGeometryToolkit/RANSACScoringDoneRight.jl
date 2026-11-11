@@ -68,5 +68,5 @@ WelschCostScoring
 SmoothTLSScoring
 GemanScoring
 loss_width_scoring
-SCORING_TAGS
+ALL_SCORING_TAGS
 ```

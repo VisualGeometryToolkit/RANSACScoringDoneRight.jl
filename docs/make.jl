@@ -5,10 +5,11 @@ using DocumenterInterLinks    # InterLinks(): `[x](@extref VisualGeometryToolkit
 using RANSACScoringDoneRight
 
 # VisualGeometryToolkitCore's names (the scoring contract, the mixture toolkit)
-# are documented in its manual: `@extref` resolves them against the inventory
+# and VisualGeometryToolkitEstimation's (SIMFIT++) are documented in their manuals: `@extref` resolves them against the inventory
 # (objects.inv) its published `dev` docs carry, as the stack's other docs do.
 const LINKS = InterLinks(
     "VisualGeometryToolkitCore" => "https://visualgeometrytoolkit.github.io/VisualGeometryToolkitCore/dev/",
+    "VisualGeometryToolkitEstimation" => "https://visualgeometrytoolkit.github.io/VisualGeometryToolkitEstimation/dev/",
 )
 
 makedocs(;

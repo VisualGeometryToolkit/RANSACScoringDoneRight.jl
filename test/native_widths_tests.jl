@@ -13,6 +13,7 @@
         WelschShape, GauInlier, decision_threshold, IGPrior, RansacScoring, MsacScoring, width_axis,
         best_pool_model
     using RANSACScoringDoneRight
+    using VisualGeometryToolkitEstimation: SimFitPP   # SIMFIT++ is Estimation's; its grid family is this package's
     import VisualGeometryToolkitCore
     using RANSACScoringDoneRight: LossSpec, loss_spec, stage_ig_shared_from_pairs
 

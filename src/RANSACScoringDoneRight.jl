@@ -12,8 +12,10 @@ import VisualGeometryToolkitCore as VgtkCore
 # depends on VisualGeometryToolkitCore (for Uncertain and the constraint-problem protocol)
 # and StaticArrays/SpecialFunctions; the GPU sweep port adds KernelAbstractions
 # (and GPUArrays, to free its device scratch eagerly),
-# and the scoring/tuning VOCABULARY layer (with SIMFIT++) adds Distributions,
-# Random and Statistics. The bootstrap harness that once lived here —
+# and the scoring VOCABULARY layer adds Statistics (`cov` of an `Uncertain`).
+# SIMFIT++ is VisualGeometryToolkitEstimation's (`SimFitPP`, `simfitpp_select`;
+# moved there on 2026-11-11): this package only gives it a grid on the
+# pool-selection contract (selection.jl). The bootstrap harness that once lived here —
 # and the JLD2/HDF5/DrWatson/DataFrames/Bootstrap/Optim deps it carried — moved
 # to the evaluation engine on 2026-07-18 (now VisualGeometryToolkitEval) and is NOT a dependency of this
 # package. Problems implement VisualGeometryToolkitCore's `AbstractConstraintProblem`.
@@ -45,9 +47,7 @@ using LinearAlgebra: I, det, dot, norm
 using StaticArrays: SMatrix, SVector, StaticMatrix, StaticVector
 using SpecialFunctions: loggamma, logbeta, gamma, gamma_inc
 using LogExpFunctions: log1pexp # log(1 + eˣ) (MLESAC's quality)
-using Distributions: Chisq, cdf, quantile
-using Random: AbstractRNG, default_rng, randperm
-using Statistics: Statistics, median
+using Statistics: Statistics
 
 # GPU scoring (KernelAbstractions port — CPU + CUDA backends).  The loss-width
 # baseline and IG/marginal sweep kernels in ig_sweep_ka.jl / loss_width_sweep_ka.jl use these;
@@ -59,13 +59,15 @@ using KernelAbstractions: KernelAbstractions, @kernel, @index, @Const
 # because both uses are qualified. (KernelAbstractions' own `unsafe_free!` is
 # not public, and CUDA.jl 5.11 does not extend it: on CUDA it frees nothing.)
 using GPUArrays: GPUArrays
+# The one host → device upload (allocate + copy, converted to the element type)
+# is VisualGeometryToolkitCore's.
+using VisualGeometryToolkitCore: ka_upload
 
 # VisualGeometryToolkitCore's `whitened_residual` / `whitened_constraint_rows`
 # (a problem's point, by `(problem, model, i)`) are the ONE whitening and degeneracy
 # rule of the residual path: this package computes no Sampson residual of its own.
 using VisualGeometryToolkitCore: VisualGeometryToolkitCore, Uncertain, CovMat, geom
-# Geometry the evaluation subsystem scores against (scoring_eval_common.jl,
-# simfitpp.jl).
+# Geometry the evaluation subsystem scores against (scoring_eval_common.jl).
 using VisualGeometryToolkitCore:
     # the loss shapes the inlier-loss layer and the scale marginals dispatch on
     AbstractLossShape, WelschShape, GemanMcclureShape, SmoothTLSShape
@@ -77,6 +79,11 @@ using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_im
     # the record's residual-matrix contract, the one pool argmax, and the one
     # pixel → pool-frame scale
     check_residual_matrix, best_model_index, pool_pixel_scale
+# SIMFIT++ is VisualGeometryToolkitEstimation's: its configuration and its pool
+# adapter. This package gives `SimFitPP` a width axis, a tag and a grid on the
+# pool-selection contract (native_widths.jl, selection.jl) and re-exports
+# nothing of it: callers take both names from VisualGeometryToolkitEstimation.
+using VisualGeometryToolkitEstimation: SimFitPP, simfitpp_select
 # The scoring families' tag registry, merged with this package's (native_widths.jl).
 using VisualGeometryToolkitCore: TagRegistry
 # The width axes, their native maps and the native-axis conversions are
@@ -136,10 +143,10 @@ export LossWidthScoring
 export MlesacScoring, MagsacScoring
 export WelschCostScoring, SmoothTLSScoring, GemanScoring
 # `loss_width_scoring(tag[, dg])` builds a `LossWidthScoring` member by its tag
-# of `SCORING_TAGS`, the scoring families' registry (VisualGeometryToolkitCore's merged
+# of `ALL_SCORING_TAGS`, the scoring families' registry (VisualGeometryToolkitCore's merged
 # with this package's).
 export loss_width_scoring
-public SCORING_TAGS
+public ALL_SCORING_TAGS
 
 # A loss-width family at its width selects through VisualGeometryToolkitCore's
 # `best_pool_model` (its `score!`, scoring_eval_common.jl); the staged grid
@@ -147,10 +154,6 @@ public SCORING_TAGS
 # `select_on_grid!`).
 export WelschMarginal
 public pair_chunk_budget
-# SIMFIT++ (simfitpp.jl): loss-width estimation from held-out residuals + the pool adapter
-export SimFitPP, unbiased_median_variance, simfitpp_loss_width, simfitpp_select
-# The SIMFIT++ bounds in another residual unit (`simfitpp_select`'s matrix method).
-public with_residual_unit
 # The two aggregations of the loss-width grid (public; generic names)
 public Aggregation, Exact, LogBinned
 
@@ -195,7 +198,6 @@ include("loss_width_sweep_ka.jl")     # RANSAC/MSAC/GaU/MAGSAC++ device kernels 
 # matrix. Concrete problem types (HomographyProblem/…) stay in the consumer and
 # are given as the leading `problem_type` argument where one is needed.
 include("scoring_eval_common.jl")     # per-pair scorers, pool scorers, per-pair staging precompute
-include("simfitpp.jl")                # SIMFIT++ loss-width estimation (Edstedt 2025) + pool adapter
 include("inlier_potentials.jl")       # canonical depths of the loss shapes; ρ̃ = (Δ/sq_loss_width)·VGC's ρ
 include("welsch_marginal.jl")         # ScaleMarginal{K} + shared evidence machinery; Welsch methods
 include("smoothtls_marginal.jl")      # marginal smooth-TLS spec: SmoothTLSMarginal

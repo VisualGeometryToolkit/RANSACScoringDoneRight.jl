@@ -5,18 +5,16 @@
 # the methods (a removed keyword) all get through it. The General registration review
 # asks for every public name to be documented (#173032).
 #
-# docs_gates.jl is the docs skill's copy the stack's suites also carry; it
-# is not a `*_tests.jl` file, so ReTestItems does not run it.
+# The gates are VisualGeometryToolkitCore's one `test_docs` (its Test
+# extension); this package's copy of them (docs_gates.jl) is deleted
+# (2026-11-11).
 
 @testitem "docs" begin
     using Test, RANSACScoringDoneRight
-    include(joinpath(@__DIR__, "docs_gates.jl"))
-    M = RANSACScoringDoneRight
+    using VisualGeometryToolkitCore: test_docs
 
     # No exception and no backlog: every public name is documented. The first
-    # exception brings back VisualGeometryToolkitCore's lists (its
-    # test/docs_tests.jl), each entry with its reason, printed by the item.
-    @test isempty(undocumented_public(M))
-    @test isempty(detached_docstrings(joinpath(pkgdir(M), "src")))
-    @test isempty(signature_mismatches(M))
+    # exception takes VisualGeometryToolkitCore's test/docs_tests.jl form, each
+    # entry with its reason.
+    test_docs(RANSACScoringDoneRight)
 end

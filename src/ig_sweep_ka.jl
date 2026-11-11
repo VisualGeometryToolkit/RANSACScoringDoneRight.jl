@@ -157,8 +157,8 @@ function grid_evaluate(scoring::StudentTUniformScoring{P}, staged::IGSharedData,
     # the table's length, so any length covering every pair gives the same sweep).
     N_max = Pn == 0 ? 0 : Int(maximum(Array(staged.K_per_pair)))
 
-    lg_table_d = _ka_upload(backend, Float64, _build_lg_table(N_max, dg; alpha0 = prior.alpha0))
-    log_two_outlier_halfwidth_d = _ka_upload(backend, Float64,
+    lg_table_d = ka_upload(Float64, backend, _build_lg_table(N_max, dg; alpha0 = prior.alpha0))
+    log_two_outlier_halfwidth_d = ka_upload(Float64, backend,
                                              [log(2.0 * Float64(h)) for h in outlier_halfwidths])
 
     sweep = _ka_kernel(ig_sweep_kernel!, backend, 3)
@@ -232,12 +232,12 @@ function stage_ig_shared_from_pairs(pairs::AbstractVector{<:PoolPair},
 
     M_max = maximum(M_arr)
 
-    sorted_sq_flat  = _ka_upload(backend, Tsq, sorted_sq_flat_h)
-    errors_imc_flat = _ka_upload(backend, Float64, errors_imc_flat_h)
-    pair_offset_d   = _ka_upload(backend, Int64,   pair_offset)
-    K_per_pair_d    = _ka_upload(backend, Int32,   K_arr)
-    M_per_pair_d    = _ka_upload(backend, Int32,   M_arr)
-    errors_offset_d = _ka_upload(backend, Int64,   errors_offset)
+    sorted_sq_flat  = ka_upload(Tsq, backend, sorted_sq_flat_h)
+    errors_imc_flat = ka_upload(Float64, backend, errors_imc_flat_h)
+    pair_offset_d   = ka_upload(Int64, backend, pair_offset)
+    K_per_pair_d    = ka_upload(Int32, backend, K_arr)
+    M_per_pair_d    = ka_upload(Int32, backend, M_arr)
+    errors_offset_d = ka_upload(Int64, backend, errors_offset)
 
     IGSharedData(backend,
                    sorted_sq_flat, pair_offset_d, K_per_pair_d, M_per_pair_d,

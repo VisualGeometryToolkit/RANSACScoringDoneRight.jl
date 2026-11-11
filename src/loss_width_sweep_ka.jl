@@ -219,7 +219,7 @@ end
 # Threshold-scoring families (D): singleton types replacing the `method::Symbol`
 # + if/elseif kernel selection. `grid_evaluate` dispatches on these via
 # `residual_quality` and `_support_sq` below; a config's tag converts at the boundary with
-# `loss_width_scoring("ransac", dg)` (the tags are `SCORING_TAGS`).
+# `loss_width_scoring("ransac", dg)` (the tags are `ALL_SCORING_TAGS`).
 # -----------------------------------------------------------------------------
 # The loss-width-swept scorings, split by whether a mixture sits underneath (the two
 # branches and the traits are declared in scoring.jl).
@@ -267,7 +267,7 @@ end
 
 MLESAC (GaU) at codimension `DG`: the Gaussian-uniform log-density at a fixed
 scale, normalised to 1 at `d = 0` (see [`residual_quality`](@extref VisualGeometryToolkitCore.residual_quality)). Tag
-`"mlesac"` ([`SCORING_TAGS`](@ref)). `MlesacScoring()`, `MlesacScoring(dg)`,
+`"mlesac"` ([`ALL_SCORING_TAGS`](@ref)). `MlesacScoring()`, `MlesacScoring(dg)`,
 `MlesacScoring(problem)`: the width-free grid family; `MlesacScoring(dg; threshold = w)`:
 the scorer at loss width `w`.
 """
@@ -434,7 +434,7 @@ loss_shape(::SmoothTLSScoring)  = VgtkCore.SmoothTLSShape()
     loss_width_scoring(tag, problem) -> LossWidthScoring
     loss_width_scoring(tag, ::Type{<:AbstractConstraintProblem}) -> LossWidthScoring
 
-The width-free [`LossWidthScoring`](@ref) family a tag of [`SCORING_TAGS`](@ref)
+The width-free [`LossWidthScoring`](@ref) family a tag of [`ALL_SCORING_TAGS`](@ref)
 names, at a codimension: `"ransac"`, `"msac"`, `"mlesac"`, `"magsac"`,
 `"welsch_cost"`, `"smooth_tls"` or `"geman"`. A retired tag (`"gau"`) is an
 `ArgumentError` naming its successor, and a tag of a family that takes no loss
@@ -445,10 +445,10 @@ Supply the codimension whenever the problem has one other than 1: the tag
 vocabulary must not be a back door that silently re-defaults `DG`.
 """
 function loss_width_scoring(tag::AbstractString, dg::Integer = 1)
-    S = SCORING_TAGS[tag]
+    S = ALL_SCORING_TAGS[tag]
     (S isa Type && S <: LossWidthScoring) || throw(ArgumentError(
         "loss_width_scoring: tag \"$tag\" names $S, which takes no loss width; the loss-width tags are " *
-            join(("\"$t\"" for (t, F) in SCORING_TAGS if F isa Type && F <: LossWidthScoring), ", ")))
+            join(("\"$t\"" for (t, F) in ALL_SCORING_TAGS if F isa Type && F <: LossWidthScoring), ", ")))
     return S(dg)
 end
 loss_width_scoring(tag::AbstractString, problem::AbstractConstraintProblem) =
@@ -598,7 +598,7 @@ function _grid_evaluate_loss_width(::Exact, ::Type{S}, scoring, shared, loss_wid
                             cs::Int, return_idxs::Bool) where {S}
     backend = shared.backend
     T = length(loss_widths); M_max = Int(shared.M_max)
-    loss_widths_d = _ka_upload(backend, Float64, loss_widths)
+    loss_widths_d = ka_upload(Float64, backend, loss_widths)
     support = _support_sq(scoring, maximum(loss_widths))
     k1 = _ka_kernel(exact_pm_score_kernel!, backend, 2)
     out = _chunked_argmax_eval(shared, T; cs, return_idxs) do scores_pmt, s, n
@@ -622,7 +622,7 @@ function _grid_evaluate_loss_width(agg::LogBinned, ::Type{S}, scoring, shared, l
     d2_max = 100.0 * max_loss_width * max_loss_width
     nbins = max(64, ceil(Int, agg.bins_per_decade * log10(d2_max / d2_min)))
     W = _build_score_weight_matrix(scoring, loss_widths, nbins, d2_min, d2_max)
-    W_d = _ka_upload(backend, Float32, vec(W))
+    W_d = ka_upload(Float32, backend, vec(W))
     log_d2_min   = S(log(d2_min))
     inv_log_spacing = S(nbins) / S(log(d2_max / d2_min))
     k1 = _ka_kernel(histogram_pm_score_kernel!, backend, 2)

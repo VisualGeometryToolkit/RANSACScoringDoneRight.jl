@@ -72,7 +72,7 @@
 
 using JLD2, Printf, Statistics, TOML
 using RANSACScoringDoneRight
-using RANSACScoringDoneRight: SCORING_TAGS
+using RANSACScoringDoneRight: ALL_SCORING_TAGS
 using VisualGeometryToolkitCore: width_axis, JeffreysPrior, retired_tags
 using VisualGeometryToolkitCore.Pools: PoolPair, num_models
 using VisualGeometryToolkitCore.Synthetic: mean_average_accuracy
@@ -99,9 +99,9 @@ const ROSTER = (:ransac, :msac, :gau, :magsac, :jeffreys)
 
 # The scoring tag of a roster/sidecar key: the sidecar predates the tag rule
 # and spells the Gaussian-uniform family by its retired tag `gau`, which
-# RANSACScoringDoneRight's `SCORING_TAGS` records as renamed `mlesac` — read from
+# RANSACScoringDoneRight's `ALL_SCORING_TAGS` records as renamed `mlesac` — read from
 # the registry, never restated here.
-family_tag(key::Symbol) = get(Dict(retired_tags(SCORING_TAGS)), String(key), String(key))
+family_tag(key::Symbol) = get(Dict(retired_tags(ALL_SCORING_TAGS)), String(key), String(key))
 
 # The width-free scoring of a loss-width roster key (`loss_width_scoring` throws
 # for an unknown one), and the Jeffreys marginal at its outlier half-width.

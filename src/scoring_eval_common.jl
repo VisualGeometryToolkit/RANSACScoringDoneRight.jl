@@ -4,11 +4,10 @@
 # per-pair staging precompute
 #
 # Contains:
-#   - `_loss_width_sum!`, Σ quality over some rows (SIMFIT++'s train split). A
-#     family's `score!` AT a loss width (`MlesacScoring(dg; threshold = w)`, …,
-#     or `with_width(F, LossWidth(w))`) is VisualGeometryToolkitCore's one
-#     threshold loop: the five families are `AbstractThresholdScoring`s, as
-#     RANSAC and MSAC are;
+#   - (a note) a family's `score!` AT a loss width (`MlesacScoring(dg;
+#     threshold = w)`, …, or `with_width(F, LossWidth(w))`) is
+#     VisualGeometryToolkitCore's one threshold loop: the five families are
+#     `AbstractThresholdScoring`s, as RANSAC and MSAC are;
 #   - the per-pair staging precompute (PrecomputedPair)
 # Every function here takes the light pool record (VisualGeometryToolkitCore's
 # `PoolPair`) together with its residual matrix `R` (num_points × num_models,
@@ -48,26 +47,10 @@
 #     squares — the grids' test.
 # =============================================================================
 
-# Σ residual_quality(scoring, dᵢ², loss_width) over the indices `rows` of the
-# residual vector `d`, d² squared in `d`'s own precision (the staging contract),
-# a non-finite d² an outlier (quality 0, VisualGeometryToolkitCore's rule: a finite d
-# whose square overflows too); each point's quality into `scores` (or not, for
-# `nothing`) — the arithmetic of VisualGeometryToolkitCore's threshold `score!`
-# on a row subset, for SIMFIT++'s MSAC-best over a train split (simfitpp.jl).
-@inline function _quality(scoring, d, loss_width::Float64)
-    d2 = Float64(d * d)
-    return isfinite(d2) ? residual_quality(scoring, d2, loss_width) : 0.0
-end
-@inline function _loss_width_sum!(scores, scoring::LossWidthScoring, d::AbstractVector, rows,
-                                  loss_width::Float64)
-    s = 0.0
-    @inbounds for i in rows
-        q = _quality(scoring, d[i], loss_width)
-        scores === nothing || (scores[i] = q)
-        s += q
-    end
-    return s
-end
+# (`_loss_width_sum!` and `_quality` — Σ quality over a row subset, SIMFIT++'s
+#  train-split MSAC sum — are deleted with this package's SIMFIT++ copy
+#  (2026-11-11): VisualGeometryToolkitEstimation's `simfitpp_select` scores the
+#  train split by VisualGeometryToolkitCore's threshold `score!`.)
 
 # log(1 + eˣ), stable over the whole range, is LogExpFunctions' `log1pexp` (a
 # dependency of SpecialFunctions already; the local `_softplus` restated it).

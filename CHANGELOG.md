@@ -1,5 +1,42 @@
 # RANSACScoringDoneRight changelog
 
+## Unreleased (the VisualGeometryToolkit 0.9 stack)
+
+On the VisualGeometryToolkit 0.9 stack: VisualGeometryToolkitCore 0.9, and
+VisualGeometryToolkitEstimation (a new dependency, for SIMFIT++ alone);
+neurips2026 also Eval and IO of that stack.
+
+### Breaking
+
+- **SIMFIT++ is VisualGeometryToolkitEstimation's.** This package's copy
+  (`src/simfitpp.jl`) is deleted, and its names are no longer exported or public
+  here: `SimFitPP`, `simfitpp_loss_width` and `simfitpp_select` are exported by
+  VisualGeometryToolkitEstimation, `unbiased_median_variance` and
+  `with_residual_unit` are public there. The same algorithm, the same defaults
+  and the same selections (Estimation scores the train split by Core's threshold
+  `score!`, the same per-point quality summed in the same order). The grid family
+  stays here: `select_on_grid!` over a `SimFitPP`, its `width_axis`
+  (`LossWidth`) and its tag `"sim_fit_pp"` take Estimation's `SimFitPP`.
+  Migration: `using RANSACScoringDoneRight: SimFitPP, simfitpp_select` →
+  `using VisualGeometryToolkitEstimation: SimFitPP, simfitpp_select` (likewise
+  `simfitpp_loss_width`; `VgtkEstimation.unbiased_median_variance`,
+  `VgtkEstimation.with_residual_unit`).
+- **`SCORING_TAGS` is renamed `ALL_SCORING_TAGS`.** The registry is unchanged
+  (VisualGeometryToolkitCore's `SCORING_TAGS` merged with this package's
+  families); Core owns the name `SCORING_TAGS`. Migration:
+  `RANSACScoringDoneRight.SCORING_TAGS` → `RANSACScoringDoneRight.ALL_SCORING_TAGS`.
+
+### Removed duplicates
+
+- Device uploads go through VisualGeometryToolkitCore's `ka_upload` (the private
+  `_ka_upload` is deleted).
+- The docstring gates are VisualGeometryToolkitCore's `test_docs` (the copied
+  `test/docs_gates.jl` is deleted); the suite runs Core's `test_duplication`.
+- neurips2026 writes its prose-number macros through VisualGeometryToolkitEval's
+  `PaperNumbers`/`add_number!`/`write_numbers` (`prose_macros` is replaced by
+  `prose_numbers`).
+- Distributions and Random are no longer dependencies (only SIMFIT++ used them).
+
 ## 0.6.0 (2026-11-09)
 
 On the VisualGeometryToolkit 0.8 stack, from General: VisualGeometryToolkitCore 0.8

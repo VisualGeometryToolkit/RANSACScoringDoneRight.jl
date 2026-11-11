@@ -29,11 +29,11 @@ precompute_pair
 VisualGeometryToolkitCore's `select_on_grid!(idxs, P, scoring, grid, staged)`
 fills `idxs[p, t]` with the model selected for pair `p` at width `grid[t]`. Every
 grid family of this package (`StudentTUniformScoring`, the width-free
-loss-width families, [`LossSpec`](@ref), `ScaleMarginal`, [`SimFitPP`](@ref))
+loss-width families, [`LossSpec`](@ref), `ScaleMarginal`, [`SimFitPP`](@extref VisualGeometryToolkitEstimation.SimFitPP))
 declares the staging `:rsdr`: `stage_selection(selection_staging(scoring), pairs, residuals; backend)`
 is one [`stage_ig_shared_from_pairs`](@ref) shared by all of them, and its
 `select_on_grid!` is one [`grid_evaluate`](@ref) (SIMFIT++: its host loop over
-[`simfitpp_select`](@ref)). [`pair_chunk_budget`](@ref) sizes the device chunks.
+[`simfitpp_select`](@extref VisualGeometryToolkitEstimation.simfitpp_select)). [`pair_chunk_budget`](@ref) sizes the device chunks.
 
 ```@docs
 pair_chunk_budget
@@ -83,13 +83,10 @@ fits (`PriorSpec`, `fit_prior`, `ALL_PRIOR_SPECS`) are VisualGeometryToolkitEval
 
 ## SIMFIT++ loss-width estimation
 
-A step-for-step port of Edstedt's SIMFIT++ ([Parskatt/simfitpp](https://github.com/Parskatt/simfitpp)),
-with a pool adapter.
-
-```@docs
-SimFitPP
-simfitpp_loss_width
-simfitpp_select
-unbiased_median_variance
-with_residual_unit
-```
+SIMFIT++ (Edstedt, CVPRW 2025; [Parskatt/simfitpp](https://github.com/Parskatt/simfitpp))
+is VisualGeometryToolkitEstimation's: [`SimFitPP`](@extref VisualGeometryToolkitEstimation.SimFitPP),
+[`simfitpp_loss_width`](@extref VisualGeometryToolkitEstimation.simfitpp_loss_width) and
+[`simfitpp_select`](@extref VisualGeometryToolkitEstimation.simfitpp_select) (exported there),
+`unbiased_median_variance` and `with_residual_unit` (public there). This
+package gives `SimFitPP` its width axis (`LossWidth`), its tag `"sim_fit_pp"` and
+its grid on the pool-selection contract (above).

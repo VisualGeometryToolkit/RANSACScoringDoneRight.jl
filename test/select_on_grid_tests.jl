@@ -14,8 +14,8 @@
     using StaticArrays
     using KernelAbstractions
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: stage_ig_shared_from_pairs, loss_spec, Exact, LossSpec, pair_chunk_budget,
-        simfitpp_select
+    using RANSACScoringDoneRight: stage_ig_shared_from_pairs, loss_spec, Exact, LossSpec, pair_chunk_budget
+    using VisualGeometryToolkitEstimation: SimFitPP, simfitpp_select   # SIMFIT++ is Estimation's
     using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, IGPrior, WelschShape,
         FundMat, sampson_distance, select_on_grid!, selection_staging, stage_selection
     using VisualGeometryToolkitCore.Pools: PoolPair, pixel_residuals, pool_pixel_scale

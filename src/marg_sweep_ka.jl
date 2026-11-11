@@ -33,13 +33,10 @@
 # accumulator stays Float64 (drift-safe).
 # =============================================================================
 
-# allocate + copyto! in one step, converting to the target element type when it
-# differs.  Every device-table upload in this file goes through here.
-@inline function _ka_upload(backend, ::Type{T}, host::AbstractArray) where {T}
-    d = KernelAbstractions.allocate(backend, T, size(host)...)
-    KernelAbstractions.copyto!(backend, d, eltype(host) === T ? host : T.(host))
-    return d
-end
+# Every device-table upload in this file (and in ig_sweep_ka.jl,
+# loss_width_sweep_ka.jl) is VisualGeometryToolkitCore's `ka_upload(T, backend,
+# host)`: allocate + copy in one step, converted to `T` when it differs. (This
+# package's `_ka_upload` copy is deleted, 2026-11-11.)
 
 # Every kernel here is instantiated through `_ka_kernel(kernel, backend, nd)`
 # (`nd` = the ndrange's dimensionality). On the CPU backend KernelAbstractions'
@@ -249,11 +246,11 @@ function grid_evaluate(::Type{S}, m::ScaleMarginal, staged::IGSharedData,
     M_max = Int(staged.M_max)
     shape, Δ, sq_loss_width, logZ, base, ltw, win_off, NU =
         _marg_quad_tables(m, prior_loss_widths, NG)
-    sq_loss_width_d = _ka_upload(backend, S, sq_loss_width)
-    logZ_d = _ka_upload(backend, S, logZ)
-    base_d = _ka_upload(backend, S, vec(base))
-    ltw_d  = _ka_upload(backend, S, vec(ltw))
-    off_d  = _ka_upload(backend, Int32, win_off)
+    sq_loss_width_d = ka_upload(S, backend, sq_loss_width)
+    logZ_d = ka_upload(S, backend, logZ)
+    base_d = ka_upload(S, backend, vec(base))
+    ltw_d  = ka_upload(S, backend, vec(ltw))
+    off_d  = ka_upload(Int32, backend, win_off)
 
     per_pair = M_max * NU * sizeof(S) + M_max * T * 8     # Dscratch + scores
     cs = clamp(Int(fld(mem_budget, max(per_pair, 1))), 1, min(256, P))
@@ -415,11 +412,11 @@ function grid_evaluate(::Type{S}, spec::LossSpec, shared_ka::IGSharedData,
     cs = clamp(Int(fld(mem_budget, max(per_pair, 1))), 1, min(256, P))
 
     # Device quadrature tables (depth Δ baked into quad.logZnodes by loss_spec).
-    sq_loss_width_nodes_d = _ka_upload(backend, S, quad.sq_loss_width_nodes)
-    logZ_d   = _ka_upload(backend, S, quad.logZnodes)
-    base_d   = _ka_upload(backend, S, quad.base)
-    ltw_d    = _ka_upload(backend, S, quad.ltw)
-    log_two_outlier_halfwidth_d = _ka_upload(backend, Float64,
+    sq_loss_width_nodes_d = ka_upload(S, backend, quad.sq_loss_width_nodes)
+    logZ_d   = ka_upload(S, backend, quad.logZnodes)
+    base_d   = ka_upload(S, backend, quad.base)
+    ltw_d    = ka_upload(S, backend, quad.ltw)
+    log_two_outlier_halfwidth_d = ka_upload(Float64, backend,
                                              [log(2 * Float64(h)) for h in outlier_halfwidth_grid])
 
     E_d      = KernelAbstractions.allocate(backend, S, cs, M_max, Kmax)

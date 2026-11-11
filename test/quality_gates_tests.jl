@@ -29,15 +29,17 @@
 
 @testitem "quality_gates" begin
     import VisualGeometryToolkitCore as VgtkCore
+    import VisualGeometryToolkitEstimation as VgtkEstimation
     using Test, Aqua, ExplicitImports, JET
     using VisualGeometryToolkitCore: VisualGeometryToolkitCore, test_quality_gates
     using RANSACScoringDoneRight
 
     # The stack's one gate (VisualGeometryToolkitCore's quality extension): Aqua,
-    # ExplicitImports, JET. Two qualified accesses are to names their owners
-    # document but have not declared `public`: `KernelAbstractions.copyto!` (KA's
-    # backend copy, the only way to move data between host and device buffers)
-    # and `Threads.maxthreadid` (sizes per-thread workspaces for `@threads`).
+    # ExplicitImports, JET. One qualified access is to a name its owner
+    # documents but has not declared `public`: `Threads.maxthreadid` (sizes
+    # per-thread workspaces for `@threads`). (`KernelAbstractions.copyto!` left
+    # with this package's upload copy: uploads are VisualGeometryToolkitCore's
+    # `ka_upload`, 2026-11-11.)
     #
     # JET: the extension drops KernelAbstractions LAUNCH reports (a kernel
     # launch analysed with the backend left abstract splits into
@@ -54,7 +56,10 @@
     # family's methods (the grid kernels, `_support_sq`) are on VGC's types. That is by design, not piracy — VGC
     # owns the scorer and leaves its WIDTH-FREE grid family to this package
     # (the threshold scorers stay on VGC's generic pool selection) — so the two
-    # are treated as RSDR's own here.
+    # are treated as RSDR's own here. So is VisualGeometryToolkitEstimation's
+    # `SimFitPP`: Estimation owns SIMFIT++ and leaves its GRID on the
+    # pool-selection contract (`width_axis`, `selection_staging`,
+    # `select_on_grid!`) to this package, whose grid families those are.
     #
     # K+ (2026-10): two qualified accesses into VisualGeometryToolkitCore came with the
     # toolkit's move there — `VisualGeometryToolkitCore.cov` (VGC's method of
@@ -68,6 +73,6 @@
     # an abstract `Type` — the abstract-stub class of the problem protocol,
     # implemented downstream (as `data_size`/`codimension` above).
     test_quality_gates(RANSACScoringDoneRight; jet_bound = 8,
-                       treat_as_own = [VgtkCore.RansacScoring, VgtkCore.MsacScoring],
-                       qualified_ignore = (:copyto!, :maxthreadid))
+                       treat_as_own = [VgtkCore.RansacScoring, VgtkCore.MsacScoring, VgtkEstimation.SimFitPP],
+                       qualified_ignore = (:maxthreadid,))
 end

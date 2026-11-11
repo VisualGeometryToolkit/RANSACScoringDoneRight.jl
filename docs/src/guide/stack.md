@@ -6,7 +6,7 @@ CurrentModule = RANSACScoringDoneRight
 
 This page is for people who change this package or the packages around it. It
 lists the VisualGeometryToolkitCore contracts the package implements, how the
-GPU grid evaluators and the SIMFIT++ port are organised, the vocabulary the
+GPU grid evaluators and the SIMFIT++ grid are organised, the vocabulary the
 package adds to the stack's, and how the repository is laid out. The
 [Overview](../overview.md) explains the same pieces from a user's point of view.
 
@@ -32,7 +32,7 @@ The pool-selection contract lives in VisualGeometryToolkitCore's
 `:rsdr` staging through `selection_staging` and `stage_selection`, and
 implements `select_on_grid!` over its device kernels. The families are the
 marginal, the width-free loss-width families, [`LossSpec`](@ref),
-`ScaleMarginal` and [`SimFitPP`](@ref). VisualGeometryToolkitCore's
+`ScaleMarginal` and VisualGeometryToolkitEstimation's `SimFitPP`. VisualGeometryToolkitCore's
 `best_pool_model(scoring, pair, R)` serves any scorer at its width; this
 package's loss-width families take it at a loss width,
 `with_width(F(dg), LossWidth(w))`, through their `score!`.
@@ -90,30 +90,15 @@ also runs on CUDA with `--cuda`. Each grid evaluator frees its function-local
 device buffers eagerly through `GPUArrays.unsafe_free!` instead of waiting for
 Julia's garbage collector.
 
-## The SIMFIT++ port
+## SIMFIT++
 
-`src/simfitpp.jl` ports Edstedt's SIMFIT++ (CVPRW 2025,
-[Parskatt/simfitpp](https://github.com/Parskatt/simfitpp)) step for step. The
-reference calls the loss width its threshold.
-
-- [`unbiased_median_variance`](@ref) is the reference's `UnbiasedMed`. It takes
-  the median of the squared residuals below the current loss width and removes
-  the bias of the truncation with the χ² fixed-point quantile iteration. It
-  returns σ², hence the name.
-- [`simfitpp_loss_width`](@ref) is `SIMFITPP.__call__`. It splits the data at
-  random into a train and a validation part and estimates the geometry on the
-  train part at the current loss width. The held-out residuals give a variance
-  and from it a loss width `sqrt(ppf(alpha)·σ²)`. The loop then applies the
-  bounds, keeps a running mean and stops on `ftol` or a repeat. A final bounds
-  check and a cross-pair filter in log space follow.
-- The geometry estimator is a pair of callbacks, so the loop runs on a full
-  RANSAC (as in the reference) or on a hypothesis pool.
-  [`simfitpp_select`](@ref)`(pair, initial_loss_width_px)` uses the MSAC-best
-  pool hypothesis on the train part as the estimator. It returns the MSAC-best
-  hypothesis over all points at the estimated loss width.
-- [`SimFitPP`](@ref) holds the reference defaults: `alpha = 0.99`,
-  `max_iter = 4`, `ftol = 0.01`, `train_fraction = 0.5`,
-  `min_loss_width = 0.25`, `max_loss_width = 8` and `dg = 1`.
+SIMFIT++ (Edstedt, CVPRW 2025, [Parskatt/simfitpp](https://github.com/Parskatt/simfitpp))
+is VisualGeometryToolkitEstimation's: its step-for-step port, `SimFitPP`, `simfitpp_loss_width`,
+`simfitpp_select`, `unbiased_median_variance` and `with_residual_unit`, moved
+there from this package on 2026-11-11 ([`SimFitPP`](@extref VisualGeometryToolkitEstimation.SimFitPP)).
+This package gives `SimFitPP` a grid on the pool-selection contract: for every
+initial loss width of the grid, `simfitpp_select` re-estimates the loss width on
+the pool and selects the MSAC-best hypothesis at the estimate.
 
 The reference's bounds, 0.25 and 8, are pixel constants. A pool stores its
 data in `NormalizedImageFrame` (image centre, half diagonal), and no single
@@ -121,7 +106,7 @@ scalar relates the two frames point by point. VisualGeometryToolkitCore's `Pools
 is the image-plane Sampson residual of the pool's models in pixels. It is
 computed from the light record and never reads the stored residual matrix, so
 it does not depend on that matrix's residual kind (tangent Sampson for E
-pools). The pair method of `simfitpp_select` runs on it, so
+pools). The pair method of Estimation's `simfitpp_select` runs on it, so
 `initial_loss_width_px`, the bounds and the returned loss width are all in
 pixels. To work in the pool frame's unit instead, call the matrix method on the
 pair's residual matrix with bounds in that unit.
@@ -132,7 +117,7 @@ frame; SIMFIT++'s grid uses it for its initial guess only.
 ## Scoring and tuning vocabulary
 
 This package holds the vocabulary and the per-pair machinery. That is the
-scoring families' tag registry ([`SCORING_TAGS`](@ref)), the `score!` of its
+scoring families' tag registry ([`ALL_SCORING_TAGS`](@ref)), the `score!` of its
 loss-width families at a loss width (which VisualGeometryToolkitCore's
 `best_pool_model` and VisualGeometryToolkitEval's sample-budget engine select
 with), [`precompute_pair`](@ref) and the KernelAbstractions grids above. A
@@ -182,7 +167,7 @@ A name for a squared quantity says so (`unbiased_median_variance`, `s_hat_sq`,
 
 ```
 src/                   the package: the sort-and-sweep marginal scorer, the grid
-                       evaluators (KernelAbstractions), the baseline families, SIMFIT++
+                       evaluators (KernelAbstractions), the baseline families, SIMFIT++'s grid
 test/                  the package's tests (ReTestItems)
 docs/                  the documentation site (Documenter)
 neurips2026/           the research project (DrWatson layout, devs this package):
@@ -220,6 +205,6 @@ git config core.hooksPath .githooks
 ```
 
 The package's tests use ReTestItems, one item per `test/*_tests.jl` file.
-`Pkg.test(; test_args = ["simfitpp"])` runs the items whose name matches. The
+`Pkg.test(; test_args = ["select_on_grid"])` runs the items whose name matches. The
 research project's suite is separate:
 `cd neurips2026 && julia --project=. test/runtests.jl`.

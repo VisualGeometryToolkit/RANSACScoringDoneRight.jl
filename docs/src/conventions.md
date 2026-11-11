@@ -44,7 +44,7 @@ What the rule then demands of this package:
   are scaled independently, so no scalar relates the frames per point. SIMFIT++
   uses it for a soft initial guess only, never for anything a bound gates.
 
-[`simfitpp_select`](@ref) on a pool record is the deliberate exception to the
+[`simfitpp_select`](@extref VisualGeometryToolkitEstimation.simfitpp_select) on a pool record is the deliberate exception to the
 exception: it is pixels in, pixels out, running on `pixel_residuals` so that
 SIMFIT++'s published pixel bounds (0.25–8 px) mean what they say.
 

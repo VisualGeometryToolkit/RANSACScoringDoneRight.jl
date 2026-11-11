@@ -6,9 +6,11 @@ RANSACScoringDoneRight: scale-free marginal RANSAC scoring, as an
 implementation of VisualGeometryToolkitCore's contracts — the scoring contract
 (`StudentTUniformScoring`, the sort-and-sweep marginal score) and the
 pool-selection contract (`select_on_grid!` over its CPU/GPU grid families:
-the marginal, the loss-width baselines, `LossSpec`, `ScaleMarginal`,
-SIMFIT++). It depends only on VisualGeometryToolkitCore (never on
-VisualGeometryToolkitEstimation, LocalOptimizationDoneRight or VisualGeometryToolkitEval).
+the marginal, the loss-width baselines, `LossSpec`, `ScaleMarginal`, and the
+grid of VisualGeometryToolkitEstimation's SIMFIT++). It depends on
+VisualGeometryToolkitCore and on VisualGeometryToolkitEstimation for SIMFIT++
+alone (`SimFitPP`, `simfitpp_select`; never re-exported), never on
+LocalOptimizationDoneRight or VisualGeometryToolkitEval.
 Problem-agnostic: problems implement VisualGeometryToolkitCore's
 `AbstractConstraintProblem`, and the Student-t posterior-weighting toolkit,
 the width axes and the MSAC/RANSAC baseline scorers are VisualGeometryToolkitCore's.
@@ -23,7 +25,7 @@ results) never goes in `src/`.
 ## Testing
 
 ReTestItems (`test/*_tests.jl`, one item per file):
-`Pkg.test(; test_args = ["simfitpp"])` filters items by name. Check the reported
+`Pkg.test(; test_args = ["select_on_grid"])` filters items by name. Check the reported
 total: 0 tests means nothing matched. The research project's suite is separate:
 `cd neurips2026 && julia --project=. test/runtests.jl`.
 

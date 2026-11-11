@@ -16,8 +16,8 @@ It sits in a stack of Julia packages:
 | package | role |
 |:---|:---|
 | VisualGeometryToolkitCore | geometric types, `Uncertain`/`whiten`, the robust-loss shapes, the contracts (problem protocol, scoring, local optimization, pool selection), the Student-t posterior toolkit, the MSAC/RANSAC baseline scorers, and the benchmark pool record `PoolPair` |
-| **RANSACScoringDoneRight** | scoring: the marginal score and the paper baselines on the scoring contract, their grid evaluators on the pool-selection contract; depends only on VisualGeometryToolkitCore |
-| VisualGeometryToolkitEstimation | the RANSAC loop, the concrete problems (homography, fundamental and essential matrix, …) and the core local optimizations |
+| **RANSACScoringDoneRight** | scoring: the marginal score and the paper baselines on the scoring contract, their grid evaluators on the pool-selection contract; depends on VisualGeometryToolkitCore, and on VisualGeometryToolkitEstimation for SIMFIT++ |
+| VisualGeometryToolkitEstimation | the RANSAC loop, the concrete problems (homography, fundamental and essential matrix, …), the core local optimizations and SIMFIT++ |
 | LocalOptimizationDoneRight | the state-of-the-art local-optimization strategies |
 | VisualGeometryToolkitEval | pool IO, statistics, tuning (including the scale-prior fits), the evaluation engine, rendering |
 
