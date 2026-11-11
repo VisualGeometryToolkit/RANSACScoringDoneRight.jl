@@ -13,7 +13,7 @@
 #     ranking;
 #   * in every scorer the stored values at the sample indices are ignored.
 
-@testitem "sample_point_rule" setup = [PoolFixtures] begin
+@testitem "sample_point_rule" setup = [PoolFixtures, LineProblems] begin
     using Test, Random, StaticArrays
     import VisualGeometryToolkitCore as VGC
     using RANSACScoringDoneRight
@@ -21,15 +21,8 @@
         score_residuals!, score_sq_residuals!
     using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, IGPrior, RansacScoring, MsacScoring,
         residual_quality, best_pool_model, with_width, LossWidth
-    const _SP = VGC
 
-    # A scalar-constraint problem: rᵢ = xᵢ − 0.6θ₁ − 0.8θ₂.
-    struct _SPProblem <: AbstractConstraintProblem
-        x::Vector{Float64}
-    end
-    _SP.data_size(p::_SPProblem) = length(p.x)
-    VGC.constraint_with_jacobians(p::_SPProblem, θ, i::Int) =
-        (p.x[i] - 0.6 * θ[1] - 0.8 * θ[2], SVector(1.0, 0.0), SVector(-0.6, -0.8))
+    # A scalar-constraint problem: rᵢ = xᵢ − 0.6θ₁ − 0.8θ₂ (LineProblems).
 
     rng = MersenneTwister(71)
     n, m, halfwidth = 60, 4, 6.0
@@ -59,12 +52,12 @@
         s_m = StudentTUniformScoring{Predictive}(m, halfwidth; codimension = 1)
         s_0 = StudentTUniformScoring{Predictive}(0, halfwidth; codimension = 1)
         sws = alloc_scoring_workspace(n, 1, s_m); q = zeros(n)
-        S_m, k_m = score_sq_residuals!(sws, q, s_m, _SPProblem(r), θ, Σ̃, S, n)
+        S_m, k_m = score_sq_residuals!(sws, q, s_m, LineProblem(r), θ, Σ̃, S, n)
         @test all(q[S] .== 0) && all(sws.penalties[S] .== 0)
-        @test score_sq_residuals!(sws, q, s_m, _SPProblem(r_junk), θ, Σ̃, S, n) == (S_m, k_m)
+        @test score_sq_residuals!(sws, q, s_m, LineProblem(r_junk), θ, Σ̃, S, n) == (S_m, k_m)
         nr = n - m
         sws0 = alloc_scoring_workspace(nr, 1, s_0); q0 = zeros(nr)
-        S_0, k_0 = score_sq_residuals!(sws0, q0, s_0, _SPProblem(r[rest]), θ, Σ̃, nothing, nr)
+        S_0, k_0 = score_sq_residuals!(sws0, q0, s_0, LineProblem(r[rest]), θ, Σ̃, nothing, nr)
         @test S_m ≈ S_0 rtol = 1e-10
         @test k_m == k_0 + m
     end

@@ -67,3 +67,33 @@
         return D
     end
 end
+
+# The scalar-constraint problem several items score: g = xᵢ − ⟨(0.6, 0.8), θ⟩
+# over 1-D data, θ ∈ ℝ² (codimension 1, minimal sample 2). `LineProblem` has no
+# solver covariance; `ProviderLineProblem` provides one (`SOLVER_COVARIANCE`),
+# or `nothing` for a `degenerate` sample (the solver Jacobian does not exist).
+@testsetup module LineProblems
+    using StaticArrays
+    import VisualGeometryToolkitCore as VGC
+    using VisualGeometryToolkitCore: AbstractConstraintProblem
+    export AbstractLineProblem, LineProblem, ProviderLineProblem, SOLVER_COVARIANCE
+
+    const SOLVER_COVARIANCE = SMatrix{2,2,Float64,4}(1e-3, 0.0, 0.0, 1e-3)
+
+    abstract type AbstractLineProblem <: AbstractConstraintProblem end
+    struct LineProblem <: AbstractLineProblem
+        x::Vector{Float64}
+    end
+    struct ProviderLineProblem <: AbstractLineProblem
+        x::Vector{Float64}
+        degenerate::Bool
+    end
+    VGC.data_size(p::AbstractLineProblem) = length(p.x)
+    VGC.codimension(::Union{AbstractLineProblem, Type{<:AbstractLineProblem}}) = 1
+    VGC.minimal_sample_size(::Union{AbstractLineProblem, Type{<:AbstractLineProblem}}) = 2
+    VGC.constraint_with_jacobians(p::AbstractLineProblem, θ, i::Int) =
+        (p.x[i] - 0.6 * θ[1] - 0.8 * θ[2], SVector(1.0, 0.0), SVector(-0.6, -0.8))
+    VGC.solver_covariance(p::ProviderLineProblem, _θ, ::AbstractVector{Int}) =
+        p.degenerate ? nothing : SOLVER_COVARIANCE
+    VGC.provides_solver_covariance(::Type{<:ProviderLineProblem}) = true
+end

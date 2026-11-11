@@ -4,23 +4,15 @@
 # write `q[0]`, corrupting the heap into later hangs and crashes far from the
 # cause.
 
-@testitem "sample_index_bounds" setup = [PoolFixtures] begin
+@testitem "sample_index_bounds" setup = [PoolFixtures, LineProblems] begin
     using Test, StaticArrays
     import VisualGeometryToolkitCore as VGC
     using RANSACScoringDoneRight
     using RANSACScoringDoneRight: alloc_scoring_workspace,
         score_residuals!, score_sq_residuals!, precompute_pair
     using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, IGPrior
-    const _SB = VGC
 
-    struct _SBProblem <: AbstractConstraintProblem
-        x::Vector{Float64}
-    end
-    _SB.data_size(p::_SBProblem) = length(p.x)
-    VGC.constraint_with_jacobians(p::_SBProblem, θ, i::Int) =
-        (p.x[i] - 0.6 * θ[1] - 0.8 * θ[2], SVector(1.0, 0.0), SVector(-0.6, -0.8))
-    _SB.solver_covariance(::_SBProblem, _θ, ::AbstractVector{Int}) =
-        SMatrix{2,2,Float64,4}(1e-3, 0.0, 0.0, 1e-3)
+    # the scalar-constraint problem with a solver covariance (LineProblems)
 
     @testset "sample indices are bounds-checked" begin
         n = 8
@@ -34,7 +26,7 @@
 
         sp = StudentTUniformScoring{Predictive}(2, 5.0; codimension = 1)
         swp = alloc_scoring_workspace(n, 1, sp); qp = zeros(n)
-        p = _SBProblem(r); θ = SVector(0.0, 0.0)
+        p = ProviderLineProblem(r, false); θ = SVector(0.0, 0.0)
         @test_throws BoundsError score_sq_residuals!(swp, qp, sp, p, θ, [0, 1], n)
         @test isfinite(first(score_sq_residuals!(swp, qp, sp, p, θ, [1, 2], n)))
     end

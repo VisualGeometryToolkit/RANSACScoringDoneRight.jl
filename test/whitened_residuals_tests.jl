@@ -7,7 +7,7 @@
 # `residual_context`, the rounding scale) is VisualGeometryToolkitCore's and is tested
 # there (constraint_problem_tests.jl).
 
-@testitem "whitened_residuals" begin
+@testitem "whitened_residuals" setup = [LineProblems] begin
     using Test, StaticArrays, LinearAlgebra
     import VisualGeometryToolkitCore as VGC
     using VisualGeometryToolkitCore: AbstractConstraintProblem
@@ -21,8 +21,7 @@
     end
     VGC.data_size(p::_CDProblem) = length(p.cds)
     VGC.constraint_with_jacobians(p::_CDProblem, _model, i::Int) = p.cds[i]
-    VGC.solver_covariance(::_CDProblem, _model, ::AbstractVector{Int}) =
-        SMatrix{2,2,Float64,4}(1e-3, 0.0, 0.0, 1e-3)
+    VGC.solver_covariance(::_CDProblem, _model, ::AbstractVector{Int}) = SOLVER_COVARIANCE
 
     _scalar(g, gx) = (g, SVector{2,Float64}(gx...), SVector(1.0, 2.0))
 

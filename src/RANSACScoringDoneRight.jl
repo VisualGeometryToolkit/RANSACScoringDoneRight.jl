@@ -76,9 +76,9 @@ using VisualGeometryToolkitCore:
 # its residual matrix, and read the record only through these. `pixel_residuals`
 # is the pool's one exit to pixels (the pair's image-plane Sampson residuals).
 using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_imc, pixel_residuals,
-    # the record's residual-matrix contract, the one pool argmax, and the one
+    # the record's residual-matrix contract and the one
     # pixel → pool-frame scale
-    check_residual_matrix, best_model_index, pool_pixel_scale
+    check_residual_matrix, pool_pixel_scale
 # SIMFIT++ is VisualGeometryToolkitEstimation's: its configuration and its pool
 # adapter. This package gives `SimFitPP` a width axis, a tag and a grid on the
 # pool-selection contract (native_widths.jl, selection.jl) and re-exports

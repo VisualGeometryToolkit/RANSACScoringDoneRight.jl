@@ -36,7 +36,7 @@
 # Every device-table upload in this file (and in ig_sweep_ka.jl,
 # loss_width_sweep_ka.jl) is VisualGeometryToolkitCore's `ka_upload(T, backend,
 # host)`: allocate + copy in one step, converted to `T` when it differs. (This
-# package's `_ka_upload` copy is deleted, 2026-11-11.)
+# package's own copy of it is deleted, 2026-11-11.)
 
 # Every kernel here is instantiated through `_ka_kernel(kernel, backend, nd)`
 # (`nd` = the ndrange's dimensionality). On the CPU backend KernelAbstractions'

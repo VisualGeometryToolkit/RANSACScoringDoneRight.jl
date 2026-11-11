@@ -3,32 +3,17 @@
 # back to model-certain scoring, which is how RVG's AbsolutePoseProblem and
 # HandEyeProblem ran "predictive" without it doing anything (until 2026-09-22).
 
-@testitem "predictive_provider" begin
+@testitem "predictive_provider" setup = [LineProblems] begin
     using Test, StaticArrays
     import VisualGeometryToolkitCore as VGC
     using RANSACScoringDoneRight
     using RANSACScoringDoneRight: Predictive, alloc_scoring_workspace, score_sq_residuals!, penalties, sort_key
     using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, scored_model, solver_covariance,
         provides_solver_covariance
-    const _PV = VGC
 
-    # Scalar constraints g = x − ⟨(0.6, 0.8), θ⟩ over 1-D data, θ ∈ ℝ².
-    abstract type _PVBase <: AbstractConstraintProblem end
-    struct _Providerless <: _PVBase
-        x::Vector{Float64}
-    end
-    struct _Provider <: _PVBase
-        x::Vector{Float64}
-        degenerate::Bool      # the solver Jacobian does not exist for this sample
-    end
-    _PV.data_size(p::_PVBase) = length(p.x)
-    _PV.codimension(::Union{_PVBase, Type{<:_PVBase}}) = 1
-    _PV.minimal_sample_size(::Union{_PVBase, Type{<:_PVBase}}) = 2
-    VGC.constraint_with_jacobians(p::_PVBase, θ, i::Int) =
-        (p.x[i] - 0.6 * θ[1] - 0.8 * θ[2], SVector(1.0, 0.0), SVector(-0.6, -0.8))
-    _PV.solver_covariance(p::_Provider, _θ, ::AbstractVector{Int}) =
-        p.degenerate ? nothing : SMatrix{2,2,Float64,4}(1e-3, 0.0, 0.0, 1e-3)
-    _PV.provides_solver_covariance(::Type{<:_Provider}) = true
+    # Scalar constraints g = x − ⟨(0.6, 0.8), θ⟩ over 1-D data, θ ∈ ℝ² (the
+    # LineProblems setup): `LineProblem` provides no solver covariance,
+    # `ProviderLineProblem` does (`nothing` for a degenerate sample).
 
     _message(f) = try f(); "" catch e; e isa ArgumentError ? e.msg : "not an ArgumentError" end
 
@@ -36,27 +21,27 @@
         n = 10
         x = collect(range(0.0, 0.2; length = n)); x[n] = 5.0     # one outlier
         θ = SVector(0.0, 0.0); idx = [1, 2]
-        none = _Providerless(x); prov = _Provider(x, false); degen = _Provider(x, true)
+        none = LineProblem(x); prov = ProviderLineProblem(x, false); degen = ProviderLineProblem(x, true)
 
         @testset "the trait" begin
-            @test provides_solver_covariance(_Providerless) === false
-            @test provides_solver_covariance(_Provider) === true
+            @test provides_solver_covariance(LineProblem) === false
+            @test provides_solver_covariance(ProviderLineProblem) === true
         end
 
         @testset "construction refuses a problem type with no provider" begin
             @test_throws ArgumentError StudentTUniformScoring{Predictive}(none, 5.0)
             @test_throws ArgumentError StudentTUniformScoring{Predictive}(none, 5.0; prior = JeffreysPrior())
-            @test_throws ArgumentError StudentTUniformScoring{Predictive}(_Providerless, 5.0)
+            @test_throws ArgumentError StudentTUniformScoring{Predictive}(LineProblem, 5.0)
             msg = _message(() -> StudentTUniformScoring{Predictive}(none, 5.0))
-            @test occursin("_Providerless provides none", msg)
-            @test occursin("solver_covariance(::_Providerless, model, sample_indices)", msg)
-            @test occursin("provides_solver_covariance(::Type{<:_Providerless}) = true", msg)
-            @test occursin("or score _Providerless model-certain", msg)
+            @test occursin("LineProblem provides none", msg)
+            @test occursin("solver_covariance(::LineProblem, model, sample_indices)", msg)
+            @test occursin("provides_solver_covariance(::Type{<:LineProblem}) = true", msg)
+            @test occursin("or score LineProblem model-certain", msg)
             # the model-certain spec needs no provider; a provider constructs
             @test StudentTUniformScoring(none, 5.0) isa StudentTUniformScoring{Nothing}
-            @test StudentTUniformScoring(_Providerless, 5.0) isa StudentTUniformScoring{Nothing}
+            @test StudentTUniformScoring(LineProblem, 5.0) isa StudentTUniformScoring{Nothing}
             @test StudentTUniformScoring{Predictive}(prov, 5.0) isa StudentTUniformScoring{Predictive}
-            @test StudentTUniformScoring{Predictive}(_Provider, 5.0) isa StudentTUniformScoring{Predictive}
+            @test StudentTUniformScoring{Predictive}(ProviderLineProblem, 5.0) isa StudentTUniformScoring{Predictive}
         end
 
         # The model_dof constructors carry no problem: the fallback method refuses
