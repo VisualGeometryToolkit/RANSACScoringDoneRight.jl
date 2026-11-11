@@ -51,8 +51,8 @@ end
 macros() = (write_numbers(joinpath(OUTDIR, only(ASSETS)),
                           prose_numbers(CFG, [check_prose_number(CFG, e) for e in CFG["numbers"]];
                                         run_key = KEY, commit = string(read_provenance(OUTDIR)["gitcommit"]))); nothing)
-verify() = (verify_assets(OUTDIR, paper_figdir(), ASSETS); nothing)
-deploy() = (deploy_assets(OUTDIR, paper_figdir(), ASSETS; replace_submitted = replace_submitted(CFG)); nothing)
+verify() = verify_paper_assets(OUTDIR, ASSETS)
+deploy() = deploy_paper_assets(OUTDIR, CFG, ASSETS)
 
 function report()
     lines = readlines(TABLE)[2:end]

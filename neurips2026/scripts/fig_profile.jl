@@ -56,8 +56,8 @@ function render()
     return nothing
 end
 
-verify() = (verify_assets(OUTDIR, paper_figdir(), ASSETS); nothing)
-deploy() = (deploy_assets(OUTDIR, paper_figdir(), ASSETS; replace_submitted = replace_submitted(CFG)); nothing)
+verify() = verify_paper_assets(OUTDIR, ASSETS)
+deploy() = deploy_paper_assets(OUTDIR, CFG, ASSETS)
 
 const STAGES = [
     Stage(:render, "the three Profile fragments and the style sheets, keyed by the run key",

@@ -22,6 +22,19 @@ using VisualGeometryToolkitEval.Reproduce: verify_assets, assets_deployed, deplo
 paper_figdir() = projectdir("paper", "figures")
 
 """
+    verify_paper_assets(outdir, assets)
+    deploy_paper_assets(outdir, cfg, assets)
+
+The verify and deploy stages of every driver: `verify_assets` and
+`deploy_assets` of the renders `assets` in `outdir` against paper/figures
+(`paper_figdir()`), the deploy under the config's sign-off
+(`replace_submitted(cfg)`).
+"""
+verify_paper_assets(outdir::AbstractString, assets) = (verify_assets(outdir, paper_figdir(), assets); nothing)
+deploy_paper_assets(outdir::AbstractString, cfg::AbstractDict, assets) =
+    (deploy_assets(outdir, paper_figdir(), assets; replace_submitted = replace_submitted(cfg)); nothing)
+
+"""
     replace_submitted(cfg) -> Bool | Vector{String}
 
 The author's sign-off of a figure config, its [deploy] replace_submitted:
