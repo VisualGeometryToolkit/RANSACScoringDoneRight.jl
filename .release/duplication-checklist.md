@@ -9,7 +9,7 @@ the duplication audit (duplication-audit.md, 2026-11-10) attributes to RSDR, and
 
 - [x] SIMFIT++ copy (src/simfitpp.jl, test/simfitpp_tests.jl, the train-split row sum `_loss_width_sum!`) → VisualGeometryToolkitEstimation's `SimFitPP`/`simfitpp_select` (e8f2f60)
 - [x] test/docs_gates.jl (audit 1, the docs-gate copy) → VisualGeometryToolkitCore's `test_docs` (e8f2f60)
-- [x] `_ka_upload` in src/marg_sweep_ka.jl (audit 17) → VisualGeometryToolkitCore's `ka_upload` (e8f2f60)
+- [x] the private device-upload helper of src/marg_sweep_ka.jl (audit 17; a retired name now) → VisualGeometryToolkitCore's `ka_upload` (e8f2f60)
 - [x] `SCORING_TAGS`, a name VisualGeometryToolkitCore owns (test_duplication `[name]`) → renamed `ALL_SCORING_TAGS`, the merge of Core's `SCORING_TAGS` with this package's families that Core's docstring prescribes (e8f2f60)
 - [x] neurips2026 `prose_macros`, a `\newcommand` writer (audit 11; the paper-project item "its TeX writer → Eval's number-macro writer"; test_duplication `[pattern] tex_macro_writer`) → VisualGeometryToolkitEval's `PaperNumbers`/`add_number!`/`write_numbers` (0f91df8)
 - [x] the suite runs VisualGeometryToolkitCore's `test_duplication` (test/quality_naming_tests.jl) (e8f2f60)
