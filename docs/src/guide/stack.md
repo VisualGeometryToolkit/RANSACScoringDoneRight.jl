@@ -82,8 +82,8 @@ dispatches on the scoring:
 VisualGeometryToolkitCore's `width_axis(scoring)` names the axis a scoring's
 grid is native on (`OutlierHalfwidth` or `LossWidth`), and this package states
 it for its grid families. VisualGeometryToolkitCore's
-`to_native(axis, efficiency_constant, scale; d_g)` maps a scale multiple onto that
-axis, and `native_map(axis; d_g)` is the same map curried.
+`to_native(axis, efficiency_constant, scale; d_g)` maps an efficiency constant
+(a width as a plain multiple of the scale) onto that axis, and `native_map(axis; d_g)` is the same map curried.
 
 The kernels run on `CPU()` or `CUDA.CUDABackend()`. The Float64 device path is
 bit-identical to the CPU reference; `test/gate_marg_mix_ka.jl` checks this and
@@ -154,7 +154,7 @@ On top of that, this package names the following quantities.
 | `outlier_halfwidth` | the half-width of the uniform outlier component |
 | `decision_boundary` | the residual at which the MAP rule flips |
 | `decision_boundary` / `decision_width` | the one map between the two (VisualGeometryToolkitCore's generic, with the mixture's method), so a grid of outlier half-widths is never called a grid of thresholds |
-| `operating_efficiency_constant` | the scale multiple at which a protocol converts (`loss_width = operating_efficiency_constant · ŝ`) |
+| `operating_efficiency_constant` | the efficiency constant at which a protocol converts (`loss_width = operating_efficiency_constant · ŝ`) |
 | `ŝ`, `s_hat_sq` | the scale estimate and its square |
 | `d_g` / `dg` | the constraint codimension |
 | `inlier_prior` / `inlier_posterior` | the scalar mixing proportion π and the per-point `P(inlier \| r)` |
