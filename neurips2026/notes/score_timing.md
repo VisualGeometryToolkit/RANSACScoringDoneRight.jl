@@ -118,5 +118,5 @@ not a median-density sample. Read it as an example of a less dense regime, not a
 claim about the pool's central tendency.
 
 ---
-Source: `neurips2026/scripts/studies/score_timing.jl` via `neurips2026/scripts/slurm/score_timing.sbatch` (job 4841).
+Source: `neurips2026/scripts/studies/score_timing.jl` (job 4841, launched by the Slurm launcher since replaced by the stage graph's `score_timing` stage; protocol: `configs/score_timing.toml`).
 Data: `$VGTK_DATA_ROOT/accv2026/results/score_timing/score_timing_exact_british_museum.jld2` (not committed).

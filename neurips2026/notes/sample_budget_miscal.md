@@ -197,6 +197,7 @@ chosen to separate the methods, not a sweep. The calibrated column is the
 control.
 
 ---
-Source: `neurips2026/scripts/studies/sample_budget_miscal.jl` via
-`neurips2026/scripts/slurm/sample_budget_miscal.sbatch` (job 4900).
-Data: `scoring_budget_miscal.{tsv,jld2}` in the driver's `--out` directory (not committed).
+Source: `neurips2026/scripts/studies/sample_budget_miscal.jl` (job 4900, launched
+by the Slurm launcher since replaced by the stage graph's `sample_budget_miscal`
+stage; its values: `configs/sample_budget_miscal.toml`).
+Data: `scoring_budget_miscal.{tsv,jld2}` in that run's output directory (not committed).

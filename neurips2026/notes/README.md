@@ -10,17 +10,15 @@ and their generators are indexed in `../REPRODUCE.md`.
 | `score_timing.md` | `neurips2026/scripts/studies/score_timing.jl` — per-hypothesis CPU scoring cost | 4839 (reproduced by 4840) |
 
 Each write-up names the driver that produced it and the JLD2 it was read from.
-The JLD2 data itself is not committed (it lands under
-`$VGTK_DATA_ROOT/accv2026/results/score_timing/`), since it is regenerable from
-the committed driver and does not belong in the package.
+The JLD2 data itself is not committed, since it is regenerable from the
+committed driver and does not belong in the package.
 
-Regenerate any of these with the matching `.sbatch` in `../scripts/slurm/`. Those
-launchers carry the exact invocation behind the published numbers; changing
-`--npairs` or `--reps` invalidates cross-row comparisons, because each figure is
-a per-hypothesis minimum over repetitions and rows are only comparable when
-measured in one process.
-
-The data root is VisualGeometryToolkitEval's `data_root()` (`ENV["VGTK_DATA_ROOT"]`,
-else the project's `data/exp_raw`); heavy outputs land under
-`<root>/accv2026/results/<experiment>/`, named after the driver. The `.sbatch`
-launchers are examples: adapt their resource requests to your cluster.
+Regenerate any of these through the paper's stage graph
+(`bash ../scripts/reproduce/reproduce_results_dgx.sh --only=<study>`), which
+runs the driver on its config of record (`../configs/<study>.toml`: the protocol
+of the published numbers and its declared inputs). Changing `npairs` or `reps`
+there invalidates cross-row comparisons, because each figure is a
+per-hypothesis minimum over repetitions and rows are only comparable when
+measured in one process. A run lands in its own keyed directory under
+`results_root()` (`<dataset>/<matcher>/<problem>/<study>/<kind>-<run key>/`);
+the write-ups' JLD2s predate that and stayed where they were written.
