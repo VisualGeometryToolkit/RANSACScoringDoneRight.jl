@@ -1,0 +1,37 @@
+# =============================================================================
+# f32_radix_probe — configuration of record of scripts/studies/f32_radix_probe.jl:
+# the decision probe of the Float32 radix sort (Float64 keys vs Float32 keys vs
+# Float32 keys with Int32 permutations) on real residual distributions. Not a
+# paper asset.
+#
+# The values are the probe's constants of 2026-07-26
+# (accv2026/results/score_timing/f32_radix_probe.jld2): the PT-E-SIFT-4K pool
+# of british_museum (the score-timing pool), the first 20 and the 20 densest
+# pairs, 50 hypotheses per pair, the minimum of 5 repetitions. Output:
+# keyed_cell_dir(cfg, "f32_radix_probe", "sort").
+#
+# DATA TIER (2026-11-12): as configs/score_timing.toml — the 0.9 Pools reader
+# needs [inputs.residuals], which PT-E-SIFT-4K lacks on dgx01.
+# =============================================================================
+
+[experiment]
+dataset = "phototourism"
+matcher = "sift"
+problem = "E"
+
+[probe]
+npairs = 20                  # pairs per density regime ("typical": the first; "dense": the most points)
+hypotheses_per_pair = 50     # residual vectors taken per pair
+reps = 5                     # the minimum over repetitions is reported
+threads = 1                  # the sort is timed single-threaded
+
+[inputs.pool]
+tier = "accv2026_pools"
+path = "accv2026/data/PT-E-SIFT-4K/british_museum.jld2"
+sha256 = "1675bec8c00328da203f3977d3d281be28014776d7b897dc0fd702cca0e4dda4"
+provenance = "accv2026 (LocalOptimizationDoneRight) PT-E-SIFT-4K scoring pool, scene british_museum (98.7 GB, rewritten 2026-09-07; no provenance record beside the pool): the pool the 2026-07-26 probe read"
+
+[inputs.residuals]
+tier = "accv2026_pools"
+path = "accv2026/data/PT-E-SIFT-4K/british_museum.residuals.jld2"
+provenance = "the residual matrices of [inputs.pool] that the 0.9 Pools reader needs; NOT PRESENT on dgx01 (configs/score_timing.toml)"

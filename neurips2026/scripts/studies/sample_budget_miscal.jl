@@ -47,42 +47,51 @@
 #   repeated draw repeats them, so the boundaries are VisualGeometryToolkitEval's
 #   `sample_starts` (the one reconstruction, certified against the pool's
 #   `total_samples` stamp); a pool the record cannot certify (PT-E-SIFT-4K_pf3:
-#   duplicated E roots) reads the replay-derived starts of `--pool-samples`
+#   duplicated E roots) reads the replay-derived starts of its [inputs.pool_samples]
 #   (accv2026 scripts/tools/derive_pool_samples.jl).
 #
-# USAGE
-#   julia --project=neurips2026 -t auto neurips2026/scripts/studies/sample_budget_miscal.jl \
-#       --pool=$VGTK_DATA_ROOT/accv2026/data/PT-E-SIFT-4K_pf3 \
-#       --ranges=$VGTK_DATA_ROOT/accv2026/data/PT-E-SIFT-4K_pf3/coarse_ranges_hierarchical.jld2 \
-#       [--pool-samples=<dir of <scene>.samples.jld2>] \
-#       --out=$VGTK_DATA_ROOT/accv2026/results/sample_budget_miscal \
-#       --splits=<VisualGeometryToolkitEval>/configs/splits.toml --split=phototourism \
-#       [--zetas=1,32] [--criterion=median] \
-#       [--budgets=100,500,1000,...,4000]   # MINIMAL SAMPLES
-#       [--max-pairs=N]                     # smoke: first N pairs per scene
+# CONFIG OF RECORD: configs/sample_budget_miscal.toml ([sweep]: the split,
+#   criterion, ζ, budgets, smoke cap; [inputs]: the pool directory, the CV
+#   sidecar and, for a pool whose record does not certify its sample
+#   boundaries, the replay-derived starts `pool_samples`). Each scene is the
+#   light pool `<scene>.jld2` plus its residuals `<scene>.residuals.jld2`,
+#   read with VisualGeometryToolkitEval.Pools. The scenes are the TEST side of
+#   the registered split [sweep] split (Tuning's `registered_split`, the stack's
+#   one scene-split registry): the validation side tuned the natives consumed
+#   here, so reading budget curves off it would be tuning on the test set.
 #
-#   Each scene is the light pool `<scene>.jld2` plus its residuals
-#   `<scene>.residuals.jld2`, read with VisualGeometryToolkitEval.Pools.
+# reproduce: reads configs/sample_budget_miscal.toml
 #
-#   The scenes are the TEST side of the registered split `--split` of the
-#   stack's one scene-split registry (`--splits`, VisualGeometryToolkitEval
-#   configs/splits.toml): the validation side tuned the natives consumed here,
-#   so reading budget curves off it would be tuning on the test set.
+# STAGES
+#   sweep  every (scorer, ζ) curve over the budgets, aggregated over the test
+#          scenes → <results>/phototourism/sift/E/sample_budget_miscal/curves-<run key>/
+#          scoring_budget_miscal.{tsv,jld2}
+#
+#   julia -t auto --project=. scripts/studies/sample_budget_miscal.jl [--plan] [--stage=NAME] [--force]
 # =============================================================================
 
-using JLD2, Printf, Statistics, TOML
+using DrWatson
+@quickactivate "NeurIPS2026"
+include(srcdir("NeurIPS2026.jl"))
+using Printf, Statistics
 using RANSACScoringDoneRight
 using RANSACScoringDoneRight: ALL_SCORING_TAGS
 using VisualGeometryToolkitCore: width_axis, JeffreysPrior, FlatLabelPrior, StudentTUniformScoring, retired_tags
 using VisualGeometryToolkitCore.Pools: PoolPair, num_models
 using VisualGeometryToolkitCore.Synthetic: mean_average_accuracy
-using VisualGeometryToolkitEval: cli_option
+using VisualGeometryToolkitEval.Experiments: keyed_cell_dir
 using VisualGeometryToolkitEval.Stats: maa_threshold
 using VisualGeometryToolkitEval.Pools: scene_loaders, residual_matrix, sample_starts
-using VisualGeometryToolkitEval.Tuning: corrupt_native
+using VisualGeometryToolkitEval.Tuning: corrupt_native, registered_split
 using VisualGeometryToolkitEval.Evaluation: SampleBudgetConfig, SampleBudgetMethodSpec, LossWidthSpec,
     evaluate_sample_budget
 using VisualGeometryToolkitEstimation: EssentialProblem
+
+const CFG_PATH = projectdir("configs", "sample_budget_miscal.toml")
+const CFG = TOML.parsefile(CFG_PATH)
+const KEY = run_key(CFG)
+const OUTDIR = keyed_cell_dir(CFG, "sample_budget_miscal", "curves")
+const RESULT = "scoring_budget_miscal.jld2"
 
 # -----------------------------------------------------------------------------
 # Scorer roster — the CV sidecar's method keys (without the `_<criterion>`
@@ -188,34 +197,25 @@ end
 # -----------------------------------------------------------------------------
 # Driver
 # -----------------------------------------------------------------------------
-function main(args = ARGS)
-    pool_dir  = cli_option(args, "pool")
-    ranges    = cli_option(args, "ranges")
-    outdir    = cli_option(args, "out")
-    criterion = cli_option(args, "criterion", "median")
-    ζs        = parse.(Float64, split(cli_option(args, "zetas", "1,32"), ','))
-    # Budget axis in MINIMAL SAMPLES — the unit a RANSAC trial draws.
-    budgets   = parse.(Int, split(cli_option(args, "budgets",
-                       "100,500,1000,1500,2000,2500,3000,3500,4000"), ','))
-    # Smoke runs only: score the first `--max-pairs` pairs of each scene.
-    max_pairs = parse(Int, cli_option(args, "max-pairs", "0"))
+function sweep()
+    p = CFG["sweep"]
+    criterion = p["criterion"]
+    ζs = Float64.(p["zetas"])
+    budgets = Int.(p["budgets"])          # MINIMAL SAMPLES — the unit a RANSAC trial draws
+    max_pairs = p["max_pairs"]            # smoke runs only: the first `max_pairs` pairs of each scene
+    pool_dir, ranges = input_path(CFG, "pool"), input_path(CFG, "ranges")
     # Replay-derived sample starts (`<scene>.samples.jld2`), for a pool whose
-    # record does not certify its own boundaries; empty = from the record.
-    samples_dir = cli_option(args, "pool-samples", "")
-
-    splits     = cli_option(args, "splits")   # VisualGeometryToolkitEval configs/splits.toml
-    split_name = cli_option(args, "split")    # a [splits.<name>] of --splits
-    scenes = let reg = get(TOML.parsefile(splits), "splits", Dict{String,Any}())
-        haskey(reg, split_name) || error("$splits has no [splits.$split_name] (has: $(sort(collect(keys(reg)))))")
-        sort(String.(reg[split_name]["test_scenes"]))
-    end
+    # record does not certify its own boundaries; none = from the record.
+    samples_dir = haskey(CFG["inputs"], "pool_samples") ? input_path(CFG, "pool_samples") : ""
+    split_name = p["split"]
+    scenes = sort(String.(registered_split(split_name).test_scenes))
 
     nat = load_natives(ranges, criterion)
     @info "tuned natives (criterion=$criterion)" nat
     @info "roster" methods = [k for k in ROSTER if haskey(nat, k)] ζs scenes = length(scenes)
     flush(stderr)
 
-    mkpath(outdir)
+    mkpath(OUTDIR)
     axis_reported = false
     results = Dict{Tuple{Symbol,Float64},Vector{Vector{Float64}}}()  # (method, ζ) -> per-pair curves
 
@@ -277,18 +277,22 @@ function main(args = ARGS)
         end
     end
 
-    tsv = joinpath(outdir, "scoring_budget_miscal.tsv")
+    tsv = joinpath(OUTDIR, "scoring_budget_miscal.tsv")
     write(tsv, join(rows, "\n") * "\n")
-    jld = joinpath(outdir, "scoring_budget_miscal.jld2")
+    jld = joinpath(OUTDIR, RESULT)
     JLD2.jldsave(jld; budgets, budget_unit = "samples", statistic = "model_imc", zetas = ζs, criterion, natives = nat,
                  roster = [String(k) for k in ROSTER if haskey(nat, k)],
-                 aggregate = agg, pool_dir, pool_samples = samples_dir, ranges_path = ranges, splits, split = split_name, scenes,
-                 max_pairs)
+                 aggregate = agg, split = split_name, scenes, max_pairs)
+    write_run_records(OUTDIR, CFG; driver = "studies/sample_budget_miscal.jl", config_source = CFG_PATH, key = KEY,
+                      inputs = filter(!isempty, [pool_dir, ranges, samples_dir]))
     @info "wrote" tsv jld
     flush(stderr)
-    return 0
+    return nothing
 end
 
-if abspath(PROGRAM_FILE) == (@__FILE__)
-    main()
-end
+const STAGES = [
+    Stage(:sweep, "every (scorer, ζ) budget curve over the registered split's test scenes, keyed by the run key",
+          () -> run_complete(OUTDIR; sidecar = RESULT), sweep),
+]
+
+run_stages("sample_budget_miscal", STAGES)

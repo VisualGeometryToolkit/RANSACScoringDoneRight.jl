@@ -1,0 +1,42 @@
+# =============================================================================
+# score_timing — configuration of record of scripts/studies/score_timing.jl:
+# the per-hypothesis CPU scoring cost of the package's scorers (notes/
+# score_timing.md). Not a paper asset (the paper reads none of its output).
+#
+# The values are the protocol of the published table (2026-07-27,
+# accv2026/results/score_timing/score_timing_exact_british_museum.jld2, which
+# the driver's command-line defaults and scripts/slurm/score_timing.sbatch
+# produced): scene british_museum of PT-E-SIFT-4K, 20 pairs per density
+# regime, the minimum of 3 repetitions, single thread. Output: its keyed run
+# directory, keyed_cell_dir(cfg, "score_timing", "timing").
+#
+# DATA TIER (2026-11-12): the table was measured on PT-E-SIFT-4K, whose
+# british_museum has no residuals file; the 0.9 driver reads the light pool
+# AND its `<scene>.residuals.jld2` (VisualGeometryToolkitEval.Pools), so
+# [inputs.residuals] is MISSING on dgx01 (the dry run reports it). Converting
+# that pool (accv2026 scripts/tools/convert_pools_v4.jl, then
+# Pools.migrate_pool) or choosing another pool of record is the author's call.
+# =============================================================================
+
+[experiment]
+dataset = "phototourism"
+matcher = "sift"
+problem = "E"
+
+[timing]
+npairs = 20                  # pairs per density regime ("typical": the first; "dense": the most points)
+reps = 3                     # the minimum over repetitions is reported
+loss_width = 0.00164         # the loss-width families' (RANSAC, MSAC, GaU, MAGSAC++)
+outlier_halfwidth = 0.00164  # the Student-t scorer's: its own parameter, never a loss width or a threshold
+threads = 1                  # BY PROTOCOL: the driver refuses another thread count
+
+[inputs.pool]
+tier = "accv2026_pools"
+path = "accv2026/data/PT-E-SIFT-4K/british_museum.jld2"
+sha256 = "1675bec8c00328da203f3977d3d281be28014776d7b897dc0fd702cca0e4dda4"
+provenance = "accv2026 (LocalOptimizationDoneRight) PT-E-SIFT-4K scoring pool, scene british_museum (98.7 GB, rewritten 2026-09-07; no provenance record beside the pool): the pool the 2026-07-27 table was measured on"
+
+[inputs.residuals]
+tier = "accv2026_pools"
+path = "accv2026/data/PT-E-SIFT-4K/british_museum.residuals.jld2"
+provenance = "the residual matrices of [inputs.pool] that the 0.9 Pools reader needs; NOT PRESENT on dgx01 (see the header: a data-tier decision)"
