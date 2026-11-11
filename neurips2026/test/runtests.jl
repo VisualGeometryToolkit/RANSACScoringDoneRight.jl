@@ -18,3 +18,4 @@ using VisualGeometryToolkitEval.PaperProjects: paper_project_violations
 
 include(joinpath(@__DIR__, "test_paper_project.jl"))
 include(joinpath(@__DIR__, "test_figures.jl"))
+include(joinpath(@__DIR__, "test_studies.jl"))
