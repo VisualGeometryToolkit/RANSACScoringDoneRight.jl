@@ -3,8 +3,12 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 RANSACScoringDoneRight: scale-free marginal RANSAC scoring, as an
-implementation of VisualGeometryToolkitCore's contracts — the scoring contract
-(`StudentTUniformScoring`, the sort-and-sweep marginal score) and the
+implementation of VisualGeometryToolkitCore's contracts. The Student-t + uniform
+marginal scorer itself (`StudentTUniformScoring`, its sort-and-sweep, workspace,
+label priors and supplied half-width) is VisualGeometryToolkitCore's (moved there
+2026-11-11); this package extends it by dispatch — the outlier models that
+estimate the support (on Core's estimated-support hooks) and its grids — and
+implements the scoring contract for its loss-width baselines and the
 pool-selection contract (`select_on_grid!` over its CPU/GPU grid families:
 the marginal, the loss-width baselines, `LossSpec`, `ScaleMarginal`, and the
 grid of VisualGeometryToolkitEstimation's SIMFIT++). It depends on
@@ -12,8 +16,10 @@ VisualGeometryToolkitCore and on VisualGeometryToolkitEstimation for SIMFIT++
 alone (`SimFitPP`, `simfitpp_select`; never re-exported), never on
 LocalOptimizationDoneRight or VisualGeometryToolkitEval.
 Problem-agnostic: problems implement VisualGeometryToolkitCore's
-`AbstractConstraintProblem`, and the Student-t posterior-weighting toolkit,
-the width axes and the MSAC/RANSAC baseline scorers are VisualGeometryToolkitCore's.
+`AbstractConstraintProblem`, and the Student-t scorer, the posterior-weighting
+toolkit, the width axes and the MSAC/RANSAC baseline scorers are
+VisualGeometryToolkitCore's. Its defaults of record are `configs/default.toml`,
+read only through `_config_default`.
 The repository has two halves, like LocalOptimizationDoneRight's: the
 registered package (`src/`, `test/`, `docs/`) and the research project
 `neurips2026/` — the NeurIPS 2026 paper, its figure drivers, configs of record,
