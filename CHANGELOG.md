@@ -19,7 +19,13 @@ neurips2026 also Eval and IO of that stack.
 - **Device launch policy: one work item per workgroup on every backend** (the coordinator's ruling 2026-11-12):
   every grid kernel is launched as VisualGeometryToolkitCore launches its selection kernels, `kernel(backend, (1, 1))`
   (`(1, 1, 1)` for the 3-D ndranges); this package's `_ka_kernel`, which kept a GPU backend's default workgroup, is
-  deleted. CPU: unchanged (it was already one item per workgroup). Results bit for bit; GPU timing: TIMING_PLACEHOLDER
+  deleted. CPU: unchanged (it was already one item per workgroup). Results bit for bit (every selection, CPU and CUDA, before and after).
+  GPU timing on one B200 (128 pairs × 800 points × 48 models, minimum of 7): the Student-t grid 1.54 → 30.6 ms
+  (20× slower), MSAC LogBinned 10.7 → 19.6 ms, MAGSAC++ LogBinned 18.2 → 26.9 ms, the full-data Welsch marginal
+  85.2 → 67.7 ms, the Track-B mixture marginal 90.8 → 62.1 ms; CPU unchanged.
+- **Fixed: `grid_evaluate(::StudentTUniformScoring)` on a GPU backend** threw (a host `Array` was passed to the device
+  kernel as its empty best-k output); it is uploaded to the staging's backend now. With the GPU-first staging default,
+  the Student-t grid did not run on a CUDA machine at all.
 - **GPU-first defaults:** `stage_ig_shared_from_pairs` and the pool-selection staging (`stage_selection`) default to
   VisualGeometryToolkitCore's `default_device()` (the accelerator when one is loaded and functional), no longer a pinned
   `KernelAbstractions.CPU()`. A `backend` supplied explicitly is unchanged.
