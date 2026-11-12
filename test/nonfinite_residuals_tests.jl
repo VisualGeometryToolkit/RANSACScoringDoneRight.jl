@@ -14,8 +14,9 @@
     using Test, Random
     using KernelAbstractions
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: MagsacScoring, MlesacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring, RansacScoring, MsacScoring, stage_ig_shared_from_pairs, Exact, LogBinned, histogram_pm_score_kernel!, _build_score_weight_matrix
-    using VisualGeometryToolkitCore: best_pool_model, with_width, LossWidth, exact_pm_score_kernel!, support_sq_loss_width
+    using RANSACScoringDoneRight: MagsacScoring, MlesacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring, RansacScoring, MsacScoring, stage_ig_shared_from_pairs, LogBinned, histogram_pm_score_kernel!, _build_score_weight_matrix
+    using VisualGeometryToolkitCore: best_pool_model, with_width, LossWidth, exact_pm_score_kernel!, support_sq_loss_width,
+        select_on_grid!, stage_selection
 
     # One pair whose M models share their residuals except that model j has
     # 3(j−1) of its INLIERS replaced by `bad(j)`. Model 1 keeps every inlier, so it
@@ -74,7 +75,7 @@
                        SmoothTLSScoring(), GemanScoring()), S in (Float64, Float32)
                 @test scores(sc, cols_bad, S) == scores(sc, cols_fin, S)
             end
-            # the Exact kernel likewise skips them — every loss-width family
+            # Core's exact kernel likewise skips them — every loss-width family
             kx = exact_pm_score_kernel!(backend)
             function xscores(sc, cols)
                 K, M = length(cols[1]), length(cols)
@@ -90,19 +91,26 @@
             end
         end
 
-        @testset "device histogram, per selection (grid_evaluate)" begin
+        @testset "device histogram, per selection (grid_evaluate; Core's exact selection)" begin
             # End to end through staging: NaN/Inf sort last and are skipped; MAGSAC++
             # gives a far finite residual exactly zero too, so the picks agree, and
-            # model 1 wins at every loss width.
-            for S in (Float64, Float32), agg in (LogBinned(), Exact())
+            # model 1 wins at every loss width — on the LogBinned grid and on Core's
+            # exact selection (`select_on_grid!` on the `:pool` staging) alike.
+            for S in (Float64, Float32)
                 picks = map((pair_nf, pair_far)) do p
                     shared = stage_ig_shared_from_pairs([p[1]], [p[2]]; backend = KernelAbstractions.CPU())
-                    last(grid_evaluate(S, MagsacScoring(), shared, _NF_LOSS_WIDTHS; aggregation = agg,
+                    last(grid_evaluate(S, MagsacScoring(), shared, _NF_LOSS_WIDTHS; aggregation = LogBinned(),
                                        return_idxs = true))
                 end
                 @test picks[1] == picks[2]
                 @test all(==(1), picks[1])
             end
+            xpicks = map((pair_nf, pair_far)) do p
+                st = stage_selection(:pool, [p[1]], [p[2]]; backend = KernelAbstractions.CPU())
+                select_on_grid!(fill(Int32(-1), 1, length(_NF_LOSS_WIDTHS)), Nothing, MagsacScoring(), _NF_LOSS_WIDTHS, st)
+            end
+            @test xpicks[1] == xpicks[2]
+            @test all(==(1), xpicks[1])
         end
     end
 end

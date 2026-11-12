@@ -34,24 +34,28 @@ and narrow validation grids keep the chunk large.
 pair_chunk_budget(M_max::Integer, T::Integer) =
     clamp(fld(6_000_000_000, max(1, M_max) * max(1, T) * 16), 1, 256)
 
+# Each method below reads THIS package's staging (`(; staged, pairs)`); a grid
+# family handed VisualGeometryToolkitCore's `:pool` staging instead selects through
+# Core's generic `select_on_grid!` — for a loss-width family the exact selection
+# (`exact_pm_score_kernel!`), the reference of the LogBinned grid.
 # A device grid is ONE `grid_evaluate` over the staged batch. The mixture
 # marginal of a redescending loss (`LossSpec`) carries neither the minimal
 # sample size nor the codimension, so they are the problem's, and it is
 # evaluated in Float64 (the protocol's precision for the marginal-Welsch sweep);
 # a quadrature marginal sizes its own chunk.
 function select_on_grid!(idxs::AbstractMatrix{Int32}, problem_type::Type, scoring::LossSpec, grid::AbstractVector,
-                         staged; kw...)
+                         staged::NamedTuple{(:staged, :pairs)}; kw...)
     _, i = grid_evaluate(Float64, scoring, staged.staged, grid; model_dof = minimal_sample_size(problem_type),
                          dg = codimension(problem_type), return_idxs = true)
     return copyto!(idxs, i)
 end
-function select_on_grid!(idxs::AbstractMatrix{Int32}, ::Type, scoring::ScaleMarginal, grid::AbstractVector, staged;
-                         kw...)
+function select_on_grid!(idxs::AbstractMatrix{Int32}, ::Type, scoring::ScaleMarginal, grid::AbstractVector,
+                         staged::NamedTuple{(:staged, :pairs)}; kw...)
     _, i = grid_evaluate(scoring, staged.staged, grid; return_idxs = true)
     return copyto!(idxs, i)
 end
 function select_on_grid!(idxs::AbstractMatrix{Int32}, ::Type, scoring::Union{StudentTUniformScoring, _WidthFreeLossWidth},
-                         grid::AbstractVector, staged; kw...)
+                         grid::AbstractVector, staged::NamedTuple{(:staged, :pairs)}; kw...)
     _, i = grid_evaluate(scoring, staged.staged, grid; return_idxs = true,
                          pair_chunk_size = pair_chunk_budget(staged.staged.M_max, length(grid)))
     return copyto!(idxs, i)
@@ -66,8 +70,8 @@ end
 # `pool_pixel_scale`). `rng_of(fingerprint, t)` is the caller's generator
 # per (pair content, column) — `fingerprint = (num_points, num_models,
 # gt_variance)` — so the grid is thread-schedule independent.
-function select_on_grid!(idxs::AbstractMatrix{Int32}, ::Type, cfg::SimFitPP, grid::AbstractVector, staged;
-                         rng_of, kw...)
+function select_on_grid!(idxs::AbstractMatrix{Int32}, ::Type, cfg::SimFitPP, grid::AbstractVector,
+                         staged::NamedTuple{(:staged, :pairs)}; rng_of, kw...)
     pairs = staged.pairs
     T = length(grid)
     Threads.@threads for p in eachindex(pairs)

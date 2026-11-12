@@ -1,8 +1,10 @@
-# The loss-width families' two aggregations, Exact and LogBinned(200 per decade), are two
-# ALGORITHMS over ONE per-residual quality `residual_quality(scoring, d², loss_width)`:
+# The loss-width families' exact selection (VisualGeometryToolkitCore's
+# `exact_pm_score_kernel!`, under its `select_on_grid!` on the `:pool` staging)
+# and this package's LogBinned(200 per decade) grid are two ALGORITHMS over ONE
+# per-residual quality `residual_quality(scoring, d², loss_width)`:
 #
-#   * Exact is the plain sum of the quality over every finite residual — pinned
-#     against a host loop in the same (sorted) order, bit for bit;
+#   * the exact score is the plain sum of the quality over every finite residual —
+#     pinned against a host loop in the same (sorted) order, bit for bit;
 #   * LogBinned evaluates the same quality at log-bin centres, so per residual
 #     it is off by at most the quality's variation across that residual's bin.
 #     Every family's quality is non-increasing in d², so that variation is
@@ -14,8 +16,8 @@
     using Test, Random
     using KernelAbstractions
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: stage_ig_shared_from_pairs, Exact, LogBinned, RansacScoring, MsacScoring, MlesacScoring, MagsacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring, residual_quality, histogram_pm_score_kernel!, _build_score_weight_matrix
-    using VisualGeometryToolkitCore: exact_pm_score_kernel!, support_sq_loss_width
+    using RANSACScoringDoneRight: stage_ig_shared_from_pairs, LogBinned, RansacScoring, MsacScoring, MlesacScoring, MagsacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring, residual_quality, histogram_pm_score_kernel!, _build_score_weight_matrix
+    using VisualGeometryToolkitCore: exact_pm_score_kernel!, support_sq_loss_width, select_on_grid!, stage_selection
 
     const _AGG_FAMILIES = (RansacScoring(), MsacScoring(), MlesacScoring(), MagsacScoring(),
                            WelschCostScoring(), SmoothTLSScoring(), GemanScoring())
@@ -25,7 +27,7 @@
         (identity_pool(D; errors_r = 10 .* rand(rng, M), errors_t = zeros(M)), D)
     end
 
-    @testset "loss-width families: Exact and LogBinned over one quality" begin
+    @testset "loss-width families: Core's exact selection and LogBinned over one quality" begin
         rng = MersenneTwister(17)
         loss_widths = collect(10.0 .^ range(log10(0.3), 1.0; length = 7))
         be = KernelAbstractions.CPU()
@@ -76,8 +78,10 @@
         @testset "per selection (a pool)" begin
             pool = _agg_pool(rng)
             sh = stage_ig_shared_from_pairs(first.(pool), last.(pool); backend = be)
+            st = stage_selection(:pool, first.(pool), last.(pool); backend = be)
             for sc in _AGG_FAMILIES
-                _, jx = grid_evaluate(Float64, sc, sh, loss_widths; aggregation = Exact(), return_idxs = true)
+                # the reference: Core's exact selection (codimension 1, no minimal sample)
+                jx = select_on_grid!(fill(Int32(-1), length(pool), length(loss_widths)), Nothing, sc, loss_widths, st)
                 _, jb = grid_evaluate(Float64, sc, sh, loss_widths; aggregation = LogBinned(), return_idxs = true)
                 _, jb32 = grid_evaluate(sc, sh, loss_widths; return_idxs = true)   # the default: Float32, LogBinned
                 @test count(jx .== jb) / length(jx) >= 0.95

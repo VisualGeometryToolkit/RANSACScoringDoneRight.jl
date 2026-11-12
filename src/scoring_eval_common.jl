@@ -28,7 +28,7 @@
 #
 # VisualGeometryToolkitCore's threshold `score!`: ONE CPU loop over the SAME
 # per-residual quantity the grids evaluate, Σᵢ residual_quality(scoring, dᵢ²,
-# loss_width) — the scalar of the KernelAbstractions Exact/LogBinned kernels
+# loss_width) — the scalar of the KernelAbstractions exact (Core's) and LogBinned kernels
 # (loss_width_sweep_ka.jl), fed exactly as staging (`precompute_pair`) feeds
 # them: d² squared in the residuals' precision, a non-finite square an outlier
 # (quality 0), the model's minimal-sample points exact inliers (d² = 0). It is
@@ -76,7 +76,7 @@ const _SOFTPLUS_HALF = log1pexp(0.5)      # MLESAC's quality normaliser (loss_wi
 #  loop for the loss costs (`_fill_grid_exact!`), and the container accessors
 #  `_resid_mat`/`_npts`. Every grid is a KernelAbstractions evaluator now, CPU()
 #  or GPU, all methods of the one verb `grid_evaluate`, dispatched on the
-#  scoring: the loss-width families (Exact or LogBinned), the marginal, the
+#  scoring: the loss-width families (LogBinned), the marginal, the
 #  scale marginals and the mixture marginal.)
 
 # (`_maa` — mean average accuracy as the area under the sorted accuracy curve —

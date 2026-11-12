@@ -47,7 +47,7 @@
 
     # =============================================================================
     # The loss-width families' per-residual quality (`residual_quality`, the ONE scalar both the
-    # Exact and the LogBinned aggregation evaluate) comes from VisualGeometryToolkitCore's
+    # exact selection (Core's) and the LogBinned aggregation evaluate) comes from VisualGeometryToolkitCore's
     # rho instead of hand-written closed forms. Pin BOTH the agreement and the
     # assumption it rests on.
     # =============================================================================

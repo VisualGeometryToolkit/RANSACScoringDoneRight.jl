@@ -69,9 +69,10 @@ dispatches on the scoring:
   evaluates the loss-width baselines. These are RANSAC, MSAC, GaU (MLESAC) and
   MAGSAC++, plus the Welsch, smooth-TLS and Geman–McClure losses. Each scores
   through one per-residual scalar, `residual_quality(scoring, d², loss_width)`.
-  The `aggregation` is [`Exact`](@ref) (every residual, the reference) or
-  [`LogBinned`](@ref) (`bins_per_decade = 200`, the fast cross-validation path
-  and the default).
+  The `aggregation` is [`LogBinned`](@ref) (`bins_per_decade = 200`, the fast
+  cross-validation path). The exact selection (every residual) is
+  VisualGeometryToolkitCore's `select_on_grid!` on its `:pool` staging
+  (`stage_selection(:pool, pairs, residuals)`).
 - `grid_evaluate(StudentTUniformScoring(problem_type, h; scale_prior, label_prior), staged, outlier_halfwidths)`
   is the IG/Jeffreys marginal sweep. The grid replaces the scoring's own `h`.
 - `grid_evaluate([S,] loss_spec(shape, prior; Δ, …), staged, outlier_halfwidths; model_dof, dg)`

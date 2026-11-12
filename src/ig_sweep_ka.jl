@@ -122,7 +122,7 @@ function grid_evaluate(scoring::StudentTUniformScoring{P}, staged::IGSharedData,
     log_two_outlier_halfwidth_d = ka_upload(Float64, backend,
                                              [log(2.0 * Float64(h)) for h in outlier_halfwidths])
 
-    sweep = _ka_kernel(ig_sweep_kernel!, backend, 3)
+    sweep = ig_sweep_kernel!(backend, (1, 1, 1))
     out = _chunked_argmax_eval(staged, T; cs, return_idxs) do scores_pmt, s, n
         sweep(scores_pmt, staged.sorted_sq_flat, staged.pair_offset,
               staged.K_per_pair, staged.M_per_pair, lg_table_d, log_two_outlier_halfwidth_d,

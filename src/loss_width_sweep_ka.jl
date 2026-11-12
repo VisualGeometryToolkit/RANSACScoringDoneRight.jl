@@ -3,27 +3,22 @@
 #
 # Every loss-width family (RANSAC, MSAC, MLESAC, MAGSAC++, and the Welsch /
 # smooth-TLS / Geman-McClure losses) has ONE per-residual quality
-# `residual_quality(scoring, d², loss_width)`, and two ALGORITHMS aggregate it per
-# (pair, model, loss width), chosen explicitly:
-#
-#   Exact()               every residual through the quality — the reference
-#                         (final evaluation, per-pair selection);
-#                         `exact_pm_score_kernel!`.
-#   LogBinned(per_decade) residuals histogrammed on a log-d² grid, the SAME
-#                         quality evaluated at bin centres — the fast
-#                         cross-validation path; `histogram_pm_score_kernel!`.
-#
-# Each is written ONCE and serves both backends; the model argmax and error
-# gather are the shared `argmax_models_kernel!` / `_chunked_argmax_eval`
-# (marg_sweep_ka.jl). Reads `IGSharedData.sorted_sq_flat` (per-model squared
-# residuals, sorted ascending, in the pool's precision).
+# `residual_quality(scoring, d², loss_width)`. Its grid here is the LOG-BINNED
+# aggregation, `LogBinned(per_decade)`: residuals histogrammed on a log-d² grid,
+# the SAME quality evaluated at bin centres — the fast cross-validation path,
+# `histogram_pm_score_kernel!`. The EXACT selection (every residual through the
+# quality) is VisualGeometryToolkitCore's: `select_on_grid!` on the `:pool`
+# staging, `exact_pm_score_kernel!` + `argmax_models_kernel!` (this package's
+# second launcher of those kernels, the `Exact` aggregation, is deleted,
+# 2026-11-12). The model argmax and error gather are the shared
+# `argmax_models_kernel!` / `_chunked_argmax_eval` (marg_sweep_ka.jl). Reads
+# `IGSharedData.sorted_sq_flat` (per-model squared residuals, sorted ascending,
+# in the pool's precision).
 #
 # Usage:
 #   staged = stage_ig_shared_from_pairs(pairs, residuals; backend)
 #   errs = grid_evaluate(loss_width_scoring("magsac", codimension(PT)),
 #                        staged, loss_widths)                       # Float32, LogBinned(200)
-#   errs = grid_evaluate(Float64, loss_width_scoring("msac", dg), staged,
-#                        loss_widths; aggregation = Exact())
 
 # (`_ka_softplus` lived here, byte-identical to `_softplus` in
 # scoring_eval_common.jl. The `_ka_` prefix implied a device constraint there is
@@ -32,26 +27,8 @@
 # `_SOFTPLUS_HALF`.)
 
 # =============================================================================
-# Aggregation — how a family's per-residual quality is summed per model
+# LogBinned — the loss-width grid's aggregation of a family's per-residual quality
 # =============================================================================
-
-"""
-    Aggregation
-
-How a loss-width family's per-residual quality is summed over a model's residuals:
-[`Exact`](@ref) or [`LogBinned`](@ref). Both evaluate the SAME scalar quality;
-only the aggregation differs.
-"""
-abstract type Aggregation end
-
-"""
-    Exact()
-
-Every residual through the family's scalar quality — the reference. The
-quality is evaluated in Float64 whatever the kernel precision `S` of
-[`grid_evaluate`](@ref).
-"""
-struct Exact <: Aggregation end
 
 """
     LogBinned(bins_per_decade = 200)
@@ -61,15 +38,14 @@ The grid has `bins_per_decade` bins per decade, spanning 0.01·min_loss_width² 
 100·max_loss_width², and the family's quality is evaluated at the bin centres. Out-of-range and non-finite
 residuals score as outliers.
 """
-struct LogBinned <: Aggregation
+struct LogBinned
     bins_per_decade::Int
 end
 LogBinned() = LogBinned(200)
 
-# --- Exact: VisualGeometryToolkitCore's `exact_pm_score_kernel!` (per (pair, model): every residual
-# through the family's `residual_quality`, at every loss width, in Float64; it stops at
-# `support_sq_loss_width` on the sorted residuals). Moved there with `argmax_models_kernel!`
-# (2026-11-11, the twin audit's V1), so Core's `select_on_grid!` runs the same selection on the CPU.
+# (The exact selection is VisualGeometryToolkitCore's `exact_pm_score_kernel!` under its
+# `select_on_grid!` on the `:pool` staging: per (pair, model) every residual through the
+# family's `residual_quality`, at every loss width, in Float64.)
 
 # =============================================================================
 # Histogram-based score kernel (Shekhovtsov ScoreWeightsGU pattern)
@@ -90,8 +66,8 @@ LogBinned() = LogBinned(200)
 # what our 5-decade log probe grid needs — linear bins squashed small-loss-width
 # signal into bin 0 and broke argmax.
 #
-# This is the `LogBinned` aggregation of every loss-width family; `Exact` is
-# VisualGeometryToolkitCore's `exact_pm_score_kernel!`.
+# This is the `LogBinned` aggregation of every loss-width family; the exact
+# selection is VisualGeometryToolkitCore's `exact_pm_score_kernel!`.
 
 # --- Kernel 1: per (pair, model) thread, LOG-spaced bins ---
 # Bin a residual d² ∈ (d²_min, d²_max] into N_bins log-spaced bins:
@@ -136,7 +112,7 @@ LogBinned() = LogBinned(200)
             # A NaN or +Inf residual is an OUTLIER. Every histogram family scores
             # an outlier at quality 0 (MAGSAC++ and smooth-TLS exactly, beyond
             # loss_width; MLESAC and Welsch/Geman in the limit), so skipping it adds
-            # exactly that — as the Exact kernel and the per-pair
+            # exactly that — as Core's exact kernel and the per-pair
             # `best_pool_model` do (and the deleted host histogram,
             # `bin_residuals_stereo`, did). It used to fall through: NaN
             # failed `d2 > 0` and took bin 1, the PERFECT-inlier weight, and +Inf
@@ -401,7 +377,7 @@ loss_width_scoring(tag::AbstractString, ::Type{P}) where {P <: AbstractConstrain
 
 # =============================================================================
 # The per-residual QUALITY — one scalar per family, of the SQUARED residual d²
-# and the loss width. Both aggregations call it: Exact at every residual,
+# and the loss width. Core's exact kernel calls it at every residual,
 # LogBinned at the bin centres. Plain Float64 functions, callable inside a
 # kernel (MAGSAC++'s incomplete gammas included).
 # =============================================================================
@@ -465,7 +441,7 @@ const _MAGSAC_Q_CUT  = gamma_inc(_MAGSAC_ORD_UP, _MAGSAC_SCALE_MULTIPLE^2/2)[2]
 end
 
 # Compact support: the quality is exactly 0 from loss_width on, so on sorted residuals
-# nothing past max_loss_width² scores (the Exact kernel stops there). MLESAC and the
+# nothing past max_loss_width² scores (Core's exact kernel stops there). MLESAC and the
 # Welsch / Geman-McClure costs reach 0 only asymptotically.
 # (VisualGeometryToolkitCore's `support_sq_loss_width`, whose default is Inf and which states RANSAC's and MSAC's.)
 VgtkCore.support_sq_loss_width(::Union{MagsacScoring, SmoothTLSScoring}, max_loss_width::Float64) = max_loss_width * max_loss_width
@@ -479,7 +455,7 @@ VgtkCore.has_residual_quality(::Union{MlesacScoring, MagsacScoring, WelschCostSc
 
 Precompute `W[bin, t] = residual_quality(scoring, d²_bin, loss_width_t)` on the host at the bin
 centres of a log-spaced grid. The centres are `d²_bin = d²_min · (d²_max/d²_min)^((bin-0.5)/N_bins)`,
-and `W` holds the SAME scalar quality the Exact kernel evaluates per residual. Returned
+and `W` holds the SAME scalar quality Core's exact kernel evaluates per residual. Returned
 column-major so the kernel can index `W[bin + (t-1)·N_bins]`.
 """
 function _build_score_weight_matrix(scoring::LossWidthScoring,
@@ -516,18 +492,18 @@ of the error (imc) of the model `scoring` selects at each loss width in `loss_wi
 (`NormalizedImageFrame` units; with `return_idxs`, also the selected pool
 indices). Runs on the staged data's backend — KernelAbstractions `CPU()` or a GPU.
 
-`aggregation` chooses the algorithm: [`LogBinned`](@ref) (default, 200 bins
-per decade; the fast cross-validation path) or [`Exact`](@ref) (every residual;
-the reference). Both evaluate the family's one per-residual quality. `S` is the
-LogBinned kernel's bin-index precision (Float32, the default, is the production
-setting); Exact evaluates in Float64. Scores accumulate in Float64 either way.
+`aggregation` is the [`LogBinned`](@ref) aggregation (default 200 bins per
+decade; the fast cross-validation path) of the family's one per-residual quality.
+The exact selection (every residual) is VisualGeometryToolkitCore's
+`select_on_grid!` on the `:pool` staging. `S` is the bin-index precision
+(Float32, the default, is the production setting); scores accumulate in Float64.
 
 `scoring` is a `LossWidthScoring` member — build it with [`loss_width_scoring`](@ref),
 supplying the problem's codimension.
 """
 function grid_evaluate(::Type{S}, scoring::LossWidthScoring, staged::IGSharedData,
                        loss_widths::AbstractVector{<:Real};
-                       aggregation::Aggregation = LogBinned(),
+                       aggregation::LogBinned = LogBinned(),
                        return_idxs::Bool = false,
                        pair_chunk_size::Int = 256) where {S<:AbstractFloat}
     P = length(staged.K_per_pair)
@@ -538,23 +514,6 @@ end
 grid_evaluate(scoring::LossWidthScoring, staged::IGSharedData, loss_widths::AbstractVector{<:Real};
               kwargs...) =
     grid_evaluate(Float32, scoring, staged, loss_widths; kwargs...)
-
-function _grid_evaluate_loss_width(::Exact, ::Type{S}, scoring, shared, loss_widths::Vector{Float64},
-                            cs::Int, return_idxs::Bool) where {S}
-    backend = shared.backend
-    T = length(loss_widths); M_max = Int(shared.M_max)
-    loss_widths_d = ka_upload(Float64, backend, loss_widths)
-    support = support_sq_loss_width(scoring, maximum(loss_widths))
-    k1 = _ka_kernel(exact_pm_score_kernel!, backend, 2)
-    out = _chunked_argmax_eval(shared, T; cs, return_idxs) do scores_pmt, s, n
-        k1(scores_pmt, shared.sorted_sq_flat, shared.pair_offset,
-           shared.K_per_pair, shared.M_per_pair, loss_widths_d, Int32(T), Int32(s),
-           scoring, support; ndrange = (n, M_max))
-        KernelAbstractions.synchronize(backend)
-    end
-    _free_local!(loss_widths_d)
-    return out
-end
 
 # The LOG-binned weight-matrix trick, pair-chunked to keep `scores_pmt` bounded
 # (at M_max≈5500, T=200, a full 20k-pair pool is 179 GiB; a 256-pair chunk ~2.3).
@@ -570,7 +529,7 @@ function _grid_evaluate_loss_width(agg::LogBinned, ::Type{S}, scoring, shared, l
     W_d = ka_upload(Float32, backend, vec(W))
     log_d2_min   = S(log(d2_min))
     inv_log_spacing = S(nbins) / S(log(d2_max / d2_min))
-    k1 = _ka_kernel(histogram_pm_score_kernel!, backend, 2)
+    k1 = histogram_pm_score_kernel!(backend, (1, 1))
     out = _chunked_argmax_eval(shared, T; cs, return_idxs) do scores_pmt, s, n
         k1(scores_pmt, shared.sorted_sq_flat, shared.pair_offset,
            shared.K_per_pair, shared.M_per_pair,

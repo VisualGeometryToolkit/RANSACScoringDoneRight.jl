@@ -1,7 +1,7 @@
 # `best_pool_model` is the per-pair model selection over the quantity the grids
 # evaluate: VisualGeometryToolkitCore's one method, over `score!` of a scorer AT its
 # width. For a loss-width family at a loss width (`with_width(F, LossWidth(w))`)
-# a model's score is the Exact grid's per-model score on one pair (the sum of
+# a model's score is Core's exact kernel's per-model score on one pair (the sum of
 # `residual_quality`, fed as staging feeds it); the Student-t marginal scores by
 # its sweep. The sentinel for "no model" is 0, never a valid index. (The typed
 # pool-scorer handles, and the 4-argument width-free form, are retired.)
@@ -11,10 +11,10 @@
     using Test, Random
     using KernelAbstractions
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: stage_ig_shared_from_pairs, Exact
+    using RANSACScoringDoneRight: stage_ig_shared_from_pairs
     using VisualGeometryToolkitCore: exact_pm_score_kernel!, support_sq_loss_width
     using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, best_pool_model,
-        with_width, LossWidth
+        with_width, LossWidth, select_on_grid!, stage_selection
     import VisualGeometryToolkitCore as VGC
     _at(sc, w) = with_width(sc, LossWidth(w))
 
@@ -42,13 +42,12 @@
         be = KernelAbstractions.CPU()
 
         @testset "the exact kernels are VisualGeometryToolkitCore's (one kernel per job, every backend)" begin
-            @test RANSACScoringDoneRight.exact_pm_score_kernel! === VGC.exact_pm_score_kernel!
             @test RANSACScoringDoneRight.argmax_models_kernel! === VGC.argmax_models_kernel!
             @test all(VGC.has_residual_quality, _BP_FAMILIES)
             @test [support_sq_loss_width(sc, 3.0) for sc in _BP_FAMILIES] == [9.0, 9.0, Inf, 9.0, Inf, 9.0, Inf]
         end
 
-        @testset "loss-width family == the Exact kernel on one pair, per model" begin
+        @testset "loss-width family == Core's exact kernel on one pair, per model" begin
             pair, D = _bp_pair(rng)
             sh = stage_ig_shared_from_pairs([pair], [D]; backend = be)
             M = Int(sh.M_per_pair[1]); T = length(loss_widths)
@@ -65,11 +64,11 @@
             end
         end
 
-        @testset "loss-width family picks what the Exact grid picks" begin
+        @testset "loss-width family picks what Core's exact selection picks" begin
             pool = [_bp_pair(rng) for _ in 1:10]
-            sh = stage_ig_shared_from_pairs(first.(pool), last.(pool); backend = be)
+            st = stage_selection(:pool, first.(pool), last.(pool); backend = be)
             for sc in _BP_FAMILIES
-                _, jx = grid_evaluate(Float64, sc, sh, loss_widths; aggregation = Exact(), return_idxs = true)
+                jx = select_on_grid!(fill(Int32(-1), length(pool), length(loss_widths)), _BPProblem, sc, loss_widths, st)
                 @test [best_pool_model(_at(sc, loss_width), p, D) for (p, D) in pool, loss_width in loss_widths] == jx
             end
         end

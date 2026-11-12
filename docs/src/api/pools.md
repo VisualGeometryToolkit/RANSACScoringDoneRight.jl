@@ -50,8 +50,6 @@ and run on `CPU()` or a CUDA backend.
 IGSharedData
 stage_ig_shared_from_pairs
 grid_evaluate
-Aggregation
-Exact
 LogBinned
 ```
 

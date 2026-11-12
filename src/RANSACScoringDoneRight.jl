@@ -101,7 +101,7 @@ using VisualGeometryToolkitCore: AbstractConstraintProblem,
     IGPrior,
     truncated_log_normaliser,
     RansacScoring, MsacScoring, AbstractThresholdScoring,
-    exact_pm_score_kernel!, argmax_models_kernel!, support_sq_loss_width, sorted_squared_residuals   # the exact grid selection (Core's)
+    argmax_models_kernel!, sorted_squared_residuals   # the grids' model argmax and staging (Core's)
 # The Student-t + uniform marginal scorer and its partition sweep (Core's): this package's grids,
 # outlier models and paper baselines use and extend them.
 using VisualGeometryToolkitCore: StudentTUniformScoring, AbstractLabelPrior, FlatLabelPrior,
@@ -158,8 +158,9 @@ public ALL_SCORING_TAGS
 # `select_on_grid!`).
 export WelschMarginal
 public pair_chunk_budget
-# The two aggregations of the loss-width grid (public; generic names)
-public Aggregation, Exact, LogBinned
+# The loss-width grid's log-binned aggregation (its exact selection is
+# VisualGeometryToolkitCore's `select_on_grid!` on the `:pool` staging)
+public LogBinned
 
 # Track B — inlier/outlier mixture reformulation of redescending losses
 public loss_scale_bounds, LossSpec, loss_spec

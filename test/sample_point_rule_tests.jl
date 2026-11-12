@@ -8,7 +8,7 @@
 #     the n − m remaining points at model_dof = 0 — ν = dg·(k − m) and the
 #     outlier count n − k agree term by term;
 #   * a loss-width family's pool score at a loss width (its `score!`, hence
-#     `best_pool_model`, and the Exact grid) is Σ over the remaining points plus
+#     `best_pool_model`, and Core's exact grid selection) is Σ over the remaining points plus
 #     the model-independent constant m·q(0), so the sample points never change a
 #     ranking;
 #   * in every scorer the stored values at the sample indices are ignored.

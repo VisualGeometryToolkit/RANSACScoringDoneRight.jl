@@ -1,5 +1,5 @@
 # The exact per-pair MAGSAC++ selection, `best_pool_model(MagsacScoring(1; threshold
-# = loss_width), pair, D)` — the sum of `residual_quality` — and the two device aggregations of
+# = loss_width), pair, D)` — the sum of `residual_quality` — and the device selections (Core's exact, this package's LogBinned) of
 # that quality, all pinned against MAGSAC++'s loss ρ written out below from the
 # paper (§2.2), independently of the package's expression. The constants are not
 # pinned: both sides read `_MAGSAC_SCALE_MULTIPLE`, so a change to it moves both. The pair has
@@ -79,9 +79,10 @@
     # (1) is the guard — the scalar against the paper's ρ above.
     # -----------------------------------------------------------------------------
     using KernelAbstractions
-    using RANSACScoringDoneRight: residual_quality, stage_ig_shared_from_pairs, Exact, LogBinned
+    using RANSACScoringDoneRight: residual_quality, stage_ig_shared_from_pairs, LogBinned
+    using VisualGeometryToolkitCore: select_on_grid!, stage_selection
 
-    @testset "MAGSAC++: the paper's quality; Exact and LogBinned agree" begin
+    @testset "MAGSAC++: the paper's quality; Core's exact selection and LogBinned agree" begin
         # (1) Per residual
         for loss_width in (0.3, 1.0, 4.0)
             @test _paper_ρ(loss_width, loss_width) ≈ _paper_ρ_cut(loss_width) rtol = 1e-12   # ρ(κ·σ_max): the two forms meet
@@ -93,7 +94,7 @@
             @test residual_quality(MagsacScoring(), (3 * loss_width)^2, loss_width) == 0.0
         end
 
-        # (2) Per selection, on a pool: LogBinned (200 bins/decade) picks Exact's
+        # (2) Per selection, on a pool: LogBinned (200 bins/decade) picks the exact selection's
         # model. Binning discretises, so a near-tie may split; the bound leaves room
         # for that (240/240 agree at both precisions when written).
         rng = MersenneTwister(1)
@@ -104,8 +105,9 @@
         end
         loss_widths = 10.0 .^ range(log10(0.3), 1.0; length = 12)
         shared = stage_ig_shared_from_pairs(first.(pairs), last.(pairs); backend = KernelAbstractions.CPU())
-        _, exact_pick = grid_evaluate(Float64, MagsacScoring(), shared, loss_widths; aggregation = Exact(),
-                                      return_idxs = true)
+        exact_pick = select_on_grid!(fill(Int32(-1), length(pairs), length(loss_widths)), Nothing, MagsacScoring(),
+                                     loss_widths, stage_selection(:pool, first.(pairs), last.(pairs);
+                                                                  backend = KernelAbstractions.CPU()))
         for S in (Float64, Float32)
             _, binned_pick = grid_evaluate(S, MagsacScoring(), shared, loss_widths; aggregation = LogBinned(),
                                            return_idxs = true)

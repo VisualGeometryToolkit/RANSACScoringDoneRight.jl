@@ -8,6 +8,18 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **Removed: the `Exact` aggregation and the `Aggregation` supertype** (the duplication audit, the coordinator's
+  ruling 2026-11-12). They were this package's second launcher of VisualGeometryToolkitCore's
+  `exact_pm_score_kernel!`/`argmax_models_kernel!`: the exact selection of a loss-width family over a width grid is
+  Core's `select_on_grid!(idxs, P, scoring, grid, stage_selection(:pool, pairs, residuals))`. `grid_evaluate` of a
+  loss-width family takes `aggregation::LogBinned` only (`LogBinned()` the default, unchanged). The names are gone,
+  so `Exact()` and `Aggregation` are `UndefVarError`s naming them. The tests' exact reference is Core's selection;
+  the LogBinned grid is unchanged, bit for bit. `select_on_grid!`'s methods here take this package's staging only
+  (`(; staged, pairs)`), so a grid family handed Core's `:pool` staging reaches Core's generic method.
+- **Device launch policy: one work item per workgroup on every backend** (the coordinator's ruling 2026-11-12):
+  every grid kernel is launched as VisualGeometryToolkitCore launches its selection kernels, `kernel(backend, (1, 1))`
+  (`(1, 1, 1)` for the 3-D ndranges); this package's `_ka_kernel`, which kept a GPU backend's default workgroup, is
+  deleted. CPU: unchanged (it was already one item per workgroup). Results bit for bit; GPU timing: TIMING_PLACEHOLDER
 - **GPU-first defaults:** `stage_ig_shared_from_pairs` and the pool-selection staging (`stage_selection`) default to
   VisualGeometryToolkitCore's `default_device()` (the accelerator when one is loaded and functional), no longer a pinned
   `KernelAbstractions.CPU()`. A `backend` supplied explicitly is unchanged.
