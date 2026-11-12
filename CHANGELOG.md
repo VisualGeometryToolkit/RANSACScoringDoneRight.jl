@@ -121,6 +121,11 @@ neurips2026 also Eval and IO of that stack.
   (`enforce_probe_interior`, `finite_median`, `eligible_maa`; the median now drops an `Inf` error too), and the radix
   probe's Float32 key and UInt32 sort are VisualGeometryToolkitCore's (`radix_key`, `radix_sortperm!`).
 - neurips2026 no longer depends on Statistics or SpecialFunctions (nothing loads them).
+- neurips2026's `scripts/fetch_data.jl` is the one call `fetch_data!(project_catalog())` (VisualGeometryToolkitEval
+  DataArtifacts'; the script's own command line, fetch loop and report are deleted), and the radix probe's Int32-
+  permutation variant runs on VisualGeometryToolkitCore's `RadixPermBuffers{UInt32, Int32}` (its own sort deleted).
+- [compat]: neurips2026 VisualGeometryToolkitEstimation 0.9, VisualGeometryToolkitEval 0.7 (temporary [sources] to the
+  pin vgtk-pin-9c74e264).
 
 ## 0.6.0 (2026-11-09)
 
