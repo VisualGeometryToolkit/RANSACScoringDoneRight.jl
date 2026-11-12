@@ -32,8 +32,8 @@ neurips2026 also Eval and IO of that stack.
   one item per workgroup / now): the Student-t grid 1.54 / 29.9 / 1.31 ms, MSAC LogBinned 10.7 / 19.6 / 6.4 ms,
   MAGSAC++ LogBinned 18.2 / 26.9 / 13.8 ms, the full-data Welsch marginal 85.2 / 67.9 / 28.4 ms, the Track-B mixture
   marginal 90.8 / 62.2 / 17.5 ms. CPU unchanged (0.93–0.98 of before, within noise).
-- **Fixed: `grid_evaluate(::StudentTUniformScoring)` on a GPU backend** threw (a host `Array` was passed to the device
-  kernel as its empty best-k output); it is uploaded to the staging's backend now. With the GPU-first staging default,
+- **Fixed: `grid_evaluate(::StudentTUniformScoring)` on a GPU backend** threw (the device kernel was handed a host `Array`
+  as its empty best-k output); it is uploaded to the staging's backend now. With the GPU-first staging default,
   the Student-t grid did not run on a CUDA machine at all.
 - **GPU-first defaults:** `stage_ig_shared_from_pairs` and the pool-selection staging (`stage_selection`) default to
   VisualGeometryToolkitCore's `default_device()` (the accelerator when one is loaded and functional), no longer a pinned
