@@ -73,17 +73,16 @@
 using DrWatson
 @quickactivate "NeurIPS2026"
 include(srcdir("NeurIPS2026.jl"))
-using Printf, Statistics
+using Printf
 using RANSACScoringDoneRight
 using RANSACScoringDoneRight: ALL_SCORING_TAGS
 using VisualGeometryToolkitCore: width_axis, JeffreysPrior, FlatLabelPrior, StudentTUniformScoring, retired_tags
 using VisualGeometryToolkitCore.Pools: PoolPair, num_models
-using VisualGeometryToolkitCore.Synthetic: mean_average_accuracy
-using VisualGeometryToolkitEval.Stats: maa_threshold
+using VisualGeometryToolkitEval.Stats: finite_median, eligible_maa
 using VisualGeometryToolkitEval.Pools: scene_loaders, residual_matrix, sample_starts
 using VisualGeometryToolkitEval.Tuning: corrupt_native, registered_split
 using VisualGeometryToolkitEval.Evaluation: SampleBudgetConfig, SampleBudgetMethodSpec, LossWidthSpec,
-    evaluate_sample_budget
+    evaluate_sample_budget, enforce_probe_interior
 using VisualGeometryToolkitEstimation: EssentialProblem
 
 const CFG_PATH = projectdir("configs", "sample_budget_miscal.toml")
@@ -136,11 +135,9 @@ function load_natives(ranges_path::AbstractString, criterion::AbstractString)
         haskey(m, key) || continue
         rec = m[key]
         # INTERIOR-ARGMIN GATE — a clipped window means the CV never bracketed
-        # the optimum; consuming it would silently report a boundary value.
-        get(rec, :boundary_hit, false) &&
-            error("$k: CV record $key carries boundary_hit — the window " *
-                  "clipped the optimum. Re-run the probe with an extended window; " *
-                  "do NOT consume a clipped operating point.")
+        # the optimum; consuming it would silently report a boundary value
+        # (VisualGeometryToolkitEval's read-side gate).
+        enforce_probe_interior(rec; context = "$k: CV record $key")
         pn = get(rec, :param_name, :?)
         axis = width_axis(scoring_for(k, EssentialProblem, 1.0))
         width_axis(pn) == axis ||
@@ -267,8 +264,8 @@ function sweep()
     agg = Dict{Tuple{Symbol,Float64},Any}()
     for ((k, ζ), curves) in results
         Mb = length(budgets)
-        med = [median(filter(!isnan, [c[b] for c in curves])) for b in 1:Mb]
-        maa = [mean_average_accuracy([c[b] for c in curves]; max_error = maa_threshold()) for b in 1:Mb]
+        med = [finite_median([c[b] for c in curves]) for b in 1:Mb]
+        maa = [eligible_maa([c[b] for c in curves]) for b in 1:Mb]
         agg[(k, ζ)] = (; median = med, maa10 = maa, n = length(curves))
         for b in 1:Mb
             push!(rows, @sprintf("%s\t%g\t%d\t%.6f\t%.6f\t%d",

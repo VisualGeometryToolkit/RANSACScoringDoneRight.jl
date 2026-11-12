@@ -25,9 +25,10 @@
 # =============================================================================
 using DataFrames: DataFrame
 using Printf: Printf
-# The house palette and its LaTeX colour names, and the summary's
-# per-(method, tuning criterion) bucketing, are VisualGeometryToolkitEval's.
-using VisualGeometryToolkitEval.Render: default_palette, paper_color_name, results_by_method
+# The house palette, its LaTeX colour names and the colour-definition emitter,
+# and the summary's per-(method, tuning criterion) bucketing, are
+# VisualGeometryToolkitEval's.
+using VisualGeometryToolkitEval.Render: default_palette, paper_color_name, color_defs, results_by_method
 
 # ---- house style (plot_val.jl STYLE / _PAPER_COLOR_HEX / PANELS) -----------------
 
@@ -211,9 +212,8 @@ function write_profile_styles(styles_io::IO, shared_io::IO, records, criterion::
     println(io, "% before any panel; main.tex should do the same once globally.")
     println(io)
     println(io, "% --- Colour palette (\\providecolor: paper-side override wins) ---")
-    for (k, hex) in sort(collect(PAPER_COLOR_HEX); by = first)
-        println(io, "\\providecolor{", paper_color_name(k), "}{HTML}{", uppercase(hex), "}")
-    end
+    println(io, color_defs([paper_color_name(k) => uppercase(hex) for (k, hex) in sort(collect(PAPER_COLOR_HEX); by = first)];
+                           command = "providecolor"))
     println(io)
     println(io, "% --- Per-method addplot styles ---")
     for r in records
@@ -336,9 +336,8 @@ function write_sensitivity_styles(styles_io::IO, shared_io::IO, data)
     println(io, "% via `\\pgfplotsset{ours_<m>/.style={...}}` in your preamble.")
     println(io)
     println(io, "% --- Colour palette (\\providecolor: paper-side override wins) ---")
-    for (k, hex) in sort(collect(PAPER_COLOR_HEX); by = first)
-        println(io, "\\providecolor{", paper_color_name(k), "}{HTML}{", uppercase(hex), "}")
-    end
+    println(io, color_defs([paper_color_name(k) => uppercase(hex) for (k, hex) in sort(collect(PAPER_COLOR_HEX); by = first)];
+                           command = "providecolor"))
     println(io)
     println(io, "% --- Per-method addplot styles ---")
     for (k, _, color, mark, dashed) in STYLE
