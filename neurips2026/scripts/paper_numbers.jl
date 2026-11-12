@@ -30,7 +30,7 @@ include(srcdir("NeurIPS2026.jl"))
 const CFG_PATH = projectdir("configs", "paper_numbers.toml")
 const CFG = TOML.parsefile(CFG_PATH)
 const KEY = run_key(CFG)
-const OUTDIR = joinpath(results_root(), "numbers", "paper_numbers-" * KEY)
+const OUTDIR = keyed_cell_dir(CFG, "numbers", "paper_numbers"; base = results_root())   # <results>/numbers/paper_numbers-<KEY>
 const TABLE = joinpath(OUTDIR, "numbers.tsv")
 const ASSETS = [CFG["render"]["macros"]]
 

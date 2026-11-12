@@ -30,8 +30,8 @@ end
             cfg = _cfg("fig_profile")
             crit = cfg["profile"]["criterion"]
             for c in cfg["profile"]["cells"]
-                recs = profile_records(input_table(cfg, c["input"], "profile"), crit)
-                oy, pmb = profile_references(input_table(cfg, c["input"], "profile_oracle"), crit)
+                recs = profile_records(JLD2.load(input_path(cfg, c["input"]), "profile"), crit)
+                oy, pmb = profile_references(JLD2.load(input_path(cfg, c["input"]), "profile_oracle"), crit)
                 txt = _render(io -> write_profile_group(io, recs, c["title"]; oracle_y = oy, per_method_best = pmb, bands = c["bands"]))
                 @test txt == _submitted(c["asset"])
                 if c["key"] == cfg["profile"]["styles_from"]
@@ -46,7 +46,7 @@ end
             cfg = _cfg("fig_sensitivity")
             sens = cfg["sensitivity"]
             for c in sens["cells"]
-                data = results_by_method(input_table(cfg, c["input"], "summary"))
+                data = results_by_method(JLD2.load(input_path(cfg, c["input"]), "summary"))
                 for p in sens["panels"]
                     txt = _render(io -> write_sensitivity_group(io, sensitivity_panel(p), data, sens["tune"], c["title"]))
                     @test txt == _submitted(c["assets"][p])

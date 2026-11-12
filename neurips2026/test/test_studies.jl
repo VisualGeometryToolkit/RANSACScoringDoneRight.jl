@@ -48,3 +48,10 @@ const _STUDIES = [
     end
     @test isempty(readdir(data))          # --plan wrote nothing into the input tree
 end
+
+# The runner bootstrap is VisualGeometryToolkitEval's, generated (Reproduce.write_reproduce_script), never a hand copy.
+using VisualGeometryToolkitEval.Reproduce: reproduce_script
+@testset "scripts/reproduce/reproduce.sh is Eval's generated bootstrap" begin
+    @test read(joinpath(@__DIR__, "..", "scripts", "reproduce", "reproduce.sh"), String) ==
+          reproduce_script(; julia_project = "neurips2026")
+end

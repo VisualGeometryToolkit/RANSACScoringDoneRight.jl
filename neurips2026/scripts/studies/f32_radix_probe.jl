@@ -30,7 +30,6 @@ using RANSACScoringDoneRight
 import VisualGeometryToolkitCore as VgtkCore   # the sweep's radix sort (Core's)
 using Printf
 using VisualGeometryToolkitCore.Pools: num_points
-using VisualGeometryToolkitEval.Experiments: keyed_cell_dir
 using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residual_matrix
 
 const CFG_PATH = projectdir("configs", "f32_radix_probe.toml")

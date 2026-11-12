@@ -13,7 +13,8 @@
 # it or holds the identical bytes, and REFUSES when they differ unless the
 # config's [deploy] replace_submitted signs the difference off (true, or the
 # names of the assets). A submitted asset is never silently replaced. This file
-# holds only where the paper is and how a config's inputs are read.
+# holds only where the paper is. (A config's inputs are read with Eval's
+# `input_path(cfg, id)`: the tier's root, the sha256 checked.)
 # =============================================================================
 using VisualGeometryToolkitEval.Reproduce: verify_assets, assets_deployed, deploy_assets,
     fragment_coordinates, compare_fragments, VERIFY_REPORT
@@ -44,21 +45,3 @@ function replace_submitted(cfg::AbstractDict)
     v = get(get(cfg, "deploy", Dict()), "replace_submitted", false)
     return v isa AbstractVector ? String.(v) : v
 end
-
-"""
-    input_path(cfg, id) -> String
-    input_table(cfg, id, key)
-
-The input `id` of a config of record — its `[inputs.<id>]` table: `path`
-under `data_root()` (installing its ArtifactView `tier` where the root is the
-artifact view), required to exist — and the evaluated table `key` of that
-stored run's `source.jld2`. (Eval gap, reported: Eval has no reader of a
-config's `[inputs.<id>]`, and verifies no `sha256` yet; this is the
-composition of its `data_root` and `require_input`, nothing more.)
-"""
-function input_path(cfg::AbstractDict, id::AbstractString)
-    t = cfg["inputs"][id]
-    return require_input(joinpath(data_root(; tiers = [t["tier"]]), t["path"]);
-        what = "input $id ($(t["tier"]))", provenance = t["provenance"])
-end
-input_table(cfg::AbstractDict, id::AbstractString, key::AbstractString) = JLD2.load(input_path(cfg, id), key)

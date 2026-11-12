@@ -35,7 +35,7 @@ include(srcdir("NeurIPS2026.jl"))
 const CFG_PATH = projectdir("configs", "fig_sensitivity.toml")
 const CFG = TOML.parsefile(CFG_PATH)
 const KEY = run_key(CFG)                       # [render] is excluded
-const OUTDIR = joinpath(results_root(), "figures", "fig_sensitivity-" * KEY)
+const OUTDIR = keyed_cell_dir(CFG, "figures", "fig_sensitivity"; base = results_root())   # <results>/figures/fig_sensitivity-<KEY>
 const SENS = CFG["sensitivity"]
 const CELLS = SENS["cells"]
 const ASSETS = vcat([c["assets"][p] for c in CELLS for p in SENS["panels"]],
@@ -45,7 +45,7 @@ function render()
     mkpath(OUTDIR)
     inputs = String[]
     for c in CELLS
-        data = results_by_method(input_table(CFG, c["input"], "summary"))
+        data = results_by_method(JLD2.load(input_path(CFG, c["input"]), "summary"))
         for p in SENS["panels"]
             open(io -> write_sensitivity_group(io, sensitivity_panel(p), data, SENS["tune"], c["title"]),
                  joinpath(OUTDIR, c["assets"][p]), "w")

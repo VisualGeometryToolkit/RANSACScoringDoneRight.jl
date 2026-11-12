@@ -79,7 +79,6 @@ using RANSACScoringDoneRight: ALL_SCORING_TAGS
 using VisualGeometryToolkitCore: width_axis, JeffreysPrior, FlatLabelPrior, StudentTUniformScoring, retired_tags
 using VisualGeometryToolkitCore.Pools: PoolPair, num_models
 using VisualGeometryToolkitCore.Synthetic: mean_average_accuracy
-using VisualGeometryToolkitEval.Experiments: keyed_cell_dir
 using VisualGeometryToolkitEval.Stats: maa_threshold
 using VisualGeometryToolkitEval.Pools: scene_loaders, residual_matrix, sample_starts
 using VisualGeometryToolkitEval.Tuning: corrupt_native, registered_split
