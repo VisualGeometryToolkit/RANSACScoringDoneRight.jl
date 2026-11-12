@@ -3,14 +3,14 @@
 # configs/default.toml, read through `_config_default` (as LocalOptimizationDoneRight's
 # and VisualGeometryToolkitEstimation's). The lookup is VisualGeometryToolkitCore's
 # `toml_default`, which throws on a missing table or key by design. Parsed at
-# precompile; `include_dependency` makes an edit force a recompile (a Revise
-# session needs a restart to see one). Included FIRST: the constants and keyword
+# precompile by Core's `parse_defaults`, which also records the file as a
+# precompilation dependency, so an edit forces a recompile (a Revise session
+# needs a restart to see one). Included FIRST: the constants and keyword
 # defaults of every later file read it.
 # =============================================================================
 
 "The defaults of record (configs/default.toml)."
 const DEFAULTS_PATH = normpath(joinpath(@__DIR__, "..", "configs", "default.toml"))
-include_dependency(DEFAULTS_PATH)
 const _DEFAULTS_OF_RECORD = parse_defaults(DEFAULTS_PATH)
 
 # RETIRED keys: a key renamed by an owner's ruling is refused, naming its successor, wherever it appears — the
