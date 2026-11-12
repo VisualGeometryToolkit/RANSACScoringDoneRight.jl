@@ -38,14 +38,15 @@
 # host)`: allocate + copy in one step, converted to `T` when it differs. (This
 # package's own copy of it is deleted, 2026-11-11.)
 
-# Every kernel here (and in ig_sweep_ka.jl, loss_width_sweep_ka.jl) is launched
-# at one work item per workgroup, `kernel(backend, (1, 1))`, on every backend:
-# VisualGeometryToolkitCore's launch policy for these (pairs × models [× grid])
-# ndranges (robust/pool_selection.jl). On the CPU backend KernelAbstractions'
-# default workgroup left most threads idle: the full-data marginal kernel took
-# 20.5 ms at the default and 1.9 ms at one item per workgroup (64 pairs × 20
-# models, 32 threads). (This package's own `_ka_kernel`, which kept the GPU's
-# default workgroup, is deleted, 2026-11-12.)
+# Every kernel here (and in ig_sweep_ka.jl, loss_width_sweep_ka.jl) is
+# instantiated through VisualGeometryToolkitCore's one launch policy,
+# `OnBackend(backend; workgroupsize = 1)(kernel)`: one work item per workgroup
+# on the CPU backend, one warp (32 items) per workgroup on a device. On the CPU
+# KernelAbstractions' default workgroup left most threads idle for these
+# (pairs × models [× grid]) ndranges: the full-data marginal kernel took 20.5 ms
+# at the default and 1.9 ms at one item per workgroup (64 pairs × 20 models, 32
+# threads). (This package's own `_ka_kernel`, which kept the backend's choice on a device, is
+# deleted, 2026-11-12.)
 
 # Eager release of FUNCTION-LOCAL device buffers: GPUArrays' `unsafe_free!` hands
 # a buffer's memory back to the device pool now, not whenever the host GC next
@@ -185,7 +186,7 @@ function _chunked_argmax_eval(fill_scores!::F, shared_ka, T::Int;
                                KernelAbstractions.allocate(backend, Int32, 0)
     errs_h = Array{Float64}(undef, P, T)
     idxs_h = return_idxs ? Array{Int32}(undef, P, T) : Array{Int32}(undef, 0, 0)
-    k_amax = argmax_models_kernel!(backend, (1, 1))
+    k_amax = OnBackend(backend; workgroupsize = 1)(argmax_models_kernel!)
     s = 0
     while s < P
         e = min(s + cs, P); n = e - s
@@ -254,7 +255,7 @@ function grid_evaluate(::Type{S}, m::ScaleMarginal, staged::IGSharedData,
     per_pair = M_max * NU * sizeof(S) + M_max * T * 8     # Dscratch + scores
     cs = clamp(Int(fld(mem_budget, max(per_pair, 1))), 1, min(256, P))
     Dscratch = KernelAbstractions.allocate(backend, S, NU, cs * M_max)
-    k_ev = marg_evidence_kernel!(backend, (1, 1))
+    k_ev = OnBackend(backend; workgroupsize = 1)(marg_evidence_kernel!)
     out = _chunked_argmax_eval(staged, T; cs, return_idxs) do scores_pmt, s, n
         k_ev(scores_pmt, staged.sorted_sq_flat, staged.pair_offset,
              staged.K_per_pair, staged.M_per_pair,
@@ -421,8 +422,8 @@ function grid_evaluate(::Type{S}, spec::LossSpec, shared_ka::IGSharedData,
     E_d      = KernelAbstractions.allocate(backend, S, cs, M_max, Kmax)
     Dscratch = KernelAbstractions.allocate(backend, S, NG, cs * M_max)
 
-    k_ev   = marg_mix_evidence_kernel!(backend, (1, 1))
-    k_prof = marg_mix_profile_kernel!(backend, (1, 1, 1))
+    k_ev   = OnBackend(backend; workgroupsize = 1)(marg_mix_evidence_kernel!)
+    k_prof = OnBackend(backend; workgroupsize = 1)(marg_mix_profile_kernel!)
     out = _chunked_argmax_eval(shared_ka, T; cs, return_idxs) do scores_pmt, s, n
         fill!(E_d, S(-Inf))
         k_ev(E_d, shared_ka.sorted_sq_flat, shared_ka.pair_offset,

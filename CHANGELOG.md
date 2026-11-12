@@ -16,13 +16,14 @@ neurips2026 also Eval and IO of that stack.
   so `Exact()` and `Aggregation` are `UndefVarError`s naming them. The tests' exact reference is Core's selection;
   the LogBinned grid is unchanged, bit for bit. `select_on_grid!`'s methods here take this package's staging only
   (`(; staged, pairs)`), so a grid family handed Core's `:pool` staging reaches Core's generic method.
-- **Device launch policy: one work item per workgroup on every backend** (the coordinator's ruling 2026-11-12):
-  every grid kernel is launched as VisualGeometryToolkitCore launches its selection kernels, `kernel(backend, (1, 1))`
-  (`(1, 1, 1)` for the 3-D ndranges); this package's `_ka_kernel`, which kept a GPU backend's default workgroup, is
-  deleted. CPU: unchanged (it was already one item per workgroup). Results bit for bit (every selection, CPU and CUDA, before and after).
-  GPU timing on one B200 (128 pairs × 800 points × 48 models, minimum of 7): the Student-t grid 1.54 → 30.6 ms
-  (20× slower), MSAC LogBinned 10.7 → 19.6 ms, MAGSAC++ LogBinned 18.2 → 26.9 ms, the full-data Welsch marginal
-  85.2 → 67.7 ms, the Track-B mixture marginal 90.8 → 62.1 ms; CPU unchanged.
+- **Device launch policy: VisualGeometryToolkitCore's one launch policy** (the owner's ruling 2026-11-12): every grid
+  kernel is instantiated through `OnBackend(backend; workgroupsize = 1)(kernel)`, one work item per workgroup on the
+  CPU and one warp (32 items) per workgroup on a device; this package's `_ka_kernel` (one item on the CPU, the
+  backend's choice on a device) is deleted. Results bit for bit (every selection, CPU and CUDA, before and after).
+  GPU timing on one B200 (128 pairs × 800 points × 48 models, minimum of 7; the last release's `_ka_kernel` /
+  one item per workgroup / now): the Student-t grid 1.54 / 29.9 / 1.31 ms, MSAC LogBinned 10.7 / 19.6 / 6.4 ms,
+  MAGSAC++ LogBinned 18.2 / 26.9 / 13.8 ms, the full-data Welsch marginal 85.2 / 67.9 / 28.4 ms, the Track-B mixture
+  marginal 90.8 / 62.2 / 17.5 ms. CPU unchanged (0.93–0.98 of before, within noise).
 - **Fixed: `grid_evaluate(::StudentTUniformScoring)` on a GPU backend** threw (a host `Array` was passed to the device
   kernel as its empty best-k output); it is uploaded to the staging's backend now. With the GPU-first staging default,
   the Student-t grid did not run on a CUDA machine at all.

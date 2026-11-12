@@ -125,7 +125,7 @@ function grid_evaluate(scoring::StudentTUniformScoring{P}, staged::IGSharedData,
     # argument): the empty best-k output goes to the backend too.
     no_best_k_d = ka_upload(Int32, backend, _NO_BEST_K)
 
-    sweep = ig_sweep_kernel!(backend, (1, 1, 1))
+    sweep = OnBackend(backend; workgroupsize = 1)(ig_sweep_kernel!)
     out = _chunked_argmax_eval(staged, T; cs, return_idxs) do scores_pmt, s, n
         sweep(scores_pmt, staged.sorted_sq_flat, staged.pair_offset,
               staged.K_per_pair, staged.M_per_pair, lg_table_d, log_two_outlier_halfwidth_d,

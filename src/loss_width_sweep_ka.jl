@@ -529,7 +529,7 @@ function _grid_evaluate_loss_width(agg::LogBinned, ::Type{S}, scoring, shared, l
     W_d = ka_upload(Float32, backend, vec(W))
     log_d2_min   = S(log(d2_min))
     inv_log_spacing = S(nbins) / S(log(d2_max / d2_min))
-    k1 = histogram_pm_score_kernel!(backend, (1, 1))
+    k1 = OnBackend(backend; workgroupsize = 1)(histogram_pm_score_kernel!)
     out = _chunked_argmax_eval(shared, T; cs, return_idxs) do scores_pmt, s, n
         k1(scores_pmt, shared.sorted_sq_flat, shared.pair_offset,
            shared.K_per_pair, shared.M_per_pair,

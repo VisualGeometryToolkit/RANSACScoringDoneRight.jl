@@ -64,6 +64,7 @@ using GPUArrays: GPUArrays
 # The one host → device upload (allocate + copy, converted to the element type)
 # is VisualGeometryToolkitCore's.
 using VisualGeometryToolkitCore: ka_upload
+using VisualGeometryToolkitCore: OnBackend   # the one kernel-launch policy: every grid kernel is instantiated through it
 
 # This package computes no residual of its own: the whitened residuals and the
 # predictive score are VisualGeometryToolkitCore's (with its StudentTUniformScoring).
