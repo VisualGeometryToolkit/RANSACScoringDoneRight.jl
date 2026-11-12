@@ -25,6 +25,8 @@
 """
     TailRules(; pot_threshold_quantile, min_excess, finite_shape_limit)   # defaults: configs/default.toml [tail_rules]
 
+The rules of the generalized Pareto tail fit.
+
 The peaks-over-threshold (POT) rules both extreme-value outlier models share
 (Coles 2001, §4.3; Hosking & Wallis 1987): the generalized Pareto law is
 fitted by probability-weighted moments to the excesses over the POT threshold
@@ -63,6 +65,8 @@ end
 """
     ExtremeValueHalfwidth(; tail rules...)
 
+A uniform outlier model whose half-width is the fitted tail's endpoint.
+
 The uniform outlier density at a half-width estimated from each partition's
 complement: the endpoint `u - ω/ξ` of the generalized Pareto law the
 [`TailRules`](@ref) (its keywords) fit to the complement's upper tail.
@@ -74,6 +78,8 @@ ExtremeValueHalfwidth(; kw...) = ExtremeValueHalfwidth(TailRules(; kw...))
 
 """
     GeneralizedParetoOutliers(; fit_per = :prefix, tail rules...)
+
+An outlier model whose density is the fitted generalized Pareto law.
 
 The fitted generalized Pareto law itself as the outlier density: the law of
 the [`TailRules`](@ref) fit, carried down to zero by threshold stability, with
@@ -97,6 +103,8 @@ fit_per(::GeneralizedParetoOutliers{F}) where {F} = F
 """
     OutlierTerm(cost)
 
+An outlier model given by the caller's cost function.
+
 A caller's outlier term, for research baselines that are not one of the
 models above (block statistics of the complement): `cost(k, z)` is the
 complement's `-log` density for the partition of the `k` smallest residuals,
@@ -112,6 +120,8 @@ end
 
 """
     gpd_pwm_fit(n, sum_excess, sum_rank_excess) -> (shape, scale)
+
+The generalized Pareto shape and scale of `n` excesses, from two sums.
 
 The probability-weighted-moment fit of a generalized Pareto law
 `G(y) = 1 - (1 + shape·y/scale)^(-1/shape)` to `n` excesses, from their sum
@@ -183,6 +193,8 @@ _rules(r::TailRules) = r
 """
     tail_fit(rules, z) -> (; outlier_halfwidth, fitted_endpoint, shape)
 
+The tail fit of `rules` to the sorted values `z`.
+
 The peaks-over-threshold fit of `rules` (a [`TailRules`](@ref) or an
 extreme-value outlier model) to the sorted values `z`: `outlier_halfwidth` is
 the uniform half-width (the fitted endpoint, raised to the largest value);
@@ -198,6 +210,8 @@ end
 
 """
     gpd_support(fit, z, lo, hi) -> endpoint
+
+The support endpoint of the fitted generalized Pareto density.
 
 The endpoint the generalized Pareto density scores with: the fitted endpoint
 where it lies beyond every value (for `shape > -1` the density vanishes at the
@@ -215,6 +229,8 @@ _is_pareto(shape) = isfinite(shape) && shape < 0
 
 """
     gpd_outlier_cost(z, endpoint, shape) -> Float64
+
+The outlier cost of one residual under the generalized Pareto density.
 
 `-log p(r)` for one signed scalar residual of absolute value `z` under the
 generalized Pareto outlier density of endpoint `endpoint` and shape `shape`
