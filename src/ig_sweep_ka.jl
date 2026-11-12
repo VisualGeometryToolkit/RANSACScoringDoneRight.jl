@@ -59,7 +59,7 @@ end
 # (pair, model, outlier half-width) over this layout.
 # =============================================================================
 
-const _NO_BEST_K = Array{Int32, 3}(undef, 0, 0, 0)   # the grid reads no k (adapted to a device as an empty array)
+const _NO_BEST_K = Array{Int32, 3}(undef, 0, 0, 0)   # the grid reads no k (uploaded to the staging's backend as an empty array)
 
 # =============================================================================
 # Marginal grid evaluation
@@ -121,15 +121,18 @@ function grid_evaluate(scoring::StudentTUniformScoring{P}, staged::IGSharedData,
     lg_table_d = ka_upload(Float64, backend, log_gamma_table(N_max, dg; alpha0 = prior.alpha0))
     log_two_outlier_halfwidth_d = ka_upload(Float64, backend,
                                              [log(2.0 * Float64(h)) for h in outlier_halfwidths])
+    # A host array is no kernel argument on a GPU backend (CUDA refuses a non-bitstype
+    # argument): the empty best-k output goes to the backend too.
+    no_best_k_d = ka_upload(Int32, backend, _NO_BEST_K)
 
     sweep = ig_sweep_kernel!(backend, (1, 1, 1))
     out = _chunked_argmax_eval(staged, T; cs, return_idxs) do scores_pmt, s, n
         sweep(scores_pmt, staged.sorted_sq_flat, staged.pair_offset,
               staged.K_per_pair, staged.M_per_pair, lg_table_d, log_two_outlier_halfwidth_d,
-              Int32(model_dof), Int32(dg), prior, Int32(s), nothing, nothing, _NO_BEST_K; ndrange = (n, Mm, T))
+              Int32(model_dof), Int32(dg), prior, Int32(s), nothing, nothing, no_best_k_d; ndrange = (n, Mm, T))
         KernelAbstractions.synchronize(backend)
     end
-    _free_local!(lg_table_d, log_two_outlier_halfwidth_d)
+    _free_local!(lg_table_d, log_two_outlier_halfwidth_d, no_best_k_d)
     return out
 end
 
