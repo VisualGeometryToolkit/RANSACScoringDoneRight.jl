@@ -75,7 +75,7 @@ rule flips, `decision_boundary`, not a half-width); the loss-width families' `th
 docs/src/index.md:129 "threshold miscalibration" (the paper's abstract, verbatim; for the owner); the table and
 config files of neurips2026 (no Student-t key named a threshold: `snn_threshold` is the SIFT ratio test).
 
-## The paper-structure pass (paper-09-rsdr, 2026-11-12)
+## The paper-structure review (paper-09-rsdr, 2026-11-12)
 
 Every private keying, layout, completion, root and launcher copy of neurips2026 removed in favour of
 VisualGeometryToolkitEval's one implementation:
