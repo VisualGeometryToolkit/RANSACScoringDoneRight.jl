@@ -38,7 +38,10 @@ INPUT tier, `<data_root()>/neurips2026/paper_runs/<dataset>/<matcher>/<problem>/
 (`PROVENANCE.toml`, `SHA256SUMS`, and `MOVED.toml`, the stamped results-root
 leaf each came from; published as the `neurips2026_paper_runs` artifact). Each
 config names the tables it reads as `[inputs.<id>]` (tier, path, provenance,
-sha256), so a run key changes with the bytes it reads.
+sha256), so a run key changes with the bytes it reads. These six runs predate run records, so the tier keeps its own layout,
+declared through `[inputs]` (tier, path, sha256); runs promoted from now on follow
+VisualGeometryToolkitEval's `promote_run` (`<data_root()>/<tier>/<name>`, each with its
+`_provenance.toml`), and conforming this legacy tier to it is logged as post-release.
 
 From those tables the drivers here regenerate every figure fragment of the
 paper, with the renderer ported from the one that drew them (`src/panels.jl`).
