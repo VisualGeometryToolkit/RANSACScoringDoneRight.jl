@@ -107,6 +107,20 @@ neurips2026 also Eval and IO of that stack.
   `PaperNumbers`/`add_number!`/`write_numbers` (`prose_macros` is replaced by
   `prose_numbers`).
 - Distributions and Random are no longer dependencies (only SIMFIT++ used them).
+- neurips2026's figure fragments print every coordinate through VisualGeometryToolkitEval Render's `pgf_coords`
+  (at `"(%.17g,%.17g)"`); panels.jl's own coordinate writers are deleted. **The committed fragments' BYTES change**
+  (the nine Profile and Sensitivity fragments of paper/figures, re-rendered from the stored inputs of record; no
+  experiment rerun): each number is spelled with 17 significant digits (`-1` for `-1.0`,
+  `-0.98994974874371877` for `-0.9899497487437188`) and the profile lines lose their trailing space. Every number is
+  unchanged: Eval's `compare_fragments` reports the same numbers, max |Δ| 0.0, in every fragment. A point with a
+  non-finite y is now DROPPED (`pgf_coords`'s rule); points lost per figure: PT-E-SIFT-Profile 0 of 4223,
+  ETH3D-F-SPLG-Profile 0 of 4223, HEB-H-SIFT-Profile 0 of 4223, the PT-E and ETH3D-F Sensitivity fragments 0 of 210
+  each, the HEB-H Sensitivity fragments 0 of 231 each. The style sheets are byte-identical (their palette through
+  Eval's `color_defs`).
+- neurips2026's sample-budget study reads the CV gate, the median and the mAA from VisualGeometryToolkitEval
+  (`enforce_probe_interior`, `finite_median`, `eligible_maa`; the median now drops an `Inf` error too), and the radix
+  probe's Float32 key and UInt32 sort are VisualGeometryToolkitCore's (`radix_key`, `radix_sortperm!`).
+- neurips2026 no longer depends on Statistics or SpecialFunctions (nothing loads them).
 
 ## 0.6.0 (2026-11-09)
 
