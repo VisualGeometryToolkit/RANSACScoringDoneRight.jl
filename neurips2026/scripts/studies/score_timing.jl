@@ -46,7 +46,6 @@ include(srcdir("NeurIPS2026.jl"))
 using Printf
 using RANSACScoringDoneRight
 using VisualGeometryToolkitCore.Pools: num_points, num_models
-using VisualGeometryToolkitEval.Experiments: keyed_cell_dir
 using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residual_matrix
 import VisualGeometryToolkitCore as VGC
 const RSDR = RANSACScoringDoneRight

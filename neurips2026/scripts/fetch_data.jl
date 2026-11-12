@@ -10,39 +10,16 @@
 #   julia --project=. scripts/fetch_data.jl --only=heb_raw
 #   julia --project=. scripts/fetch_data.jl --list       # the catalog, nothing fetched
 #
-# Each artifact is downloaded once into the Julia depot (sha256 and tree hash
-# verified) and linked file by file into its mount root: data artifacts into
-# data/exp_raw (made an artifact view when no data root is bound), results
-# artifacts into results_root(). An existing binding wins — VGTK_DATA_ROOT /
-# VGTK_RESULTS_ROOT or the author's data/exp_raw, data/exp_pro links — and is
-# never written to (VisualGeometryToolkitEval DataArtifacts `fetch_artifacts!`).
+# The command line, the fetch and the report are VisualGeometryToolkitEval
+# DataArtifacts' `fetch_data!` (every paper project's one fetch driver; this
+# script's own copy is deleted, 2026-11-12): each artifact is downloaded once
+# into the Julia depot (sha256 and tree hash verified) and linked file by file
+# into its mount root, an existing binding (VGTK_DATA_ROOT / VGTK_RESULTS_ROOT,
+# or the author's data/exp_raw, data/exp_pro links) winning and never written to.
 # =============================================================================
 using DrWatson
 @quickactivate "NeurIPS2026"
-using VisualGeometryToolkitEval: cli_option
 include(srcdir("NeurIPS2026.jl"))
 include(srcdir("data_artifacts.jl"))
 
-const CAT = project_catalog()
-
-if "--list" in ARGS
-    meta = isfile(CAT.artifacts_toml) ? TOML.parsefile(CAT.artifacts_toml) : Dict{String,Any}()
-    for (n, a) in sort(collect(CAT.artifacts); by = first)
-        url = haskey(meta, n) ? meta[n]["download"][1]["url"] : "(not bound)"
-        println(rpad(n, 32), get(a, "required", false) ? " required " : " optional ", rpad(a["mount"], 8), " ", a["what"])
-        println(" "^32, "  ", url)
-    end
-    exit(0)
-end
-
-only = filter(!isempty, split(cli_option(ARGS, "only", ""), ','))
-names = !isempty(only) ? String.(only) :
-        "--all" in ARGS ? sort(collect(keys(CAT.artifacts))) : required_artifacts(CAT)
-
-for r in fetch_artifacts!(CAT, names)
-    msg = r.dst === nothing ? "not linked: its root is bound" : "$(r.linked) new link(s) under $(r.dst)"
-    println(rpad(r.name, 32), " ", msg)
-end
-for (what, root) in (("data_root()   ", data_root), ("results_root()", results_root))
-    println(what, " = ", try root() catch err; sprint(showerror, err) end)
-end
+fetch_data!(project_catalog())

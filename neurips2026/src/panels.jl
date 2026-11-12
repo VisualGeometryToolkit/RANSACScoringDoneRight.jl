@@ -25,9 +25,14 @@
 # =============================================================================
 using DataFrames: DataFrame
 using Printf: Printf
-# The house palette and its LaTeX colour names, and the summary's
-# per-(method, tuning criterion) bucketing, are VisualGeometryToolkitEval's.
-using VisualGeometryToolkitEval.Render: default_palette, paper_color_name, results_by_method
+# The house palette, its LaTeX colour names, the colour-definition emitter and
+# the `coordinates {…}` body of a curve (`pgf_coords`), and the summary's
+# per-(method, tuning criterion) bucketing, are VisualGeometryToolkitEval's. Every
+# coordinate is printed through `pgf_coords` at `"(%.17g,%.17g)"`: 17 significant
+# digits, so each number parses back to the Float64 it was (the submitted
+# fragments' values exactly; only their spelling changed, 2026-11-12), and a point
+# with a non-finite y is dropped.
+using VisualGeometryToolkitEval.Render: default_palette, paper_color_name, color_defs, results_by_method, pgf_coords
 
 # ---- house style (plot_val.jl STYLE / _PAPER_COLOR_HEX / PANELS) -----------------
 
@@ -141,6 +146,7 @@ envelope and its argmin marker, then the GT-Oracle line.
 function write_profile_group(io::IO, records, title::AbstractString;
                              oracle_y::Float64 = NaN, per_method_best::AbstractDict = Dict{Symbol,Float64}(),
                              bands::Bool = true)
+    fmt = "(%.17g,%.17g)"
     println(io, "% panel_profile_group.tex — \\nextgroupplot fragment.")
     if bands
         println(io, "% Host preamble MUST load: \\usepgfplotslibrary{groupplots},")
@@ -166,30 +172,26 @@ function write_profile_group(io::IO, records, title::AbstractString;
             lower = r.ys .- 1.96 .* r.stds
             u_name = "U_" * String(r.snake_key) * "_grp"
             l_name = "L_" * String(r.snake_key) * "_grp"
-            print(io, "  \\addplot[name path=", u_name, ", draw=none, mark=none, forget plot] coordinates {")
-            for (xi, yi) in zip(xn, upper); print(io, "(", xi, ",", yi, ") "); end
-            println(io, "};")
-            print(io, "  \\addplot[name path=", l_name, ", draw=none, mark=none, forget plot] coordinates {")
-            for (xi, yi) in zip(xn, lower); print(io, "(", xi, ",", yi, ") "); end
-            println(io, "};")
+            println(io, "  \\addplot[name path=", u_name, ", draw=none, mark=none, forget plot] coordinates {",
+                    pgf_coords(xn, upper; fmt), "};")
+            println(io, "  \\addplot[name path=", l_name, ", draw=none, mark=none, forget plot] coordinates {",
+                    pgf_coords(xn, lower; fmt), "};")
             println(io, "  \\addplot[", sn, ", fill, fill opacity=0.18, draw=none, mark=none, forget plot] ",
                     "fill between [of=", u_name, " and ", l_name, "];")
         end
-        print(io, "  \\addplot+[", sn, ", mark=none] coordinates {")
-        for (xi, yi) in zip(xn, r.ys); print(io, "(", xi, ",", yi, ") "); end
-        println(io, "};")
+        println(io, "  \\addplot+[", sn, ", mark=none] coordinates {", pgf_coords(xn, r.ys; fmt), "};")
         pmb = get(per_method_best, r.snake_key, NaN)
         if isfinite(pmb)
             println(io, "  \\addplot+[", sn, ", mark=none, line width=0.4pt, dashed, forget plot] ",
-                    "coordinates {(-1.0,", pmb, ") (1.0,", pmb, ")};")
+                    "coordinates {", pgf_coords([-1.0, 1.0], [pmb, pmb]; fmt), "};")
         end
         argmin_xn = log10(r.x_argmin / r.x_star)
         println(io, "  \\addplot+[", sn, ", mark=*, only marks, mark size=\\PanelArgminSize, ",
-                "forget plot] coordinates {(", argmin_xn, ",", r.y_star, ")};")
+                "forget plot] coordinates {", pgf_coords([argmin_xn], [r.y_star]; fmt), "};")
     end
     if isfinite(oracle_y)
         println(io, "  \\addplot+[ours_oracle, mark=none, forget plot] ",
-                "coordinates {(-1.0,", oracle_y, ") (1.0,", oracle_y, ")};")
+                "coordinates {", pgf_coords([-1.0, 1.0], [oracle_y, oracle_y]; fmt), "};")
     end
     return nothing
 end
@@ -211,9 +213,8 @@ function write_profile_styles(styles_io::IO, shared_io::IO, records, criterion::
     println(io, "% before any panel; main.tex should do the same once globally.")
     println(io)
     println(io, "% --- Colour palette (\\providecolor: paper-side override wins) ---")
-    for (k, hex) in sort(collect(PAPER_COLOR_HEX); by = first)
-        println(io, "\\providecolor{", paper_color_name(k), "}{HTML}{", uppercase(hex), "}")
-    end
+    println(io, color_defs([paper_color_name(k) => uppercase(hex) for (k, hex) in sort(collect(PAPER_COLOR_HEX); by = first)];
+                           command = "providecolor"))
     println(io)
     println(io, "% --- Per-method addplot styles ---")
     for r in records
@@ -270,9 +271,8 @@ function _sensitivity_style_name(k::AbstractString)
     return "ours_" * lowercase(replace(k, "-" => "_"))
 end
 
-_coordinates(io, xs, ys) = (print(io, "        coordinates {");
-                            print(io, join(("(" * string(x) * "," * string(y) * ")" for (x, y) in zip(xs, ys)), " "));
-                            println(io, "}"); println(io, "        ;"))
+_coordinates(io, xs, ys) = (println(io, "        coordinates {", pgf_coords(xs, ys; fmt = "(%.17g,%.17g)"), "}");
+                            println(io, "        ;"))
 
 """
     write_sensitivity_group(io, panel, data, tune, title)
@@ -336,9 +336,8 @@ function write_sensitivity_styles(styles_io::IO, shared_io::IO, data)
     println(io, "% via `\\pgfplotsset{ours_<m>/.style={...}}` in your preamble.")
     println(io)
     println(io, "% --- Colour palette (\\providecolor: paper-side override wins) ---")
-    for (k, hex) in sort(collect(PAPER_COLOR_HEX); by = first)
-        println(io, "\\providecolor{", paper_color_name(k), "}{HTML}{", uppercase(hex), "}")
-    end
+    println(io, color_defs([paper_color_name(k) => uppercase(hex) for (k, hex) in sort(collect(PAPER_COLOR_HEX); by = first)];
+                           command = "providecolor"))
     println(io)
     println(io, "% --- Per-method addplot styles ---")
     for (k, _, color, mark, dashed) in STYLE

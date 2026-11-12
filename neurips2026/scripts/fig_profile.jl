@@ -30,7 +30,7 @@ include(srcdir("NeurIPS2026.jl"))
 const CFG_PATH = projectdir("configs", "fig_profile.toml")
 const CFG = TOML.parsefile(CFG_PATH)
 const KEY = run_key(CFG)                       # [render] is excluded
-const OUTDIR = joinpath(results_root(), "figures", "fig_profile-" * KEY)
+const OUTDIR = keyed_cell_dir(CFG, "figures", "fig_profile"; base = results_root())   # <results>/figures/fig_profile-<KEY>
 const CELLS = CFG["profile"]["cells"]
 const ASSETS = vcat([c["asset"] for c in CELLS], [CFG["render"]["styles"], CFG["render"]["styles_shared"]])
 
@@ -39,9 +39,9 @@ function render()
     mkpath(OUTDIR)
     inputs = String[]
     for c in CELLS
-        records = profile_records(input_table(CFG, c["input"], "profile"), crit)
+        records = profile_records(JLD2.load(input_path(CFG, c["input"]), "profile"), crit)
         isempty(records) && error("no Profile records for criterion $crit in input $(c["input"])")
-        oracle_y, pmb = profile_references(input_table(CFG, c["input"], "profile_oracle"), crit)
+        oracle_y, pmb = profile_references(JLD2.load(input_path(CFG, c["input"]), "profile_oracle"), crit)
         open(joinpath(OUTDIR, c["asset"]), "w") do io
             write_profile_group(io, records, c["title"]; oracle_y, per_method_best = pmb, bands = c["bands"])
         end

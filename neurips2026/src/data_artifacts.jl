@@ -13,7 +13,7 @@
 if !@isdefined(NEURIPS2026_DATA_ARTIFACTS_LOADED)
 
 using VisualGeometryToolkitEval.DataArtifacts: DataCatalog, load_catalog, project_catalog, required_artifacts, artifact_files,
-    fetch_artifacts!, pack_artifacts, zenodo_url, catalog_violations
+    fetch_artifacts!, fetch_data!, pack_artifacts, zenodo_url, catalog_violations
 
 # The catalog is VisualGeometryToolkitEval's `project_catalog()`: configs/data_artifacts.toml of the
 # bound project, bound to its Artifacts.toml or `ENV["NEURIPS2026_ARTIFACTS_TOML"]`.

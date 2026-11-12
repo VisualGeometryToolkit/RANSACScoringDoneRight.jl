@@ -25,6 +25,10 @@ hypotheses_per_pair = 50     # residual vectors taken per pair
 reps = 5                     # the minimum over repetitions is reported
 threads = 1                  # the sort is timed single-threaded
 
+# KNOWN GAP (owner ruling 2026-11-12): PT-E-SIFT-4K is pool FORMAT 1, which the 0.9 Pools reader refuses, and it
+# has no residuals files. It needs conversion (a format-1 → 4 converter, which does not exist, plus a ruling on the
+# residual kind and frame: Sampson in the old canonical frame vs 0.9's tangent Sampson) before this study runs on
+# 0.9 (REPRODUCE.md, "Scoring studies"). No other pool is substituted.
 [inputs.pool]
 tier = "accv2026_pools"
 path = "accv2026/data/PT-E-SIFT-4K/british_museum.jld2"

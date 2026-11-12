@@ -30,7 +30,6 @@ using RANSACScoringDoneRight
 import VisualGeometryToolkitCore as VgtkCore   # the sweep's radix sort (Core's)
 using Printf
 using VisualGeometryToolkitCore.Pools: num_points
-using VisualGeometryToolkitEval.Experiments: keyed_cell_dir
 using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residual_matrix
 
 const CFG_PATH = projectdir("configs", "f32_radix_probe.toml")
@@ -40,68 +39,12 @@ const OUTDIR = keyed_cell_dir(CFG, "f32_radix_probe", "sort")
 const RESULT = "probe.jld2"
 
 # --- the three sort variants ------------------------------------------------
-# V1 = the production path, verbatim (F64 key → UInt64, 8 iterations, Int perm).
-# V2 = F32 key → UInt32, 4 iterations, Int perm.
-# V3 = F32 key → UInt32, 4 iterations, Int32 perm (half the scatter payload).
-
-@inline function _key32(x::Float32)
-    isnan(x) && return 0xffffffff
-    u = reinterpret(UInt32, x)
-    return (u & 0x80000000) == zero(UInt32) ? (u | 0x80000000) : ~u
-end
-
-struct Radix32{P<:Integer}
-    keys::Vector{UInt32}
-    keys2::Vector{UInt32}
-    perm2::Vector{P}
-    counts::Matrix{Int}
-end
-Radix32{P}(n::Int) where {P} = Radix32{P}(Vector{UInt32}(undef, n), Vector{UInt32}(undef, n),
-                                          Vector{P}(undef, n), Matrix{Int}(undef, 256, 4))
-
-function radix32_sortperm!(perm::Vector{P}, target::AbstractVector{Float32},
-                           rb::Radix32{P}, n::Int) where {P<:Integer}
-    keys = rb.keys; keys2 = rb.keys2; perm2 = rb.perm2; counts = rb.counts
-    @inbounds for i in 1:n
-        keys[i] = _key32(target[i])
-        perm[i] = P(i)
-    end
-    fill!(counts, 0)
-    @inbounds for i in 1:n
-        k = keys[i]
-        counts[Int(k & 0xff) + 1, 1] += 1
-        counts[Int((k >> 8) & 0xff) + 1, 2] += 1
-        counts[Int((k >> 16) & 0xff) + 1, 3] += 1
-        counts[Int((k >> 24) & 0xff) + 1, 4] += 1
-    end
-    src_k, dst_k = keys, keys2
-    src_p, dst_p = perm, perm2
-    @inbounds for d in 1:4
-        b1 = 1
-        while counts[b1, d] == 0
-            b1 += 1
-        end
-        counts[b1, d] == n && continue
-        off = 0
-        # paper-project: allow C2 the 256 buckets of one byte digit: the radix sort's algorithm, not data
-        for b in 1:256
-            c = counts[b, d]; counts[b, d] = off; off += c
-        end
-        shift = 8 * (d - 1)
-        for i in 1:n
-            k = src_k[i]
-            b = Int((k >> shift) & 0xff) + 1
-            j = counts[b, d] + 1
-            counts[b, d] = j
-            dst_k[j] = k
-            dst_p[j] = src_p[i]
-        end
-        src_k, dst_k = dst_k, src_k
-        src_p, dst_p = dst_p, src_p
-    end
-    src_p !== perm && copyto!(perm, 1, src_p, 1, n)
-    return nothing
-end
+# V1 = F64 key → UInt64, 8 iterations, Int perm (VisualGeometryToolkitCore's radix at UInt64 keys).
+# V2 = F32 key → UInt32, 4 iterations, Int perm (VisualGeometryToolkitCore's radix at its default
+#      UInt32 keys: the production path since this probe).
+# V3 = F32 key → UInt32, 4 iterations, Int32 perm (half the scatter payload): Core's radix
+#      at an Int32 permutation (`RadixPermBuffers{UInt32, Int32}`; this probe's own copy of
+#      the sort for it is deleted, 2026-11-12).
 
 # --- REAL residual vectors from the pool ------------------------------------
 # `nhyp` hypotheses of each pair `ix` of the residuals `res`, as Float64 vectors.
@@ -119,22 +62,22 @@ end
 function bench(sets, label, reps)
     n = length(first(sets))
     perm64 = Vector{Int}(undef, n); rb64 = VgtkCore.RadixPermBuffers{UInt64}(n)   # V1 is the UInt64 path; the bare default is UInt32 since this probe
-    perm32 = Vector{Int}(undef, n); rb32 = Radix32{Int}(n)
-    permI32 = Vector{Int32}(undef, n); rbI32 = Radix32{Int32}(n)
+    perm32 = Vector{Int}(undef, n); rb32 = VgtkCore.RadixPermBuffers{UInt32}(n)
+    permI32 = Vector{Int32}(undef, n); rbI32 = VgtkCore.RadixPermBuffers{UInt32, Int32}(n)
     sets32 = [Float32.(s) for s in sets]
 
     # warmup
     VgtkCore.radix_sortperm!(perm64, sets[1], rb64, n)
-    radix32_sortperm!(perm32, sets32[1], rb32, n)
-    radix32_sortperm!(permI32, sets32[1], rbI32, n)
+    VgtkCore.radix_sortperm!(perm32, sets32[1], rb32, n)
+    VgtkCore.radix_sortperm!(permI32, sets32[1], rbI32, n)
 
     t64 = Inf; t32 = Inf; tI32 = Inf
     for _ in 1:reps
         t0 = time_ns(); for s in sets;   VgtkCore.radix_sortperm!(perm64, s, rb64, n) end
         t64 = min(t64, (time_ns() - t0) / length(sets))
-        t0 = time_ns(); for s in sets32; radix32_sortperm!(perm32, s, rb32, n) end
+        t0 = time_ns(); for s in sets32; VgtkCore.radix_sortperm!(perm32, s, rb32, n) end
         t32 = min(t32, (time_ns() - t0) / length(sets))
-        t0 = time_ns(); for s in sets32; radix32_sortperm!(permI32, s, rbI32, n) end
+        t0 = time_ns(); for s in sets32; VgtkCore.radix_sortperm!(permI32, s, rbI32, n) end
         tI32 = min(tI32, (time_ns() - t0) / length(sets))
     end
 
@@ -144,7 +87,7 @@ function bench(sets, label, reps)
     agree = 0; worst = 0.0
     for (s, s32) in zip(sets, sets32)
         VgtkCore.radix_sortperm!(perm64, s, rb64, n)
-        radix32_sortperm!(perm32, s32, rb32, n)
+        VgtkCore.radix_sortperm!(perm32, s32, rb32, n)
         agree += (perm64 == perm32)
         for i in 1:n
             worst = max(worst, abs(s[perm64[i]] - s[perm32[i]]))
