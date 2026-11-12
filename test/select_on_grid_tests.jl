@@ -139,7 +139,7 @@
         generic!(idxs, sc, grid, st) =
             invoke(select_on_grid!, Tuple{AbstractMatrix{Int32}, Type, Any, AbstractVector, Any}, idxs, _SGProblem, sc, grid, st)
         st = stage_selection(:pool, pairs, Rs)
-        @test st == (; pairs, residuals = Rs)
+        @test st == (; pairs, residuals = Rs, backend = VGC.default_device())   # the staging names its device (Core)
         lw = [0.05, 0.3, 1.0, 3.0, 8.0, 25.0]
         for dg in (1, 2), (sc, wf) in ((MsacScoring(dg; threshold = 1.0), MsacScoring(dg)),
                                        (RansacScoring(dg; threshold = 1.0), RansacScoring(dg)))

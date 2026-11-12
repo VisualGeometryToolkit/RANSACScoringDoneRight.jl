@@ -60,7 +60,7 @@
             end
         end
         # the table cannot outgrow its build size: the workspace does not record dg
-        sws = default_scoring_workspace(10; scale_prior = JeffreysPrior())
+        sws = default_scoring_workspace(10; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())   # both priors stated (Core)
         @test_throws ArgumentError resize!(sws, 11)
         @test_throws ArgumentError resize!(sws, -1)
         # the table follows the workspace's label prior through any size, n = 0 included
