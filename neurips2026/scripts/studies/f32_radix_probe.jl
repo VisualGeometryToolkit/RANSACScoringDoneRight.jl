@@ -15,20 +15,29 @@
 # shows no win here, the Tq parameterization of the scoring path is not
 # worth its complexity and the investigation stops.
 #
-# Usage: julia -t 1 --project=neurips2026 neurips2026/scripts/studies/f32_radix_probe.jl
+# reproduce: reads configs/f32_radix_probe.toml
+#
+# STAGES
+#   sort  the three sort variants on the typical and dense pairs of [inputs.pool]
+#         → <results>/phototourism/sift/E/f32_radix_probe/sort-<run key>/probe.jld2
+#
+#   julia -t 1 --project=. scripts/studies/f32_radix_probe.jl [--plan] [--stage=NAME] [--force]
 # =============================================================================
+using DrWatson
+@quickactivate "NeurIPS2026"
+include(srcdir("NeurIPS2026.jl"))
 using RANSACScoringDoneRight
 import VisualGeometryToolkitCore as VgtkCore   # the sweep's radix sort (Core's)
-import JLD2
 using Printf
 using VisualGeometryToolkitCore.Pools: num_points
-using VisualGeometryToolkitEval.Experiments: data_root
-using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residuals_path, residual_matrix
+using VisualGeometryToolkitEval.Experiments: keyed_cell_dir
+using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residual_matrix
 
-# The data root is VisualGeometryToolkitEval's `data_root()` (ENV["VGTK_DATA_ROOT"],
-# else the project's data/exp_raw); it holds accv2026/data/PT-E-SIFT-4K.
-const POOL  = joinpath(data_root(), "accv2026", "data", "PT-E-SIFT-4K", "british_museum.jld2")
-const REPS  = 5
+const CFG_PATH = projectdir("configs", "f32_radix_probe.toml")
+const CFG = TOML.parsefile(CFG_PATH)
+const KEY = run_key(CFG)
+const OUTDIR = keyed_cell_dir(CFG, "f32_radix_probe", "sort")
+const RESULT = "probe.jld2"
 
 # --- the three sort variants ------------------------------------------------
 # V1 = the production path, verbatim (F64 key → UInt64, 8 iterations, Int perm).
@@ -74,6 +83,7 @@ function radix32_sortperm!(perm::Vector{P}, target::AbstractVector{Float32},
         end
         counts[b1, d] == n && continue
         off = 0
+        # paper-project: allow C2 the 256 buckets of one byte digit: the radix sort's algorithm, not data
         for b in 1:256
             c = counts[b, d]; counts[b, d] = off; off += c
         end
@@ -93,26 +103,20 @@ function radix32_sortperm!(perm::Vector{P}, target::AbstractVector{Float32},
     return nothing
 end
 
-# --- harvest REAL residual vectors from the pool ----------------------------
-pool  = load_pool(POOL)
-pairs = pool.pairs
-byn   = sortperm(pairs; by = num_points, rev = true)
-groups = (("typical", collect(1:20)), ("dense", byn[1:20]))
-res   = load_pool_residuals(residuals_path(POOL), pool;
-                            pairs = unique(vcat(last.(groups)...)))
-
-function residual_sets(ix)
+# --- REAL residual vectors from the pool ------------------------------------
+# `nhyp` hypotheses of each pair `ix` of the residuals `res`, as Float64 vectors.
+function residual_sets(res, ix, nhyp)
     out = Vector{Float64}[]
     for i in ix
         D = residual_matrix(res, i)         # npts × nmodels, Float32 on disk
-        for j in 1:min(size(D, 2), 50)      # 50 hypotheses per pair is plenty
+        for j in 1:min(size(D, 2), nhyp)
             push!(out, Float64.(@view D[:, j]))
         end
     end
     return out
 end
 
-function bench(sets, label)
+function bench(sets, label, reps)
     n = length(first(sets))
     perm64 = Vector{Int}(undef, n); rb64 = VgtkCore.RadixPermBuffers{UInt64}(n)   # V1 is the UInt64 path; the bare default is UInt32 since this probe
     perm32 = Vector{Int}(undef, n); rb32 = Radix32{Int}(n)
@@ -125,7 +129,7 @@ function bench(sets, label)
     radix32_sortperm!(permI32, sets32[1], rbI32, n)
 
     t64 = Inf; t32 = Inf; tI32 = Inf
-    for _ in 1:REPS
+    for _ in 1:reps
         t0 = time_ns(); for s in sets;   VgtkCore.radix_sortperm!(perm64, s, rb64, n) end
         t64 = min(t64, (time_ns() - t0) / length(sets))
         t0 = time_ns(); for s in sets32; radix32_sortperm!(perm32, s, rb32, n) end
@@ -153,17 +157,35 @@ function bench(sets, label)
     return (; label, n, t64, t32, tI32, agree, nsets = length(sets), worst)
 end
 
-results = NamedTuple[]
-# group by exact point count so each bench uses one n (buffers are sized once)
-for (label, ix) in groups
-    sets = residual_sets(ix)
-    bylen = Dict{Int,Vector{Vector{Float64}}}()
-    for s in sets; push!(get!(bylen, length(s), Vector{Float64}[]), s); end
-    n_best = argmax(k -> length(bylen[k]), collect(keys(bylen)))
-    push!(results, bench(bylen[n_best], label))
+function probe()
+    p = CFG["probe"]
+    Threads.nthreads() == p["threads"] || error("$(p["threads"]) thread(s) by protocol — use `julia -t $(p["threads"])`")
+    path, rpath = input_path(CFG, "pool"), input_path(CFG, "residuals")
+    pool  = load_pool(path)
+    pairs = pool.pairs
+    k     = min(p["npairs"], length(pairs))
+    byn   = sortperm(pairs; by = num_points, rev = true)
+    groups = (("typical", collect(1:k)), ("dense", byn[1:k]))
+    res   = load_pool_residuals(rpath, pool; pairs = unique(vcat(last.(groups)...)))
+    results = NamedTuple[]
+    # group by exact point count so each bench uses one n (buffers are sized once)
+    for (label, ix) in groups
+        sets = residual_sets(res, ix, p["hypotheses_per_pair"])
+        bylen = Dict{Int,Vector{Vector{Float64}}}()
+        for s in sets; push!(get!(bylen, length(s), Vector{Float64}[]), s); end
+        n_best = argmax(k -> length(bylen[k]), collect(keys(bylen)))
+        push!(results, bench(bylen[n_best], label, p["reps"]))
+    end
+    mkpath(OUTDIR)
+    JLD2.jldsave(joinpath(OUTDIR, RESULT); results)
+    write_run_records(OUTDIR, CFG; driver = "studies/f32_radix_probe.jl", config_source = CFG_PATH, key = KEY,
+                      inputs = [path, rpath])
+    return nothing
 end
 
-out = joinpath(DATA_ROOT, "accv2026", "results", "score_timing", "f32_radix_probe.jld2")
-mkpath(dirname(out))
-JLD2.jldsave(out; results, reps = REPS, pool = POOL)
-println("\nsaved -> ", out)
+const STAGES = [
+    Stage(:sort, "the F64 / F32 / F32+Int32 radix sorts on real residuals, keyed by the run key",
+          () -> run_complete(OUTDIR; sidecar = RESULT), probe),
+]
+
+run_stages("f32_radix_probe", STAGES)

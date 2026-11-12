@@ -43,7 +43,7 @@ function compute()
             println(io, join((r.id, join(r.computed, ","), join(r.rounded, ","), join(r.stated, ","), r.relation, r.ok), '\t'))
         end
     end
-    inputs = unique([joinpath(stored_dir(CFG), run, "source.jld2") for run in values(CFG["runs"])])
+    inputs = [input_path(CFG, id) for id in sort(collect(keys(CFG["inputs"])))]
     write_run_records(OUTDIR, CFG; driver = "paper_numbers.jl", config_source = CFG_PATH, key = KEY, inputs)
     return nothing
 end

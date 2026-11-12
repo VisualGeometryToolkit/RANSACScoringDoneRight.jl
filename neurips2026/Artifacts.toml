@@ -15,11 +15,11 @@ lazy = true
     url = "https://zenodo.org/records/23240467/files/heb_raw.tar.gz?download=1"
 
 [neurips2026_paper_runs]
-git-tree-sha1 = "e2209e4016af4c4ece0af908d4e8d050dbdef21b"
+git-tree-sha1 = "11879968bcee9fa5c1b96ceed1bcf7b4e3dda66d"
 lazy = true
 
     [[neurips2026_paper_runs.download]]
-    sha256 = "99b9d02c1542f11f159fd574f527311af2ce9faec7e2716604cf686982193569"
+    sha256 = "cdd1f48a98f2173cd3397ccd717c15ede5406cb3b236c0e54c569d4c8711c911"
     url = "https://zenodo.org/records/ZENODO_RECORD_NEURIPS2026/files/neurips2026_paper_runs.tar.gz?download=1"
 
 [pt_raw_test]

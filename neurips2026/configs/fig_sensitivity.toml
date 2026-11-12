@@ -10,14 +10,29 @@
 # 1 000 cross-validation trials' median test error with their 95 % BCa
 # intervals; `trials`, the trials themselves), as the 2026-05-06 production
 # runs wrote them (RobustVisualGeometry eval/neurips2026 evaluate_val,
-# 67d76e2-dirty; Slurm jobs 842, 844, 854). [stored] dir is RELATIVE to
-# results_root() (PROVENANCE.toml and SHA256SUMS beside the runs; published
-# as the `neurips2026_paper_runs` artifact). The computation that produced the
+# 67d76e2-dirty; Slurm jobs 842, 844, 854): the [inputs.<id>] below, under
+# data_root(), in the `neurips2026_paper_runs` tier (PROVENANCE.toml and
+# SHA256SUMS beside the runs); each cell names its input. The computation that produced the
 # tables is NOT ported (REPRODUCE.md, "Not ported").
 # =============================================================================
 
-[stored]
-dir = "stored/paper-runs-2026-05-06"
+[inputs.pt_sensitivity]
+tier = "neurips2026_paper_runs"
+path = "neurips2026/paper_runs/phototourism/sift/E/Sensitivity/source.jld2"
+sha256 = "0991ad17f31de51813629fd0647bb7a666cc962e8d43cb6046699d00da9b9166"
+provenance = "the cell's evaluated Sensitivity table (`summary`, `trials`): RobustVisualGeometry eval/neurips2026 evaluate_val (67d76e2-dirty, committed as 6bc825d), Slurm job 844, 2026-05-06; the stored leaf phototourism/sift/E/Sensitivity/2026-05-06T102716 (paper_runs MOVED.toml)"
+
+[inputs.eth3d_sensitivity]
+tier = "neurips2026_paper_runs"
+path = "neurips2026/paper_runs/eth3d/splg/F/Sensitivity/source.jld2"
+sha256 = "ee2defad04c929a27aedcf97f118abedd52a959bba8d46f418a034eff8dcd24c"
+provenance = "the cell's evaluated Sensitivity table (`summary`, `trials`): RobustVisualGeometry eval/neurips2026 evaluate_val (67d76e2-dirty, committed as 6bc825d), Slurm job 854, 2026-05-06; the stored leaf eth3d/splg/F/Sensitivity/2026-05-06T140300 (paper_runs MOVED.toml)"
+
+[inputs.heb_sensitivity]
+tier = "neurips2026_paper_runs"
+path = "neurips2026/paper_runs/heb/sift/H/Sensitivity/source.jld2"
+sha256 = "19282b61b5c76c7fb93e2f03833f36cf220acec4ed646edfddf64483c9454b47"
+provenance = "the cell's evaluated Sensitivity table (`summary`, `trials`): RobustVisualGeometry eval/neurips2026 evaluate_val (67d76e2-dirty, committed as 6bc825d), Slurm job 842, 2026-05-06; the stored leaf heb/sift/H/Sensitivity/2026-05-06T084659 (paper_runs MOVED.toml)"
 
 [sensitivity]
 tune = "median"                  # the tuning criterion of the drawn trials
@@ -28,19 +43,19 @@ styles_from = "heb"
 
 [[sensitivity.cells]]
 key = "pt"
-run = "phototourism/sift/E/Sensitivity/2026-05-06T102716"
+input = "pt_sensitivity"
 title = 'PhotoTourism / RootSIFT / \(\bE\)'
 assets = { eR_mean = "PT-E-SIFT-Sensitivity-eRmean.tex", eR_std = "PT-E-SIFT-Sensitivity-eRstd.tex" }
 
 [[sensitivity.cells]]
 key = "eth3d"
-run = "eth3d/splg/F/Sensitivity/2026-05-06T140300"
+input = "eth3d_sensitivity"
 title = 'ETH3D / SuperPoint+LightGlue / \(\bF\)'
 assets = { eR_mean = "ETH3D-F-SPLG-Sensitivity-eRmean.tex", eR_std = "ETH3D-F-SPLG-Sensitivity-eRstd.tex" }
 
 [[sensitivity.cells]]
 key = "heb"
-run = "heb/sift/H/Sensitivity/2026-05-06T084659"
+input = "heb_sensitivity"
 # HEB ships plain SIFT matches (Sec. 4.2, Tab. 3); the submitted "RootSIFT"
 # was corrected on the author's sign-off, 2026-10-09.
 title = 'HEB / SIFT / \(\bH\)'

@@ -74,3 +74,13 @@ width); `has_decision_boundary`/`decision_boundary` (VisualGeometryToolkitCore's
 rule flips, `decision_boundary`, not a half-width); the loss-width families' `threshold` (their loss width, kept);
 docs/src/index.md:129 "threshold miscalibration" (the paper's abstract, verbatim; for the owner); the table and
 config files of neurips2026 (no Student-t key named a threshold: `snn_threshold` is the SIFT ratio test).
+
+## The paper-structure pass (paper-09-rsdr, 2026-11-12)
+
+Every private keying, layout, completion, root and launcher copy of neurips2026 removed in favour of
+VisualGeometryToolkitEval's one implementation:
+
+- [x] `stored_dir`/`stored_table` and the configs' `[stored] dir` / `[runs]` (stored runs read from the results root) → each config's `[inputs.<id>]` (tier `neurips2026_paper_runs`, path under `data_root()`, sha256), read by `input_path`/`input_table`, the composition of Eval's `data_root(; tiers)` and `require_input` (723d791)
+- [x] the studies' command-line parameters and their output directories under `data_root()/accv2026/results` (score_timing, sample_budget_miscal) and the probe's undefined `DATA_ROOT` → one config of record each, `keyed_cell_dir`, `write_run_records`, `run_complete`, `run_stages` (ec77439)
+- [x] scripts/slurm/score_timing.sbatch, sample_budget_miscal.sbatch (the launchers, their POOL/OUT/… environment switches) → configs/reproduce.toml stages and scripts/reproduce/reproduce_results_{dgx,desktop}.sh on Eval's runner (309a69f)
+- [x] the deferred-violation allowlist of test/test_paper_project.jl → none: the check runs with no allowance (ec77439, b14bdf7)

@@ -1,0 +1,104 @@
+# The stage graph of record of the paper: every result and figure from its declared inputs, in one command
+# (VisualGeometryToolkitEval Reproduce, the runner: its docs, "One command: the runner"). Data only: which driver runs on
+# which config of record, after what. How a stage runs (Slurm or here, the CPUs, the memory) is the site's, a machine
+# profile shipped with VisualGeometryToolkitEval (configs/sites/dgx01.toml, desktop.toml; _template.toml to add one);
+# where this project's data and results are on each machine is [sites.<name>] below.
+#
+#   bash neurips2026/scripts/reproduce/reproduce_results_dgx.sh [--dry-run] [--only=<stage>,…] [--no-deps] [status]
+#   bash neurips2026/scripts/reproduce/reproduce_results_desktop.sh [--dry-run] [--only=<stage>,…] [--no-deps] [status]
+#
+# Without --only: every stage that is not `default = false` — the environment, the two figures and the prose numbers,
+# each through its driver's own stages (render → verify → deploy; a finished keyed run is reused by its run key). The
+# scoring studies (scripts/studies/; not paper assets) run only with --only. Each driver stays callable on its own:
+# julia --project=neurips2026 neurips2026/scripts/<driver>.jl [--plan]. Paths are relative to the repository root,
+# where the jobs are submitted from.
+
+[project]
+name = "neurips2026"
+workdir = "../.."
+julia_project = "neurips2026"
+# the code every stage runs: a change here re-keys every stage; the paper's text and the docs do not
+code = ["Project.toml", "src", "neurips2026/Project.toml", "neurips2026/src", "neurips2026/scripts"]
+
+[sites.dgx01]
+# the shared input root of record on dgx01 (the accv2026 pools, the raw datasets, neurips2026/paper_runs) and this
+# paper's results root
+data_root = "/raid/data/jpr"
+results_root = "/raid/data/jpr/results/neurips2026"
+
+[sites.desktop]
+# the data ladder's own binding (neurips2026/data/exp_raw: a link, or the artifact view scripts/fetch_data.jl builds)
+# and this checkout's results (both ignored by git)
+data_root = "neurips2026/data/exp_raw"
+results_root = "neurips2026/data/exp_pro"
+
+# ---- the environment -----------------------------------------------------------------------------------------------------
+[[stage]]
+name = "setup"
+what = "the neurips2026 environment, inside the scheduler: Pkg.instantiate and precompile (the one untracked root Manifest)"
+command = ["julia", "--startup-file=no", "--project=neurips2026", "-e", "using Pkg; Pkg.instantiate(); Pkg.precompile()"]
+time = "01:00:00"
+
+# ---- the paper: Fig. 1, Fig. 2, the prose numbers of Sec. 4 (from the stored runs of record) ------------------------------
+[[stage]]
+name = "fig_profile"
+what = "Fig. 1 (fig:profile-grid): the three Profile cells and the style sheets — render, verify, deploy"
+after = ["setup"]
+command = ["julia", "--startup-file=no", "--project=neurips2026", "neurips2026/scripts/fig_profile.jl"]
+driver = "neurips2026/scripts/fig_profile.jl"
+config = "neurips2026/configs/fig_profile.toml"
+time = "00:30:00"
+
+[[stage]]
+name = "fig_sensitivity"
+what = "Fig. 2 (fig:sensitivity-grid): the six Sensitivity panels and the style sheets — render, verify, deploy"
+after = ["setup"]
+command = ["julia", "--startup-file=no", "--project=neurips2026", "neurips2026/scripts/fig_sensitivity.jl"]
+driver = "neurips2026/scripts/fig_sensitivity.jl"
+config = "neurips2026/configs/fig_sensitivity.toml"
+time = "00:30:00"
+
+[[stage]]
+name = "paper_numbers"
+what = "the Sec. 4 prose numbers against their data, and the generated macros (paper/figures/paper_numbers.tex)"
+after = ["setup"]
+command = ["julia", "--startup-file=no", "--project=neurips2026", "neurips2026/scripts/paper_numbers.jl"]
+driver = "neurips2026/scripts/paper_numbers.jl"
+config = "neurips2026/configs/paper_numbers.toml"
+time = "00:30:00"
+
+# ---- the scoring studies (notes/; no paper asset reads them): only with --only ------------------------------------------
+[[stage]]
+name = "score_timing"
+what = "the per-hypothesis CPU scoring cost (notes/score_timing.md); SINGLE THREAD by protocol (the driver refuses another count)"
+after = ["setup"]
+# MEMORY: british_museum.jld2 is ~92 GB and its load needs ~220 GB: the site's CPUs at the node ratio pay for it
+# (dgx01: 28 CPUs x 8G), although the scoring itself is single-threaded by protocol.
+command = ["julia", "-t", "1", "--startup-file=no", "--project=neurips2026", "neurips2026/scripts/studies/score_timing.jl"]
+driver = "neurips2026/scripts/studies/score_timing.jl"
+config = "neurips2026/configs/score_timing.toml"
+time = "02:00:00"
+default = false
+
+[[stage]]
+name = "sample_budget_miscal"
+what = "the scoring-only sample-budget sweep, ζ ∈ {1, 32} (notes/sample_budget_miscal.md); CPU only"
+after = ["setup"]
+# MEMORY: the driver holds ONE scene at a time (it frees each before the next: two resident scenes OOM-killed job 4896 at
+# 300 GB) and logs VmHWM per scene; the last line of a successful run is the peak to size the site's CPUs from
+# (peak GB / 8). The 4K pools' scenes are 60–100 GB each on disk.
+command = ["julia", "-t", "auto", "--startup-file=no", "--project=neurips2026", "neurips2026/scripts/studies/sample_budget_miscal.jl"]
+driver = "neurips2026/scripts/studies/sample_budget_miscal.jl"
+config = "neurips2026/configs/sample_budget_miscal.toml"
+time = "12:00:00"
+default = false
+
+[[stage]]
+name = "f32_radix_probe"
+what = "the Float32 radix-sort decision probe on real residuals; single thread"
+after = ["setup"]
+command = ["julia", "-t", "1", "--startup-file=no", "--project=neurips2026", "neurips2026/scripts/studies/f32_radix_probe.jl"]
+driver = "neurips2026/scripts/studies/f32_radix_probe.jl"
+config = "neurips2026/configs/f32_radix_probe.toml"
+time = "02:00:00"
+default = false

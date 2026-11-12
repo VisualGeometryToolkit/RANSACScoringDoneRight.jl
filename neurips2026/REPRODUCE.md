@@ -18,15 +18,27 @@ julia --project=. scripts/<driver>.jl              # run the pending stages
 make -C paper                                      # the PDF (18 pages)
 ```
 
+Or everything in one command, per machine (VisualGeometryToolkitEval's runner on
+the stage graph of record `configs/reproduce.toml`; from the repository root):
+
+```
+bash neurips2026/scripts/reproduce/reproduce_results_dgx.sh --dry-run    # the jobs, the run keys, every missing input
+bash neurips2026/scripts/reproduce/reproduce_results_dgx.sh              # Slurm (dgx01)
+bash neurips2026/scripts/reproduce/reproduce_results_desktop.sh          # no scheduler
+```
+
 ## What is reproduced, and from what
 
 The paper's two figures are drawn from **six evaluated runs** (PT/E, ETH3D/F,
 HEB/H × Profile, Sensitivity) produced on 2026-05-06 by the evaluation
 pipeline of the time (RobustVisualGeometry `eval/neurips2026`, see "Not
 ported"). Each run's evaluated table (`source.jld2`) is kept, with the run's
-parameters and the renders of the time, as the stored runs of record:
-`<results_root()>/stored/paper-runs-2026-05-06/` (`PROVENANCE.toml`,
-`SHA256SUMS`; published as the `neurips2026_paper_runs` artifact).
+parameters and the renders of the time, as the stored runs of record: an
+INPUT tier, `<data_root()>/neurips2026/paper_runs/<dataset>/<matcher>/<problem>/<Profile|Sensitivity>/`
+(`PROVENANCE.toml`, `SHA256SUMS`, and `MOVED.toml`, the stamped results-root
+leaf each came from; published as the `neurips2026_paper_runs` artifact). Each
+config names the tables it reads as `[inputs.<id>]` (tier, path, provenance,
+sha256), so a run key changes with the bytes it reads.
 
 From those tables the drivers here regenerate every figure fragment of the
 paper, with the renderer ported from the one that drew them (`src/panels.jl`).
@@ -48,8 +60,8 @@ Inputs are read from `data_root()` (read-only: `VGTK_DATA_ROOT`, else
 `data/exp_raw`, else the artifact view of the published data); results are
 written under `results_root()` (`VGTK_RESULTS_ROOT`, else `data/exp_pro`), one
 directory per run key, each with its `_config.toml` and `_provenance.toml`.
-The stored runs are a results-side input: the figure configs name them by
-`[stored] dir`, relative to `results_root()`. The published data
+The stored runs are inputs like any other: the configs name each table as an
+`[inputs.<id>]` under `data_root()`. The published data
 (`configs/data_artifacts.toml`, `Artifacts.toml`): the stored runs
 (`neurips2026_paper_runs`, required; Zenodo record not yet deposited) and the
 raw inputs of the paper's pools, shared with LocalOptimizationDoneRight's
@@ -75,6 +87,10 @@ writes into `paper/figures` only what is identical, unless the config's
 | `fig:sensitivity-grid` | `paper/figures/HEB-H-SIFT-Sensitivity-eRmean.tex` `paper/figures/HEB-H-SIFT-Sensitivity-eRstd.tex` | generated — ported; REGENERATED with the title "HEB / SIFT", numbers identical to the submitted file (signed off 2026-10-09) | `scripts/fig_sensitivity.jl` | `configs/fig_sensitivity.toml` | stored run `heb/sift/H/Sensitivity/2026-05-06T084659` | as above (job 842) |
 | `fig:sensitivity-grid` | `paper/figures/sensitivity_styles.tex` `paper/figures/sensitivity_styles_shared.tex` | generated — ported, verified byte-identical | `scripts/fig_sensitivity.jl` | `configs/fig_sensitivity.toml` | the HEB Sensitivity run's method set and validation sizes | as above |
 | — | `paper/figures/paper_numbers.tex` | generated — new (no submitted copy): `\BaselinesStdVtwoLo`, `\BaselinesStdVtwoHi`, `\StdGapVtwoLo`, `\StdGapVtwoHi` (Sec. 4.4) | `scripts/paper_numbers.jl` | `configs/paper_numbers.toml` | stored runs `phototourism/sift/E/Sensitivity/…`, `eth3d/splg/F/Sensitivity/…` (`summary`, `std_med` at n = 2) | `_provenance.toml` of `numbers/paper_numbers-<key>` |
+| — | `paper/appendix_dof.tex` `paper/appendix_torr.tex` `paper/appendix_deployment.tex` `paper/checklist.tex` | static | — | — | — | the authors' text: sections of the manuscript that `main.tex` reads (appendices, the NeurIPS checklist); no data |
+| — | `paper/figures/accv_numbers.tex` | static | — | — | — | copied from LocalOptimizationDoneRight accv2026 `paper/figures/paper_numbers.tex` (its `scripts/paper_numbers.jl`), the `SelThresh*` macros recomputed from the same selection summary without the Welsch and Geman–McClure scores; the file's header names its source (App. G, H) |
+| — | `paper/figures/sel_miscal_colors.tex` `paper/figures/panel_sel_miscal.tex` `paper/figures/panel_sel_miscal_maa.tex` | static | — | — | — | copied from LocalOptimizationDoneRight accv2026 (its selection-miscalibration figure driver; no driver here), the inline `table` form converted to `coordinates` for arXiv on 2026-11-10, same numbers (App. G) |
+| — | `paper/figures/table_e2e.tex` | static | — | — | — | copied from LocalOptimizationDoneRight accv2026 `scripts/e2e_ransac.jl` stage `table` (config `pt_e_e2e_table`, key c6209c04f1db6665; the time row from `pt_e_e2e_timing`, key 5f46111bdfcca644); the file's header names its source (App. H) |
 
 The Sensitivity fragments are written in the `coordinates {…}` form the paper
 carries since its arXiv preparation (paper repository 98714cd converted the
@@ -157,7 +173,7 @@ A rerun replaces the stored runs only through a new keyed run and the
   `select_on_grid!`) and VisualGeometryToolkitEval's `Tuning` for the
   cross-validation — as `scripts/profile.jl` and `scripts/sensitivity.jl`
   writing keyed runs with the same `source.jld2` schema, so `fig_*.jl` reads
-  them through a changed `[stored]`/run entry. Expected runtime once ported,
+  them through a changed `[inputs.<id>]` entry. Expected runtime once ported,
   from the 2026-05-06 jobs (one 8-GPU node): HEB Sensitivity 32 min, HEB
   Profile 7 min, PT Sensitivity 93 min, PT Profile 24 min, ETH3D Sensitivity
   38 min, ETH3D Profile 4 min (≈ 3.3 h), plus the coarse probes (~5–15 min
@@ -195,7 +211,12 @@ to match its data exactly, and the macro file to be what the driver writes
 
 `scripts/studies/` holds the package's scoring studies (sample budget under
 scale miscalibration, per-hypothesis scoring cost, a Float32 radix-sort
-probe), launched by `scripts/slurm/*.sbatch`, with write-ups in `notes/`. The
-paper reads none of their outputs. They predate the conventions (command-line
-parameters, unkeyed outputs); their deferred violations are listed, with the
-fix, in `test/test_paper_project.jl`.
+probe), with write-ups in `notes/`. The paper reads none of their outputs.
+Each is a driver on its config of record (`configs/score_timing.toml`,
+`sample_budget_miscal.toml`, `f32_radix_probe.toml`: the protocol of the
+write-up's run, and its pools as `[inputs.<id>]`), writing into its keyed run
+directory under `results_root()`; they are stages of `configs/reproduce.toml`
+that run only when named (`--only=score_timing`). Their pools are accv2026's
+PT-E-SIFT-4K, which has no residuals files: the 0.9 pool reader needs them,
+so the dry run reports `score_timing`'s and `f32_radix_probe`'s
+`[inputs.residuals]` missing (a data-tier decision, recorded in each config).

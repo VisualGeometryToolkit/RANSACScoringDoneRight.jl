@@ -36,9 +36,9 @@ drivers are `neurips2026/scripts/fig_profile.jl` and `fig_sensitivity.jl`
 
 | driver | write-up | question |
 |:---|:---|:---|
-| `neurips2026/scripts/studies/sample_budget_miscal.jl` (+ `scripts/slurm/*.sbatch`) | `neurips2026/notes/sample_budget_miscal.md` | how selection improves with the hypothesis budget, calibrated and under a 32× miscalibrated scale |
-| `neurips2026/scripts/studies/score_timing.jl` (+ `scripts/slurm/*.sbatch`) | `neurips2026/notes/score_timing.md` | the per-hypothesis CPU cost of each scorer |
-| `neurips2026/scripts/studies/f32_radix_probe.jl` | — | a decision probe: does a Float32 sort key speed up the sweep's radix sort at these problem sizes? |
+| `neurips2026/scripts/studies/sample_budget_miscal.jl` (`configs/sample_budget_miscal.toml`) | `neurips2026/notes/sample_budget_miscal.md` | how selection improves with the hypothesis budget, calibrated and under a 32× miscalibrated scale |
+| `neurips2026/scripts/studies/score_timing.jl` (`configs/score_timing.toml`) | `neurips2026/notes/score_timing.md` | the per-hypothesis CPU cost of each scorer |
+| `neurips2026/scripts/studies/f32_radix_probe.jl` (`configs/f32_radix_probe.toml`) | — | a decision probe: does a Float32 sort key speed up the sweep's radix sort at these problem sizes? |
 
 ## Environment
 
@@ -51,15 +51,16 @@ VisualGeometryToolkitEstimation, which the package itself uses only for SIMFIT++
 cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
 ```
 
-The pools are read with VisualGeometryToolkitEval's `load_pool` and
-`load_pool_residuals`. The data root is VisualGeometryToolkitEval's `data_root()`
-(`ENV["VGTK_DATA_ROOT"]`, else the project's `data/exp_raw`; or give the
-drivers `--pool` and `--out`); pools are read from
-`<root>/accv2026/data/PT-E-SIFT-4K/` and heavy outputs land under
-`<root>/accv2026/results/<experiment>/`. The `.sbatch` files are example SLURM
-launchers: they carry the exact driver invocation behind the published numbers,
-with the resource requests of the cluster they ran on — adapt the partition,
-CPUs and memory to yours. Submit them from the repository root.
+Each study is one driver and one config of record under `neurips2026/configs/`:
+its parameters, and every file it reads as an `[inputs.<id>]` table (tier,
+path under VisualGeometryToolkitEval's `data_root()`, provenance, sha256 where
+known). The pools are read with VisualGeometryToolkitEval's `load_pool` and
+`load_pool_residuals`. A study writes only into its own keyed run directory
+under `results_root()`, `<dataset>/<matcher>/<problem>/<study>/<kind>-<run key>/`
+(VisualGeometryToolkitEval's `keyed_cell_dir`), with `_config.toml` and
+`_provenance.toml` beside the result. They run as stages of the paper's stage
+graph (`neurips2026/configs/reproduce.toml`), only when named: the machine's
+resources are its site profile's.
 
 ## Sample budget under scale miscalibration
 
@@ -71,7 +72,7 @@ counted in minimal samples, from 100 to 4 000, on 8 800 pairs of four held-out
 test scenes.
 
 ```bash
-sbatch neurips2026/scripts/slurm/sample_budget_miscal.sbatch
+bash neurips2026/scripts/reproduce/reproduce_results_dgx.sh --only=sample_budget_miscal
 ```
 
 The write-up reports mAA@10° and median pose error at every budget for the
@@ -87,7 +88,7 @@ at one shared operating point; the figure is the minimum over three
 repetitions, per hypothesis scored.
 
 ```bash
-sbatch neurips2026/scripts/slurm/score_timing.sbatch
+bash neurips2026/scripts/reproduce/reproduce_results_dgx.sh --only=score_timing
 ```
 
 The sort-and-sweep costs more than RANSAC and MSAC and less than GaU and

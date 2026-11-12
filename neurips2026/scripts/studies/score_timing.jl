@@ -26,29 +26,43 @@
 #   pair before scoring any -- so no online RANSAC can run it, and timing
 #   against it would not measure what a deployment pays.
 #
-# PROTOCOL: 20 pairs, 3 reps, minimum, single thread, per-pair workspaces —
-# the published protocol, so these numbers supersede the 2026-07-24 table.
+# PROTOCOL (configs/score_timing.toml [timing]): 20 pairs, 3 reps, minimum,
+# single thread, per-pair workspaces — the published protocol, so these
+# numbers supersede the 2026-07-24 table.
+#
+# reproduce: reads configs/score_timing.toml
+#
+# STAGES
+#   measure  µs per hypothesis of every scorer on the two density regimes of
+#            [inputs.pool] (its residuals [inputs.residuals])
+#            → <results>/phototourism/sift/E/score_timing/timing-<run key>/timings.jld2
+#
+#   julia -t 1 --project=. scripts/studies/score_timing.jl [--plan] [--stage=NAME] [--force]
 # =============================================================================
 
-using JLD2, Printf
+using DrWatson
+@quickactivate "NeurIPS2026"
+include(srcdir("NeurIPS2026.jl"))
+using Printf
 using RANSACScoringDoneRight
 using VisualGeometryToolkitCore.Pools: num_points, num_models
-using VisualGeometryToolkitEval: cli_option
-using VisualGeometryToolkitEval.Experiments: data_root
-using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residuals_path, residual_matrix
+using VisualGeometryToolkitEval.Experiments: keyed_cell_dir
+using VisualGeometryToolkitEval.Pools: load_pool, load_pool_residuals, residual_matrix
 import VisualGeometryToolkitCore as VGC
 const RSDR = RANSACScoringDoneRight
 
-# The data root is VisualGeometryToolkitEval's `data_root()` (ENV["VGTK_DATA_ROOT"],
-# else the project's data/exp_raw). Needed only for the --pool/--out defaults;
-# give both to run without it.
+const CFG_PATH = projectdir("configs", "score_timing.toml")
+const CFG = TOML.parsefile(CFG_PATH)
+const KEY = run_key(CFG)
+const OUTDIR = keyed_cell_dir(CFG, "score_timing", "timing")
+const RESULT = "timings.jld2"
 
 # The marginal scorer's native parameter is the outlier half-width, never a loss
 # width or a threshold (the owner's ruling, 2026-11-11: the Student-t has only the
-# outlier half-width). It is its own option, `--outlier-halfwidth`; `--loss-width`
-# is the loss-width families' alone. The recorded protocol ran both at 1.64e-3
-# (each the default of its own option); a timing harness measures cost, and
-# neither value is read as the other.
+# outlier half-width). It is its own config value, [timing] outlier_halfwidth;
+# [timing] loss_width is the loss-width families' alone. The recorded protocol
+# ran both at 1.64e-3; a timing harness measures cost, and neither value is
+# read as the other.
 #
 # Per-pair workspace: deployed sizing, so `sweep!` takes the radix fast path
 # (RVG's `_set_n!` resizes to n for exactly this reason); every scorer gets one,
@@ -112,51 +126,42 @@ function time_scorers(subs, scorers; reps::Int)
 end
 
 """
-    timing_subsets(path, npairs) -> [(regime, pairs, mats)]
+    timing_subsets(path, residuals, npairs) -> [(regime, pairs, mats)]
 
 The two density regimes of the protocol: the first `npairs` pairs of the pool
 at `path` ("typical") and its `npairs` pairs with the most points ("dense"),
-with their residual matrices — read for those pairs only, so a 95 GB
-residuals file costs what the timed pairs hold.
+with their residual matrices from `residuals` — read for those pairs only, so a
+95 GB residuals file costs what the timed pairs hold.
 """
-function timing_subsets(path::AbstractString, npairs::Int)
+function timing_subsets(path::AbstractString, residuals::AbstractString, npairs::Int)
     pool = load_pool(path)
     pairs = pool.pairs
     println("loaded $(length(pairs)) pairs"); flush(stdout)
     k   = min(npairs, length(pairs))
     byn = sortperm(pairs; by = num_points, rev = true)
     typical, dense = collect(1:k), byn[1:k]
-    res = load_pool_residuals(residuals_path(path), pool; pairs = sort(unique(vcat(typical, dense))))
+    res = load_pool_residuals(residuals, pool; pairs = sort(unique(vcat(typical, dense))))
     sub(ix) = (pairs[ix], [residual_matrix(res, i) for i in ix])
     return [("typical", sub(typical)...), ("dense", sub(dense)...)]
 end
 
-function main(args = ARGS)
-    pool_dir   = cli_option(args, "pool", nothing)
-    scene      = cli_option(args, "scene", "british_museum")
-    npairs     = parse(Int, cli_option(args, "npairs", "20"))
-    loss_width = parse(Float64, cli_option(args, "loss-width", "0.00164"))                  # the loss-width families'
-    outlier_halfwidth = parse(Float64, cli_option(args, "outlier-halfwidth", "0.00164"))    # the Student-t scorer's
-    reps       = parse(Int, cli_option(args, "reps", "3"))
-    out        = cli_option(args, "out", nothing)
-
-    pool_dir === nothing && (pool_dir = joinpath(data_root(), "accv2026", "data", "PT-E-SIFT-4K"))
-    out === nothing && (out = joinpath(data_root(), "accv2026", "results", "score_timing"))
-
-    Threads.nthreads() == 1 || error("single-thread BY PROTOCOL — use `julia -t 1`")
-    mkpath(out)
-
-    println("loading $scene …"); flush(stdout)
-    path = joinpath(pool_dir, "$scene.jld2")
-    subs = timing_subsets(path, npairs)
-    results = time_scorers(subs, sub -> timed_scorers(sub; loss_width, outlier_halfwidth); reps)
-
-    dst = joinpath(out, "score_timing_exact_$(scene).jld2")
-    JLD2.jldsave(dst; scene, loss_width, outlier_halfwidth, reps, nthreads = Threads.nthreads(), results)
-    println("saved -> ", dst); flush(stdout)
-    return 0
+function measure()
+    p = CFG["timing"]
+    Threads.nthreads() == p["threads"] || error("$(p["threads"]) thread(s) BY PROTOCOL — use `julia -t $(p["threads"])`")
+    pool, residuals = input_path(CFG, "pool"), input_path(CFG, "residuals")
+    subs = timing_subsets(pool, residuals, p["npairs"])
+    results = time_scorers(subs, sub -> timed_scorers(sub; loss_width = p["loss_width"],
+                                                     outlier_halfwidth = p["outlier_halfwidth"]); reps = p["reps"])
+    mkpath(OUTDIR)
+    JLD2.jldsave(joinpath(OUTDIR, RESULT); results, nthreads = Threads.nthreads())
+    write_run_records(OUTDIR, CFG; driver = "studies/score_timing.jl", config_source = CFG_PATH, key = KEY,
+                      inputs = [pool, residuals])
+    return nothing
 end
 
-if abspath(PROGRAM_FILE) == (@__FILE__)
-    main()
-end
+const STAGES = [
+    Stage(:measure, "µs per hypothesis of every scorer, typical and dense pairs, keyed by the run key",
+          () -> run_complete(OUTDIR; sidecar = RESULT), measure),
+]
+
+run_stages("score_timing", STAGES)

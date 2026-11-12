@@ -1,0 +1,45 @@
+# =============================================================================
+# sample_budget_miscal — configuration of record of
+# scripts/studies/sample_budget_miscal.jl: the scoring-only sample-budget
+# sweep, calibrated (ζ = 1) vs miscalibrated (ζ = 32) noise scale (notes/
+# sample_budget_miscal.md). Not a paper asset.
+#
+# The values are those of the write-up's run (2026-07-27,
+# results/scoring_budget/pt_e_samples/scoring_budget_miscal.{jld2,tsv}: its
+# recorded --pool and --ranges) and the driver's command-line defaults of the
+# time (ζ, criterion, budgets); scripts/slurm/sample_budget_miscal.sbatch
+# defaulted to PT-E-SIFT-4K_pf3 since, whose ranges sidecar does not exist. The
+# scenes are the TEST side of the stack's registered split [sweep] split
+# (VisualGeometryToolkitEval configs/splits.toml, read through Tuning's
+# registered_split): the validation side tuned the natives consumed here.
+# Output: keyed_cell_dir(cfg, "sample_budget_miscal", "curves").
+#
+# DATA TIER (2026-11-12): the 0.9 driver reads each scene's light pool AND its
+# `<scene>.residuals.jld2`; PT-E-SIFT-4K has no residuals files (the dry run of
+# `--only=sample_budget_miscal` cannot see that: [inputs.pool] is the
+# directory). Converting the pool or choosing another pool of record is the
+# author's call.
+# =============================================================================
+
+[experiment]
+dataset = "phototourism"
+matcher = "sift"
+problem = "E"
+
+[sweep]
+split = "phototourism"         # a [splits.<name>] of VisualGeometryToolkitEval configs/splits.toml; its test_scenes
+criterion = "median"           # the CV sidecar's tuning criterion (method keys <method>_<criterion>)
+zetas = [1.0, 32.0]            # noise-scale corruption factors: calibrated, miscalibrated
+budgets = [100, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]   # MINIMAL SAMPLES
+max_pairs = 0                  # 0: every pair of each scene (N: the first N, a smoke run)
+
+[inputs.pool]
+tier = "accv2026_pools"
+path = "accv2026/data/PT-E-SIFT-4K"
+provenance = "accv2026 (LocalOptimizationDoneRight) PT-E-SIFT-4K scoring pools, one <scene>.jld2 per scene (~1 TB; no provenance record beside the pools, not hashed): the --pool of the 2026-07-27 run"
+
+[inputs.ranges]
+tier = "accv2026_pools"
+path = "accv2026/data/PT-E-SIFT-4K/coarse_ranges_hierarchical.jld2"
+sha256 = "9ce5ea28a3fee228afd1fb850f3860ecb94d3c954a16ee54e6c3455ba31dd7a5"
+provenance = "the deployed coarse→fine CV sidecar of PT-E-SIFT-4K, hierarchical protocol (2026-06-11 probe; RobustVisualGeometry eval/neurips2026 run_coarse_probes.jl): the tuned natives; the --ranges of the 2026-07-27 run"

@@ -9,15 +9,15 @@ DrWatson's data directory, bound per machine (VisualGeometryToolkitEval Experime
 | `datadir("sims")` | — | smoke runs, never read by a paper asset |
 
 `data/exp_raw`, `data/exp_pro` and `data/sims` are ignored by git. Configs name
-inputs relative to `data_root()` and stored results relative to
-`results_root()`; no code names a machine path.
+every input as an `[inputs.<id>]` table, its path relative to `data_root()`;
+no code names a machine path.
 
 On the author's host both are links: `exp_raw` to the immutable input root
 (the PhotoTourism, HEB and ETH3D trees the pool configs' `[source]` tables
-name) and `exp_pro` to the paper's results root, which holds
-`stored/paper-runs-2026-05-06/` (the six evaluated runs behind Fig. 1, Fig. 2
-and the Sec. 4 numbers, with `PROVENANCE.toml` and `SHA256SUMS`) and the keyed
-run directories of the drivers (`figures/fig_profile-<key>/`, …).
+name, accv2026's pools, and `neurips2026/paper_runs/`: the six evaluated runs
+behind Fig. 1, Fig. 2 and the Sec. 4 numbers, with `PROVENANCE.toml`,
+`SHA256SUMS` and `MOVED.toml`) and `exp_pro` to the paper's results root, which
+holds the keyed run directories of the drivers (`figures/fig_profile-<key>/`, …).
 
 ## A machine without the data: the published artifacts
 
@@ -28,7 +28,7 @@ julia --project=. scripts/fetch_data.jl --list   # the catalog, nothing fetched
 ```
 
 downloads them once into the Julia depot (sha256 and tree hash verified) and
-links them into `data/exp_raw` (an artifact view) and `data/exp_pro`. An
+links them into `data/exp_raw` (an artifact view). An
 existing binding always wins and is never written to. The stored runs'
 Zenodo record is not deposited yet (its URL carries the placeholder
 `ZENODO_RECORD_NEURIPS2026`, which the fetch refuses); the raw inputs are the

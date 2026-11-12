@@ -8,15 +8,30 @@
 # method's two-decade window, and `profile_oracle`, the GT-Oracle line and the
 # per-pair-best envelopes), as the 2026-05-06 production runs wrote them
 # (RobustVisualGeometry eval/neurips2026 evaluate_val, 67d76e2-dirty; Slurm
-# jobs 843, 845, 855). [stored] dir is RELATIVE to results_root(); the
-# directory's PROVENANCE.toml and SHA256SUMS describe it, and the published
-# copy is the `neurips2026_paper_runs` artifact (configs/data_artifacts.toml).
+# jobs 843, 845, 855): the [inputs.<id>] below, under data_root(), in the
+# `neurips2026_paper_runs` tier (configs/data_artifacts.toml; PROVENANCE.toml
+# and SHA256SUMS beside the runs); each cell names its input.
 # The computation that produced the tables is NOT ported (REPRODUCE.md,
 # "Not ported").
 # =============================================================================
 
-[stored]
-dir = "stored/paper-runs-2026-05-06"
+[inputs.pt_profile]
+tier = "neurips2026_paper_runs"
+path = "neurips2026/paper_runs/phototourism/sift/E/Profile/source.jld2"
+sha256 = "d81999efa120e0588a0a0f829178507f63125387d810580aa3f8d6a73456dac9"
+provenance = "the cell's evaluated Profile table (`profile`, `profile_oracle`): RobustVisualGeometry eval/neurips2026 evaluate_val (67d76e2-dirty, committed as 6bc825d), Slurm job 845, 2026-05-06; the stored leaf phototourism/sift/E/Profile/2026-05-06T130222 (paper_runs MOVED.toml)"
+
+[inputs.eth3d_profile]
+tier = "neurips2026_paper_runs"
+path = "neurips2026/paper_runs/eth3d/splg/F/Profile/source.jld2"
+sha256 = "499971d58b7b01e1278406287e018a9b977e0ac784472c898e36346fdb50d14b"
+provenance = "the cell's evaluated Profile table (`profile`, `profile_oracle`): RobustVisualGeometry eval/neurips2026 evaluate_val (67d76e2-dirty, committed as 6bc825d), Slurm job 855, 2026-05-06; the stored leaf eth3d/splg/F/Profile/2026-05-06T140718 (paper_runs MOVED.toml)"
+
+[inputs.heb_profile]
+tier = "neurips2026_paper_runs"
+path = "neurips2026/paper_runs/heb/sift/H/Profile/source.jld2"
+sha256 = "b4ea302f561ad6965816834b57baa95fc5b04443640aaa83ae962bab8876b729"
+provenance = "the cell's evaluated Profile table (`profile`, `profile_oracle`): RobustVisualGeometry eval/neurips2026 evaluate_val (67d76e2-dirty, committed as 6bc825d), Slurm job 843, 2026-05-06; the stored leaf heb/sift/H/Profile/2026-05-06T130202 (paper_runs MOVED.toml)"
 
 [profile]
 criterion = "median"
@@ -26,14 +41,14 @@ styles_from = "heb"
 
 [[profile.cells]]
 key = "pt"
-run = "phototourism/sift/E/Profile/2026-05-06T130222"
+input = "pt_profile"
 title = 'PhotoTourism / RootSIFT / \(\bE\)'
 asset = "PT-E-SIFT-Profile.tex"
 bands = true
 
 [[profile.cells]]
 key = "eth3d"
-run = "eth3d/splg/F/Profile/2026-05-06T140718"
+input = "eth3d_profile"
 title = 'ETH3D / SuperPoint+LightGlue / \(\bF\)'
 asset = "ETH3D-F-SPLG-Profile.tex"
 # Drawn with its confidence band, like the other cells and as the caption
@@ -43,7 +58,7 @@ bands = true
 
 [[profile.cells]]
 key = "heb"
-run = "heb/sift/H/Profile/2026-05-06T130202"
+input = "heb_profile"
 # HEB ships plain SIFT matches (Sec. 4.2, Tab. 3). The submitted title read
 # "RootSIFT" (the old renderer's label for the `sift` slug); corrected on the
 # author's sign-off, 2026-10-09.

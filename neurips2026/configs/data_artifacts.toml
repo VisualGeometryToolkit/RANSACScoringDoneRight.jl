@@ -11,8 +11,9 @@
 #
 # Two groups:
 #   * neurips2026_paper_runs — the stored runs every figure and prose number of
-#     the paper is drawn from (configs/fig_profile.toml, fig_sensitivity.toml,
-#     paper_numbers.toml [stored] dir). REQUIRED: with it, every generated
+#     the paper is drawn from, an INPUT tier mounted on the data root (the
+#     [inputs.<id>] of configs/fig_profile.toml, fig_sensitivity.toml,
+#     paper_numbers.toml name it as their `tier`). REQUIRED: with it, every generated
 #     asset regenerates. Its record is not deposited yet (placeholder).
 #   * the raw inputs of the paper's pools, SHARED with LocalOptimizationDoneRight's
 #     accv2026 (the same artifacts, records and hashes: the two papers read
@@ -50,11 +51,11 @@ placeholder = "ZENODO_RECORD_ETH3D"
 
 [artifacts.neurips2026_paper_runs]
 kind = "tree"
-dir = "stored/paper-runs-2026-05-06"
-mount = "results"
+dir = "neurips2026/paper_runs"
+mount = "data"
 record = "neurips2026"
 required = true
-what = "the six evaluated runs (PT/E, ETH3D/F, HEB/H x Profile, Sensitivity) the paper's Fig. 1, Fig. 2 and Sec. 4 numbers are drawn from: per run source.jld2 (the evaluated table), config.toml and the original renders, with PROVENANCE.toml and SHA256SUMS"
+what = "the six evaluated runs (PT/E, ETH3D/F, HEB/H x Profile, Sensitivity) the paper's Fig. 1, Fig. 2 and Sec. 4 numbers are drawn from: per run source.jld2 (the evaluated table), config.toml and the original renders, with PROVENANCE.toml, SHA256SUMS and MOVED.toml (the stamped leaf each came from)"
 provenance = "RobustVisualGeometry eval/neurips2026 run_pipeline.jl / evaluate_val.jl (67d76e2-dirty, committed as 6bc825d), one 8-GPU node, 2026-05-06, Slurm jobs 842-845, 854, 855"
 
 [artifacts.pt_raw_validation]
