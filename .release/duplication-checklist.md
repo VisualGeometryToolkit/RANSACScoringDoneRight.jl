@@ -84,3 +84,18 @@ VisualGeometryToolkitEval's one implementation:
 - [x] the studies' command-line parameters and their output directories under `data_root()/accv2026/results` (score_timing, sample_budget_miscal) and the probe's undefined `DATA_ROOT` → one config of record each, `keyed_cell_dir`, `write_run_records`, `run_complete`, `run_stages` (ec77439)
 - [x] scripts/slurm/score_timing.sbatch, sample_budget_miscal.sbatch (the launchers, their POOL/OUT/… environment switches) → configs/reproduce.toml stages and scripts/reproduce/reproduce_results_{dgx,desktop}.sh on Eval's runner (309a69f)
 - [x] the deferred-violation allowlist of test/test_paper_project.jl → none: the check runs with no allowance (ec77439, b14bdf7)
+
+## The concept-level audit (2026-11-12; ~/logs/dgx-agent/dup-audit-rsdr.md)
+
+- [x] config_defaults.jl's second `include_dependency` → VisualGeometryToolkitCore's `parse_defaults` (f07af91)
+- [x] neurips2026 panels.jl's two `\providecolor` loops → VisualGeometryToolkitEval Render's `color_defs` (dc3131a)
+- [x] sample_budget_miscal's interior-argmin gate, median and mAA → Eval's `enforce_probe_interior`, `finite_median`, `eligible_maa` (dc3131a)
+- [x] f32_radix_probe's Float32 key and UInt32/Int-perm sort → Core's `radix_key`, `radix_sortperm!` (dc3131a)
+- [x] the `Exact` aggregation and `Aggregation` (a second launcher of Core's exact selection kernels) → Core's `select_on_grid!` on the `:pool` staging (3df0fd5)
+- [x] `_ka_kernel` → Core's one launch policy, `OnBackend(backend; workgroupsize = 1)` (3df0fd5, 24a0ba0)
+- [x] neurips2026 panels.jl's coordinate writers → Eval Render's `pgf_coords` (cecd431; fragments re-rendered, same numbers, 1e3e5cc)
+- [x] the five loss-width families' constructor loop and `_at_loss_width` → Core's `@threshold_scoring_constructors` (ea6dcb1)
+- [x] their `scoring_from_toml`/`config_dict` methods → VisualGeometryToolkitEstimation's `AbstractThresholdScoring` methods (ea6dcb1)
+- [x] `_free_local!` → Core's `free_device_buffers!`; GPUArrays no longer a dependency (ea6dcb1)
+- [x] neurips2026 scripts/fetch_data.jl's command line and fetch loop → Eval DataArtifacts' `fetch_data!` (f31b0c1)
+- [x] f32_radix_probe's Int32-permutation sort → Core's `RadixPermBuffers{UInt32, Int32}` (f31b0c1)
