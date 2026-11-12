@@ -1,6 +1,6 @@
 # RANSACScoringDoneRight changelog
 
-## Unreleased (the VisualGeometryToolkit 0.9 stack)
+## 0.7.0 (2026-11-12, the VisualGeometryToolkit 0.9 stack)
 
 On the VisualGeometryToolkit 0.9 stack: VisualGeometryToolkitCore 0.9, and
 VisualGeometryToolkitEstimation (a new dependency, for SIMFIT++ alone);
@@ -154,8 +154,8 @@ neurips2026 also Eval and IO of that stack.
 - neurips2026's `scripts/fetch_data.jl` is the one call `fetch_data!(project_catalog())` (VisualGeometryToolkitEval
   DataArtifacts'; the script's own command line, fetch loop and report are deleted), and the radix probe's Int32-
   permutation variant runs on VisualGeometryToolkitCore's `RadixPermBuffers{UInt32, Int32}` (its own sort deleted).
-- [compat]: neurips2026 VisualGeometryToolkitEstimation 0.9, VisualGeometryToolkitEval 0.7 (temporary [sources] to the
-  pin vgtk-pin-9c74e264).
+- [compat]: VisualGeometryToolkitCore 0.9 and VisualGeometryToolkitEstimation 0.9 (the package and its tests);
+  neurips2026 also VisualGeometryToolkitEval 0.7 and VisualGeometryToolkitIO 0.9; every one resolved from General.
 
 ## 0.6.0 (2026-11-09)
 
