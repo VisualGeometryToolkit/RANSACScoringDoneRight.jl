@@ -141,11 +141,13 @@ Stage a pool once for every grid evaluator. The inputs are the light records `pa
 (`residuals[p]` is pair `p`'s `num_points × num_models` Float32 matrix, in
 `NormalizedImageFrame` units — the caller loads them; staging opens no file),
 each pair precomputed by [`precompute_pair`](@ref) into the flat
-[`IGSharedData`](@ref) layout on `backend`. No prior fit, no width grid baked in.
+[`IGSharedData`](@ref) layout on `backend` (by default VisualGeometryToolkitCore's
+`default_device()`: the accelerator when one is loaded and functional, else the CPU).
+No prior fit, no width grid baked in.
 """
 function stage_ig_shared_from_pairs(pairs::AbstractVector{<:PoolPair},
                                     residuals::AbstractVector{<:AbstractMatrix{Float32}};
-                                    backend = KernelAbstractions.CPU())
+                                    backend = VgtkCore.default_device())
     length(pairs) == length(residuals) || throw(DimensionMismatch(
         "stage_ig_shared_from_pairs: $(length(pairs)) pairs and $(length(residuals)) residual matrices"))
     foreach(check_residual_matrix, pairs, residuals)

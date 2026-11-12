@@ -8,6 +8,9 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **GPU-first defaults:** `stage_ig_shared_from_pairs` and the pool-selection staging (`stage_selection`) default to
+  VisualGeometryToolkitCore's `default_device()` (the accelerator when one is loaded and functional), no longer a pinned
+  `KernelAbstractions.CPU()`. Passing `backend` explicitly is unchanged.
 - **Renamed (VisualGeometryToolkitCore's and Estimation's, the owner's rulings): the robust-estimation contract's names.**
   A width's multiple of the scale is the `efficiency_constant` (was `scale_multiple`; the `EfficiencyConstant` width axis,
   was `ScaleMultiple`; the protocol's `operating_efficiency_constant`), always the plain multiple; find_*'s strategy

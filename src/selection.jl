@@ -17,7 +17,7 @@ selection_staging(::_RsdrGridScoring) = :rsdr
 
 # The staged batch: the device staging of the pairs' residual columns, and the
 # pairs themselves (SIMFIT++ reads their pixel residuals on the host).
-stage_selection(::Val{:rsdr}, pairs, residuals; backend = KernelAbstractions.CPU()) =
+stage_selection(::Val{:rsdr}, pairs, residuals; backend = VgtkCore.default_device()) =
     (; staged = stage_ig_shared_from_pairs(pairs, residuals; backend), pairs)
 
 """
