@@ -56,7 +56,9 @@
     # non-finite square an outlier, quality 0: a NaN, an Inf and a finite d whose
     # Float32 square overflows), then the minimal sample's points corrected to
     # zero residual — written out here, as this package's own loop computed it
-    # before Core's one loop replaced it.
+    # before Core's one loop replaced it — but only a HELD sample point (Core's
+    # `sample_point_held`, on its residual's square: a sample point whose square is
+    # not finite is a point the model does not reach, and stays an outlier).
     function _summed_quality(sc, col, smp, τ)
         q(d) = (d2 = Float64(d * d); isfinite(d2) ? VGC.residual_quality(sc, d2, τ) : 0.0)
         s = 0.0
@@ -65,6 +67,7 @@
         end
         if smp !== nothing
             for i in smp
+                VGC.sample_point_held(col[i] * col[i]) || continue
                 s += VGC.residual_quality(sc, 0.0, τ) - q(col[i])
             end
         end
@@ -85,7 +88,7 @@
                     @test score!(W, sc, scores, col, 120; sample = smp) === _summed_quality(sc, col, smp, τ)
                     k = inlier_count(sc, W)
                     @test Set(consensus_order(sc, W)[1:k]) ==
-                          Set(i for i in 1:120 if (smp !== nothing && i in smp) ||
+                          Set(i for i in 1:120 if (smp !== nothing && i in smp && isfinite(col[i] * col[i])) ||
                                                      (isfinite(col[i]) && Float64(col[i] * col[i]) < τ^2))
                 end
             end
