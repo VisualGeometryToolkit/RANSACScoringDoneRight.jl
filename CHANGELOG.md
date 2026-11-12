@@ -8,6 +8,14 @@ neurips2026 also Eval and IO of that stack.
 
 ### Breaking
 
+- **On the stack's one copy of five more things** (the duplication audit's hoists; monorepo pin 9c74e264):
+  the five loss-width families' constructors and width setter are VisualGeometryToolkitCore's
+  `@threshold_scoring_constructors` (they gain the problem-TYPE form `F(P; threshold)`, as RANSAC/MSAC have it);
+  their TOML reader and writer are VisualGeometryToolkitEstimation's `AbstractThresholdScoring` methods, so
+  `config_dict` of one of them takes the registry, `config_dict(sc; tags = ALL_SCORING_TAGS)`, and a table that
+  spells `outlier_halfwidth` is refused naming the scorer's own `threshold`; the eager release of a grid's device
+  buffers is Core's `free_device_buffers!`, and GPUArrays is no longer a dependency. Results bit for bit.
+- **[compat]:** VisualGeometryToolkitEstimation 0.9 (test too); neurips2026 Estimation 0.9 and Eval 0.7.
 - **Removed: the `Exact` aggregation and the `Aggregation` supertype** (the duplication audit, the coordinator's
   ruling 2026-11-12). They were this package's second launcher of VisualGeometryToolkitCore's
   `exact_pm_score_kernel!`/`argmax_models_kernel!`: the exact selection of a loss-width family over a width grid is

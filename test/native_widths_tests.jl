@@ -98,7 +98,7 @@ end
                    ("smooth_tls", SmoothTLSScoring), ("geman", GemanScoring))
         d = Dict("type" => t, "threshold" => 1.5)
         sc = scoring_from_toml(d; problem = P, tags = ALL_SCORING_TAGS)
-        @test sc isa T && sc.threshold == 1.5 && config_dict(sc) == d
+        @test sc isa T && sc.threshold == 1.5 && config_dict(sc; tags = ALL_SCORING_TAGS) == d
     end
     d = Dict("type" => "student_t_uniform", "outlier_halfwidth" => 0.25)
     sc = scoring_from_toml(d; problem = P, tags = ALL_SCORING_TAGS)

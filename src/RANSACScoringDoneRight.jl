@@ -14,8 +14,7 @@ import VisualGeometryToolkitCore as VgtkCore
 # the outlier models that estimate the support, its CPU/GPU grids — and adds the
 # paper baselines. The scoring core
 # depends on VisualGeometryToolkitCore (for Uncertain and the constraint-problem protocol)
-# and StaticArrays/SpecialFunctions; the GPU sweep port adds KernelAbstractions
-# (and GPUArrays, to free its device scratch eagerly),
+# and StaticArrays/SpecialFunctions; the GPU sweep port adds KernelAbstractions,
 # and the scoring VOCABULARY layer adds Statistics (`cov` of an `Uncertain`).
 # SIMFIT++ is VisualGeometryToolkitEstimation's (`SimFitPP`, `simfitpp_select`;
 # moved there on 2026-11-11): this package only gives it a grid on the
@@ -55,15 +54,11 @@ using Statistics: Statistics
 # baseline and IG/marginal sweep kernels in ig_sweep_ka.jl / loss_width_sweep_ka.jl use these;
 # the module name is bound because nearly every call is qualified.
 using KernelAbstractions: KernelAbstractions, @kernel, @index, @Const
-# Eager release of the grid evaluators' function-local device buffers
-# (`_free_local!`, marg_sweep_ka.jl): GPUArrays owns `unsafe_free!`, which every
-# GPU array type implements, and `AbstractGPUArray`. Bound by module name,
-# because both uses are qualified. (KernelAbstractions' own `unsafe_free!` is
-# not public, and CUDA.jl 5.11 does not extend it: on CUDA it frees nothing.)
-using GPUArrays: GPUArrays
 # The one host → device upload (allocate + copy, converted to the element type)
-# is VisualGeometryToolkitCore's.
-using VisualGeometryToolkitCore: ka_upload
+# and the eager release of the grid evaluators' function-local device buffers
+# (GPUArrays' `unsafe_free!`; this package's `_free_local!` copy is deleted,
+# 2026-11-12) are VisualGeometryToolkitCore's.
+using VisualGeometryToolkitCore: ka_upload, free_device_buffers!
 using VisualGeometryToolkitCore: OnBackend   # the one kernel-launch policy: every grid kernel is instantiated through it
 
 # This package computes no residual of its own: the whitened residuals and the
@@ -101,7 +96,7 @@ using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth
 using VisualGeometryToolkitCore: AbstractConstraintProblem,
     IGPrior,
     truncated_log_normaliser,
-    RansacScoring, MsacScoring, AbstractThresholdScoring,
+    RansacScoring, MsacScoring, AbstractThresholdScoring, @threshold_scoring_constructors,
     argmax_models_kernel!, sorted_squared_residuals   # the grids' model argmax and staging (Core's)
 # The Student-t + uniform marginal scorer and its partition sweep (Core's): this package's grids,
 # outlier models and paper baselines use and extend them.
@@ -110,7 +105,7 @@ using VisualGeometryToolkitCore: StudentTUniformScoring, AbstractLabelPrior, Fla
     suffix_sums!
 import VisualGeometryToolkitCore: loss_shape, codimension, score_bound,
     decision_boundary, has_decision_boundary,
-    scale_prior, outlier_halfwidth, with_width, width_axis, minimal_sample_size,
+    scale_prior, outlier_halfwidth, width_axis, minimal_sample_size,
     residual_quality,
     # the estimated-support sweep's hooks, for this package's outlier models (extreme_value_sweep.jl)
     outlier_context!, outlier_cost, scored_outlier_halfwidth,

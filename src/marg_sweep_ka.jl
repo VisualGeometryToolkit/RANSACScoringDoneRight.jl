@@ -48,22 +48,13 @@
 # threads). (This package's own `_ka_kernel`, which kept the backend's choice on a device, is
 # deleted, 2026-11-12.)
 
-# Eager release of FUNCTION-LOCAL device buffers: GPUArrays' `unsafe_free!` hands
-# a buffer's memory back to the device pool now, not whenever the host GC next
-# runs — and host memory pressure says nothing about the device, where a grid
-# evaluation allocates GiB-scale scratch per pair-chunk. Host `Array`s (the CPU
-# backend) have nothing to free.
-#
-# Only for buffers the calling function allocated, never returns and never
-# hands to anything that outlives the call — a freed buffer must not be read
-# again. Every call site below is such a buffer: device tables uploaded for one
-# evaluation, per-chunk scratch, and the chunk loop's own outputs after their
-# host copy-back. The staged `IGSharedData` is the CALLER's and is never freed
-# here. (The `_try_unsafe_free!` these call sites used to reach freed nothing:
-# its `::AbstractArray` no-op method caught `CuArray` too.)
-_free_local!(xs::AbstractArray...) = (foreach(_unsafe_free_one!, xs); nothing)
-@inline _unsafe_free_one!(x::GPUArrays.AbstractGPUArray) = GPUArrays.unsafe_free!(x)
-@inline _unsafe_free_one!(::AbstractArray) = nothing
+# Eager release of FUNCTION-LOCAL device buffers is VisualGeometryToolkitCore's
+# `free_device_buffers!` (GPUArrays' `unsafe_free!`; a host `Array` is left
+# alone): only for buffers the calling function allocated, never returns and
+# never hands to anything that outlives the call. Every call site below is such
+# a buffer: device tables uploaded for one evaluation, per-chunk scratch, and the
+# chunk loop's own outputs after their host copy-back. The staged `IGSharedData`
+# is the CALLER's and is never freed here.
 
 # The two device steps of the ONE scale quadrature, shared by both evaluators
 # below. The mixture reads one spec's tables (every offset 0); the full-data
@@ -211,7 +202,7 @@ function _chunked_argmax_eval(fill_scores!::F, shared_ka, T::Int;
         end
         s = e
     end
-    _free_local!(scores_pmt, errs_d, idxs_d)
+    free_device_buffers!(scores_pmt, errs_d, idxs_d)
     return return_idxs ? (errs_h, idxs_h) : errs_h
 end
 
@@ -263,7 +254,7 @@ function grid_evaluate(::Type{S}, m::ScaleMarginal, staged::IGSharedData,
              S(Δ), Int32(NU), Int32(NG), Int32(T), Int32(s), shape; ndrange = (n, M_max))
         KernelAbstractions.synchronize(backend)
     end
-    _free_local!(Dscratch, sq_loss_width_d, logZ_d, base_d, ltw_d, off_d)
+    free_device_buffers!(Dscratch, sq_loss_width_d, logZ_d, base_d, ltw_d, off_d)
     return out
 end
 
@@ -436,7 +427,7 @@ function grid_evaluate(::Type{S}, spec::LossSpec, shared_ka::IGSharedData,
                log_two_outlier_halfwidth_d, Int32(dg), Int32(s); ndrange = (n, M_max, T))
         KernelAbstractions.synchronize(backend)
     end
-    _free_local!(E_d, Dscratch, sq_loss_width_nodes_d, logZ_d, base_d, ltw_d, log_two_outlier_halfwidth_d)
+    free_device_buffers!(E_d, Dscratch, sq_loss_width_nodes_d, logZ_d, base_d, ltw_d, log_two_outlier_halfwidth_d)
     return out
 end
 

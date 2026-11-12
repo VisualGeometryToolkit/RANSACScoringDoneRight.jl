@@ -39,16 +39,8 @@ const ALL_SCORING_TAGS = merge(VgtkCore.SCORING_TAGS, TagRegistry(:scoring, "Sco
     "sim_fit_pp" => SimFitPP;
     retired = ("gau" => "mlesac", "welsch" => "welsch_cost", "simfitpp" => "sim_fit_pp")))
 
-# The scorers' TOML tables (VisualGeometryToolkitEstimation's `scoring_from_toml`, the local optimization's schema):
-# a loss-width family at its `threshold`, required, read through `ALL_SCORING_TAGS`
-# (`scoring_from_toml(table; problem, tags = ALL_SCORING_TAGS)`). The Student-t scorer's table (its
-# `outlier_halfwidth` and priors) is VisualGeometryToolkitEstimation's reader, with the scorer.
-const _LossWidthFamily = Union{MlesacScoring, MagsacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring}
-function VgtkEstimation.scoring_from_toml(::Type{T}, d::AbstractDict; problem::Type, section::AbstractString) where {T <: _LossWidthFamily}
-    VgtkCore.check_keys(d, ("type", "threshold"), section)
-    haskey(d, "threshold") || throw(ArgumentError("[$section] needs `threshold` (a scorer's width is its config's)"))
-    return T(codimension(problem); threshold = Float64(d["threshold"]))
-end
-VgtkEstimation.config_dict(sc::Union{MlesacScoring{<:Any, Float64}, MagsacScoring{<:Any, Float64}, WelschCostScoring{<:Any, Float64},
-                                     SmoothTLSScoring{<:Any, Float64}, GemanScoring{<:Any, Float64}}) =
-    Dict{String, Any}("type" => VgtkCore.tag_of(ALL_SCORING_TAGS, sc), "threshold" => sc.threshold)
+# The scorers' TOML tables are VisualGeometryToolkitEstimation's: a loss-width family
+# (built by Core's `@threshold_scoring_constructors`) at its `threshold`, required,
+# read by `scoring_from_toml(table; problem, tags = ALL_SCORING_TAGS)` and written by
+# `config_dict(scoring; tags = ALL_SCORING_TAGS)`, Estimation's methods for every
+# `AbstractThresholdScoring` (this package's own two are deleted, 2026-11-12).

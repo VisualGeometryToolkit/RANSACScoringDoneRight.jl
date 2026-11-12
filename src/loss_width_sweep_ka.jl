@@ -285,28 +285,17 @@ score_bound(sc::MagsacScoring{<:Any, Float64}) = residual_quality(sc, 0.0, decis
 
 codimension(::_OwnLossWidthScoring{DG}) where {DG} = DG
 
-# The constructors, VisualGeometryToolkitCore's forms of `RansacScoring`/`MsacScoring`:
-# bare `F()` is codim 1 (see above); `F(problem)` takes it from the problem,
-# exactly as `StudentTUniformScoring(problem, a)` does.
-#
-# The scorer form's keyword is `threshold`, its loss width; `with_width` builds
-# that form from a template.
-for S in (:MlesacScoring, :MagsacScoring, :WelschCostScoring, :SmoothTLSScoring, :GemanScoring)
-    @eval begin
-        $S{DG}() where {DG} = $S{DG, Nothing}(nothing)
-        $S() = $S{1}()
-        $S(dg::Integer; threshold::Union{Nothing, Real} = nothing) = _at_loss_width($S{Int(dg)}, threshold)
-        $S(problem::AbstractConstraintProblem; threshold::Union{Nothing, Real} = nothing) =
-            _at_loss_width($S{codimension(problem)}, threshold)
-        with_width(::$S{DG}, w::LossWidth{NTuple{2, Float64}}) where {DG} =
-            $S(DG; threshold = VgtkCore.loss_width(w))
-    end
-end
-_at_loss_width(::Type{S}, ::Nothing) where {S} = S{Nothing}(nothing)
-function _at_loss_width(::Type{S}, w::Real) where {S}
-    (isfinite(w) && w > 0) || throw(ArgumentError("$(nameof(S)): threshold must be positive and finite, got $w"))
-    return S{Float64}(Float64(w))
-end
+# The constructors and the width setter are VisualGeometryToolkitCore's, exactly as
+# `RansacScoring`/`MsacScoring` have them (`@threshold_scoring_constructors`):
+# bare `F()` is codim 1 (see above); `F(dg; threshold)`, `F(problem; threshold)`
+# and `F(P; threshold)` at a loss width (positive and finite), width-free
+# without one; `with_width(::F{DG}, LossWidth(w))`. (This package's own loop and
+# `_at_loss_width` are deleted, 2026-11-12.)
+@threshold_scoring_constructors MlesacScoring
+@threshold_scoring_constructors MagsacScoring
+@threshold_scoring_constructors WelschCostScoring
+@threshold_scoring_constructors SmoothTLSScoring
+@threshold_scoring_constructors GemanScoring
 
 # Where these sit in the elimination table (scoring.jl): RANSAC and MSAC profile
 # the labels, MLESAC and MAGSAC++ marginalise them, and every one of the seven
@@ -537,6 +526,6 @@ function _grid_evaluate_loss_width(agg::LogBinned, ::Type{S}, scoring, shared, l
            Int32(s); ndrange = (n, M_max))
         KernelAbstractions.synchronize(backend)
     end
-    _free_local!(W_d)
+    free_device_buffers!(W_d)
     return out
 end

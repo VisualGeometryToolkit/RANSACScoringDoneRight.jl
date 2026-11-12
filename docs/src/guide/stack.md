@@ -89,8 +89,8 @@ it for its grid families. VisualGeometryToolkitCore's
 The kernels run on `CPU()` or `CUDA.CUDABackend()`. The Float64 device path is
 bit-identical to the CPU reference; `test/gate_marg_mix_ka.jl` checks this and
 also runs on CUDA with `--cuda`. Each grid evaluator frees its function-local
-device buffers eagerly through `GPUArrays.unsafe_free!` instead of waiting for
-Julia's garbage collector.
+device buffers eagerly through VisualGeometryToolkitCore's `free_device_buffers!`
+instead of waiting for Julia's garbage collector.
 
 ## SIMFIT++
 

@@ -75,7 +75,7 @@ const _NO_BEST_K = Array{Int32, 3}(undef, 0, 0, 0)   # the grid reads no k (uplo
 
 # (`free_ka_shared!` is deleted: the staged `IGSharedData` belongs to the
 #  caller, which drops it when done. The grid evaluators free their OWN
-#  function-local device buffers eagerly through `_free_local!`
+#  function-local device buffers eagerly through `free_device_buffers!` (Core's)
 #  (marg_sweep_ka.jl); the `_try_unsafe_free!` they used to call freed nothing
 #  on any backend.)
 
@@ -132,7 +132,7 @@ function grid_evaluate(scoring::StudentTUniformScoring{P}, staged::IGSharedData,
               Int32(model_dof), Int32(dg), prior, Int32(s), nothing, nothing, no_best_k_d; ndrange = (n, Mm, T))
         KernelAbstractions.synchronize(backend)
     end
-    _free_local!(lg_table_d, log_two_outlier_halfwidth_d, no_best_k_d)
+    free_device_buffers!(lg_table_d, log_two_outlier_halfwidth_d, no_best_k_d)
     return out
 end
 
