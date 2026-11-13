@@ -1,6 +1,6 @@
 # RANSACScoringDoneRight changelog
 
-## 0.8.0 (unreleased, the VisualGeometryToolkit wave-10 stack)
+## 0.8.0 (2026-11-13, the VisualGeometryToolkit wave-10 stack)
 
 On the wave-10 stack: VisualGeometryToolkitCore 0.10 and VisualGeometryToolkitEstimation 0.11 (the package and its
 tests); neurips2026 also VisualGeometryToolkitEval 0.8. No scoring change: the same results, bit for bit.
