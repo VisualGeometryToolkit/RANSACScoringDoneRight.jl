@@ -9,9 +9,9 @@ RANSACScoringDoneRight = "084d9f33-8b05-4903-a655-8a8c4926d033"
 path = ".."
 
 [compat]
-Documenter = "1.17"
+Documenter = "1.20"
 DocumenterCodeBlocks = "1.5.1"
-DocumenterInterLinks = "1"
+DocumenterInterLinks = "1.1"
 DocumenterLandingPage = "0.2.2"
 julia = "1.13"
 RANSACScoringDoneRight = "0.8"

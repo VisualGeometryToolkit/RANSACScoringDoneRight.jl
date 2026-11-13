@@ -8,6 +8,8 @@ tests); neurips2026 also VisualGeometryToolkitEval 0.8. No scoring change: the s
 ### Breaking
 
 - **[compat]:** VisualGeometryToolkitCore 0.10, VisualGeometryToolkitEstimation 0.11; neurips2026 VisualGeometryToolkitEval 0.8.
+  Floors raised to the gated resolve (`floor_compat --raise`): Statistics 1.11 (package, test), Documenter 1.20 and
+  DocumenterInterLinks 1.1 (docs).
   Core 0.10's terminology (detection, correspondence, observation) reaches this package only through the pool record:
   `PoolPair`'s correspondences are `PoolPair(; correspondences, …)` and the way back to pixels is Core's
   `pixel_correspondences` (both renamed in Core; `pixel_residuals`, this package's one exit to pixels, is unchanged).
