@@ -1,5 +1,17 @@
-docs-pass: f0ba187
-landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (the site IS this package's Documenter build, deployed by docs/make.jl's deploydocs from CI; it is refreshed from this commit at publish)
+docs-pass: 438108c
+landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no change: a compat patch; nothing the site shows moved)
+
+# 0.7.1 docs pass (julia-docs-pass) — on VisualGeometryToolkitEstimation 0.10
+
+RANSACScoringDoneRight 0.7.1 is a patch: `[compat]` VisualGeometryToolkitEstimation "0.10" in every member that declares it, and the
+CHANGELOG section. No public name added, removed or re-signatured.
+- API diff since the last release: none.
+- stale mentions: nothing here names the SplineLens image-space refine Estimation 0.10.0 retired (its free route,
+  `penalty`, the GCV and window metadata): checked by grep over src, docs, README and the paper projects.
+- README / install lines: unchanged (no version is named); the README rows resolve the registry and pass once
+  Estimation 0.10.0 is registered.
+
+---
 
 # Docs pass: RANSACScoringDoneRight 0.7.0 (2026-11-12)
 

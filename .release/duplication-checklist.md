@@ -99,3 +99,8 @@ VisualGeometryToolkitEval's one implementation:
 - [x] `_free_local!` → Core's `free_device_buffers!`; GPUArrays no longer a dependency (ea6dcb1)
 - [x] neurips2026 scripts/fetch_data.jl's command line and fetch loop → Eval DataArtifacts' `fetch_data!` (f31b0c1)
 - [x] f32_radix_probe's Int32-permutation sort → Core's `RadixPermBuffers{UInt32, Int32}` (f31b0c1)
+
+## 0.7.1 (on VisualGeometryToolkitEstimation 0.10)
+
+Nothing to delete: the release widens one compat entry; the stack duplication audit lists no item for RANSACScoringDoneRight at
+this release (its open items: none). `check_duplication` runs in the suite.
