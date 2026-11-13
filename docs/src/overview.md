@@ -32,7 +32,7 @@ A RANSAC *score* assigns a value to one model hypothesis from its residuals;
 two granularities:
 
 - **one hypothesis**: [`score_residuals!`](@extref VisualGeometryToolkitCore.score_residuals!) (from residuals) or
-  [`score_sq_residuals!`](@extref VisualGeometryToolkitCore.score_sq_residuals!) (from a problem and a model) returns the score
+  [`score_sq_residuals!`](@extref VisualGeometryToolkitCore :std:doc:`api/student_t_scoring`) (from a problem and a model) returns the score
   and the inlier count of the best partition;
 - **a pool of hypotheses**: VisualGeometryToolkitCore's
   [`best_pool_model`](@extref VisualGeometryToolkitCore.best_pool_model) selects the best stored
