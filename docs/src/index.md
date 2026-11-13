@@ -135,7 +135,7 @@ prior regularization as validation data grows scarce.
 ## Install
 
 **Pkg** — `RANSACScoringDoneRight` is registered in the General registry
-(Julia 1.12+). The example below also loads VisualGeometryToolkitCore, which
+(Julia 1.13+). The example below also loads VisualGeometryToolkitCore, which
 defines the scoring contract:
 
 ```julia-repl

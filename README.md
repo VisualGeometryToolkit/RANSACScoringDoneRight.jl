@@ -20,7 +20,7 @@ VisualGeometryToolkitEstimation's.
 
 ## Installation
 
-The package requires Julia 1.12 or later. The example also loads
+The package requires Julia 1.13 or later. The example also loads
 VisualGeometryToolkitCore, which defines the scoring contract:
 
 ```julia-repl

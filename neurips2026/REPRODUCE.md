@@ -7,7 +7,7 @@ config of record under `configs/`, and indexed below. The suite
 fragment byte for byte.
 
 ```
-# Julia 1.12 (juliaup). The stack is registered in CauRegistry (and submitted to
+# Julia 1.13 (juliaup). The stack is registered in CauRegistry (and submitted to
 # General); until it is in General, add both registries once (General first: Pkg
 # adds it on its own only to an empty depot):
 julia -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl")'   # once per depot
