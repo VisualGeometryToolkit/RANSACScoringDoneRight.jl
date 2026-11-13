@@ -104,3 +104,9 @@ VisualGeometryToolkitEval's one implementation:
 
 Nothing to delete: the release widens one compat entry; the stack duplication audit lists no item for RANSACScoringDoneRight at
 this release (its open items: none). `check_duplication` runs in the suite.
+
+## 0.7.2 (Julia 1.13)
+
+A compat-only patch: no source, test or paper code is added, so nothing new can duplicate the stack.
+
+- [x] 0.7.2: no new duplicate (the diff since the registered release adds no code; `check_duplication(RANSACScoringDoneRight)` re-runs in the fresh-clone gate of this commit)
