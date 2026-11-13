@@ -1,4 +1,4 @@
-docs-pass: 9b032d1
+docs-pass: eb06027
 landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src; the install line there changes when main's Docs job deploys this tree)
 
 # 0.8.0 docs pass at the release (julia-docs-pass), resolved from General alone
@@ -13,6 +13,8 @@ IO 0.10.0, Estimation 0.11.0, Eval 0.8.0 (job 15031). floor_compat --raise: 0 en
 [x] README rows: the readme item resolves the install line from the registry. It was the known pre-registration failure on
     every -tmp gate; the release gate (fresh clone of the release commit, no temporary sources) runs it against General.
 [x] Docs build: docs/make.jl (strict) in the release gate, against the registered stack.
+[x] Re-recorded at eb06027: neurips2026's reproduce.sh regenerated with the registered Eval 0.8.0's generator (the release
+    gate a5e7231 found it stale against Eval 0.8.0's template, test_studies 31/32); no docs change.
 
 ---
 
