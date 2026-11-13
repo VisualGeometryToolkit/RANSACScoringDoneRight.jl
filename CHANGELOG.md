@@ -25,6 +25,13 @@ tests); neurips2026 also VisualGeometryToolkitEval 0.8. No scoring change: the s
 - The whole stack is in General: the install lines (README, docs, REPRODUCE.md) and the CI, docs and Downgrade
   workflows add no other registry.
 - Prose follows the terminology ruling: a correspondence where a pair's datum is meant, "benchmark" for a timing.
+- CI: the Downgrade workflow is deleted (the stack's one policy: Resolver.jl does not run on Julia 1.13, and every
+  release raises its compat floors to the versions its gate resolved, `floor_compat --raise`).
+- Comments that pointed at files and types the 0.7.0 port deleted (`sweep.jl`, `GauScoring`, `decision_width` in
+  scoring.jl) name VisualGeometryToolkitCore's owners.
+- No restated code (VisualGeometryToolkitCore's check_duplication against the stack): the five loss-width scorer
+  structs drop their inner constructor (it was Julia's default constructor, written out); the tests build the pool
+  maps with Core's `to_homogeneous` and their constraint tuples inline.
 
 ## 0.7.2 (2026-11-13)
 

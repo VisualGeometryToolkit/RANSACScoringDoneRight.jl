@@ -22,7 +22,8 @@
     VGC.constraint_with_jacobians(p::_CDProblem, _model, i::Int) = p.cds[i]
     VGC.solver_covariance(::_CDProblem, _model, ::AbstractVector{Int}) = SOLVER_COVARIANCE
 
-    _scalar(g, gx) = (g, SVector{2,Float64}(gx...), SVector(1.0, 2.0))
+    # one scalar constraint tuple (g, ∂ₓg, ∂_θg): the point gradient `gx` (zero: degenerate), a fixed ∂_θg
+    gx1, gx0, gθ = SVector(0.6, 0.8), SVector(0.0, 0.0), SVector(1.0, 2.0)
 
     # The epipolar constraint of VGC's FundMat at each pair, with the model's
     # rounding scale supplied through the problem's `constraint_rounding_scale` hook.
@@ -41,9 +42,9 @@
 
     @testset "the sweeps read a degenerate point as an outlier" begin
         n = 12
-        cds = [_scalar(0.01 * i, (0.6, 0.8)) for i in 1:n]
-        cds[5] = _scalar(0.02, (0.0, 0.0))              # degenerate, unsatisfied
-        cds[n] = _scalar(3.0, (0.6, 0.8))               # an ordinary outlier
+        cds = [(0.01 * i, gx1, gθ) for i in 1:n]
+        cds[5] = (0.02, gx0, gθ)            # degenerate, unsatisfied
+        cds[n] = (3.0, gx1, gθ)            # an ordinary outlier
         p = _CDProblem(cds)
 
         s = StudentTUniformScoring(2, 5.0; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
@@ -66,7 +67,7 @@
 
     @testset "the predictive scorer reports mahalanobis_distances!'s distances" begin
         n = 8
-        cds = [_scalar((-1.0)^i * 0.05 * i, (0.6, 0.8)) for i in 1:n]
+        cds = [((-1.0)^i * 0.05 * i, gx1, gθ) for i in 1:n]
         p = _CDProblem(cds)
         r = zeros(n); VGC.mahalanobis_distances!(r, p, nothing)
         @test all(>=(0), r)                              # a distance, never the signed residual

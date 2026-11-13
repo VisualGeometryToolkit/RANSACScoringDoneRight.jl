@@ -1,3 +1,23 @@
+# RANSACScoringDoneRight 0.8.0: the wave-10 duplication check (2026-11-13)
+
+The wave's rule: zero duplication, checked by CONCEPT across Core, IO, Features, Estimation, Eval, PoseLib, BB, RSDR,
+LODR, PS and CB. This leg adds, changes and deletes NO function in src/, test/ or neurips2026/: it renames call sites
+onto upstream names, rewrites docs and configs, and bumps compat.
+
+- [x] the one detection → observation conversion (Core): RSDR holds no detection, frame or `Uncertain{<:FeatureFrame}`
+  code (grep of src/, test/, neurips2026/ for Uncertain/FeatureFrame/PointFrame: only the predictive provider's
+  `Uncertain` model, Core's), so it has no hand conversion to replace.
+- [x] the hoisted FeatureFrame interface: no frame verb is implemented here.
+- [x] the sensor noise (Core `SensorNoise`, the resolver, the one black subtraction): no raw image or noise model here.
+- [x] the pool record's correspondences and the way back to pixels: Core's `PoolPair(; correspondences, …)` and
+  `pixel_correspondences` (renamed upstream); the tests construct the record through Core's keyword, with no copy.
+- [x] the artifact catalogue's published name: Eval's DataArtifacts `published_name` (est-eval, handoffs.md), not a
+  local URL builder.
+- [x] the retired aliases (`LiftableProblem`, `ScalarOrQuantity`, `POOL_RNG`): no use here.
+- [x] check_duplication on the gated commit: pasted in the leg report (~/logs/dgx-agent/wave10/rsdr.md).
+
+---
+
 # RANSACScoringDoneRight: duplicate removals of the 0.9 leg
 
 Owner decision 12 (2026-11-11) and the owner's ruling "all duplicates must be gone; all common code must be hoisted

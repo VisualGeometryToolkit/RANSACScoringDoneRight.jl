@@ -127,7 +127,7 @@ const POOL_FRAME_R_MAX = 1.0
 # loss width (`efficiency_constant·ŝ`).  The scale multiple is the inlier/outlier
 # density-crossover point in σ-units; the marginals share the uniform outlier
 # model, so their native map IS the Gaussian-Uniform boundary — `GauInlier`
-# plus `decision_width` (scoring.jl).  No closed form is restated here.
+# plus `decision_width` (both VisualGeometryToolkitCore's).  No closed form is restated here.
 # Tuning the scale multiple over the common window (e.g. [0.8, 6]) compares
 # METHODS, not parameterizations.
 # =============================================================================

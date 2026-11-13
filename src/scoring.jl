@@ -14,14 +14,15 @@
 # decides which questions a member can answer — not merely how it computes. So
 # it is a hierarchy, not a trait.
 #
-#   GauScoring     the Gaussian-Uniform mixture of Eq. (1): a Gaussian inlier
+#   the mixture    the Gaussian-Uniform mixture of Eq. (1): a Gaussian inlier
 #                  density and a uniform outlier density on [-h, h]^d_g (h the
 #                  outlier half-width), with a
 #                  latent label z_i and prior gamma = Pr(z_i = 1). EVERY member
 #                  posits this one model; they differ only in how the two
 #                  nuisances are eliminated — see the elimination table below.
 #                  RANSAC and MSAC are not outside the family: they profile the
-#                  labels where MLESAC marginalises them.
+#                  labels where MLESAC marginalises them. Its marginal scorer is
+#                  VisualGeometryToolkitCore's `StudentTUniformScoring`.
 #
 #   LossCostScoring a robust loss rho from VisualGeometryToolkitCore, with NO mixture.
 #                  The half-quadratic lift does give rho(s) = min_z[z*s + psi(z)],
@@ -38,12 +39,10 @@
 # every family at a loss width is a VisualGeometryToolkitCore
 # `AbstractThresholdScoring{T}` (`T` its width's type), whose one loop scores
 # it. So `LossCostScoring{T} <: AbstractThresholdScoring{T}`, and MLESAC and
-# MAGSAC++ subtype `AbstractThresholdScoring` directly; `GauScoring` holds the
-# one mixture scorer with no loss width, `StudentTUniformScoring` — now
-# VisualGeometryToolkitCore's, a plain `AbstractScoring` (the empty `GauScoring`
-# supertype went with the move: nothing dispatched on it, 2026-11-07: this
-# package, LODR, BlobBoards, the neurips2026 code). The branch a family belongs
-# to is the table above, not its supertype.
+# MAGSAC++ subtype `AbstractThresholdScoring` directly; the one mixture scorer
+# with no loss width, `StudentTUniformScoring`, is VisualGeometryToolkitCore's, a
+# plain `AbstractScoring` (no mixture supertype: nothing dispatched on one). The
+# branch a family belongs to is the table above, not its supertype.
 
 abstract type LossCostScoring{T} <: AbstractThresholdScoring{T} end
 

@@ -7,7 +7,8 @@ config of record under `configs/`, and indexed below. The suite
 fragment byte for byte.
 
 ```
-# Julia 1.13 (juliaup). The whole stack is in Julia's General registry.
+# Julia 1.13 (juliaup). The whole stack is in Julia's General registry (Pkg adds General by itself only to a depot
+# with no registry: a depot holding another registry adds it once, julia -e 'using Pkg; Pkg.Registry.add("General")').
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
 julia --project=. scripts/fetch_data.jl            # only on a machine without the data (data/README.md)
 julia --project=. scripts/<driver>.jl --plan       # what is done, what is pending
@@ -66,7 +67,7 @@ The stored runs are inputs like any other: the configs name each table as an
 (`neurips2026_paper_runs`, required; Zenodo record not yet deposited) and the
 raw inputs of the paper's pools, shared with LocalOptimizationDoneRight's
 accv2026 (`pt_raw_validation`, `pt_raw_test`, `heb_raw`,
-`eth3d_splg_correspondences`, its Zenodo file published as `eth3d_splg_csponds`: the same records and hashes).
+`eth3d_splg_correspondences`, its Zenodo file under its published name, `configs/data_artifacts.toml` `published_name`: the same records and hashes).
 
 A regenerated figure never replaces the submitted one silently: a driver
 renders into its keyed results directory, `verify` writes `verify.tsv` (byte

@@ -110,7 +110,7 @@ understate a full trial.
 
 **Only our score currently runs inside our RANSAC.** The framework dispatches on
 the marginal scoring type; the baselines are evaluated over the same stored
-hypotheses. The comparison is like-for-like as a benchmark of scoring cost,
+hypotheses. The comparison is like-for-like as a comparison of scoring cost,
 but it is not a comparison of complete estimators.
 
 **The lower-density regime is the first twenty pairs in pool storage order**,

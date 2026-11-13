@@ -100,7 +100,7 @@
     @testset "SIMFIT++: the host loop over pixel residuals, one generator per (pair, column)" begin
         # pool-frame pairs whose maps are similarities: the pixel residuals differ
         # from the stored ones, and the initial guess crosses frames
-        sim(s, tx, ty) = SMatrix{3,3,Float64,9}(s, 0.0, 0.0, 0.0, s, 0.0, tx, ty, 1.0)
+        sim(s, tx, ty) = VGC.to_homogeneous(s * SMatrix{2,2,Float64,4}(I), SVector(tx, ty))   # Core's homogeneous form
         Kc = SMatrix{3,3,Float64,9}(400.0, 0.0, 0.0, 0.0, 400.0, 0.0, 320.0, 240.0, 1.0)
         I3s = SMatrix{3,3,Float64,9}(I)
         r = MersenneTwister(77)

@@ -143,14 +143,13 @@ end
 #
 # `ThresholdFamily` used to be the supertype of all seven. It could not be:
 # "takes a loss width" is true of both branches, so using it as the hierarchy forced
-# GauScoring's members and StudentTUniformScoring into disconnected roots even though
-# they posit the SAME model. The members that take a loss width are now the
+# the mixture branch's members and StudentTUniformScoring into disconnected roots even
+# though they posit the SAME model. The members that take a loss width are now the
 # `LossWidthScoring` union, which is what the sweep entry points accept.
 #
-# `GauScoring` is likewise no longer a concrete type. The whole mixture branch
-# is Gaussian-Uniform, so the name belongs to the family; the member it used to
-# name is MLESAC, the marginal likelihood over labels at fixed scale. Its tag is
-# `:mlesac` (the tag rule: the type's name without its family suffix).
+# The mixture branch's fixed-scale member is MLESAC, the marginal likelihood over
+# labels at fixed scale. Its tag is `:mlesac` (the tag rule: the type's name without
+# its family suffix).
 # EVERY ONE CARRIES ITS CODIMENSION, as `StudentTUniformScoring{P, DG}` does. loss width is
 # not a bare length: for a codim-DG residual with Gaussian inliers
 # ||r||^2/sigma^2 ~ chi^2_DG, so one quantile factor q maps to a DIFFERENT
@@ -190,7 +189,6 @@ the scorer at loss width `w`.
 """
 struct MlesacScoring{DG, T} <: AbstractThresholdScoring{T}
     threshold::T
-    MlesacScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
 end
 
 """
@@ -203,7 +201,6 @@ the forms of [`MlesacScoring`](@ref).
 """
 struct MagsacScoring{DG, T} <: AbstractThresholdScoring{T}
     threshold::T
-    MagsacScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
 end
 
 """
@@ -215,7 +212,6 @@ the forms of [`MlesacScoring`](@ref).
 """
 struct WelschCostScoring{DG, T} <: LossCostScoring{T}
     threshold::T
-    WelschCostScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
 end
 
 """
@@ -227,7 +223,6 @@ The smooth truncated-least-squares cost as a loss-width score at codimension
 """
 struct SmoothTLSScoring{DG, T} <: LossCostScoring{T}
     threshold::T
-    SmoothTLSScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
 end
 
 """
@@ -239,7 +234,6 @@ with VisualGeometryToolkitCore's Geman–McClure `ρ`. Tag `"geman"`; the forms 
 """
 struct GemanScoring{DG, T} <: LossCostScoring{T}
     threshold::T
-    GemanScoring{DG, T}(threshold) where {DG, T} = new{DG, T}(threshold)
 end
 
 """
@@ -247,7 +241,7 @@ end
 
 The loss-width-parameterised scorings of both branches at codimension `DG` — the
 paper's "threshold-based family". A Union, not a supertype: "takes a loss width" cuts
-across `GauScoring` and `LossCostScoring`, so it cannot be a supertype of both
+across the mixture branch and `LossCostScoring`, so it cannot be a supertype of both
 without implying a mixture underneath the losses.
 
 This is the type the loss-width sweep entry points accept. Widening them to

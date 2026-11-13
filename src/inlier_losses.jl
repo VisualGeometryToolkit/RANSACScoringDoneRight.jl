@@ -12,7 +12,7 @@
 # CV parameter (exactly like the Student-t's).
 #
 # The Gaussian inlier is the closed-form (conjugate) special case — it reduces
-# to `partition_score(::IGPrior, …)` in sweep.jl bit-for-bit.  Welsch / Geman-
+# to VisualGeometryToolkitCore's `partition_score(::IGPrior, …)` (robust/partition_sweep.jl) bit-for-bit.  Welsch / Geman-
 # McClure / smooth-TLS are NON-conjugate, so ∫dw is a 1-D quadrature over the
 # log-squared-width axis t = log sq_loss_width (VGC's `s` is a squared
 # RESIDUAL — see the name note in inlier_potentials.jl).
@@ -24,7 +24,7 @@
 #   endpoints; ~100 nodes reproduce a 40001-node reference to ~1e-15 relative
 #   when the endpoints carry no mass.  The 13-node cubic-Hermite spline the
 #   full-data marginal used until 2026-09-30 was off by a median 3e-3 … 0.18 and
-#   up to Inf in log-evidence (marg_sweep_ka.jl's header has the benchmark),
+#   up to Inf in log-evidence (marg_sweep_ka.jl's header has the error table),
 #   which fails a <1e-6 accuracy requirement.  Fixed
 #   nodes also make the per-node data sufficient statistic D_k(w²_j)
 #   incremental in k (the evidence kernel `marg_mix_evidence_kernel!`).
