@@ -45,6 +45,6 @@ gaussian_sigma = 0.125
 target = 1000                    # accepted minimal samples per pair
 max_attempts = 100000
 snn_threshold = 0.9
-min_csponds = 20
+min_correspondences = 20
 max_pairs_per_scene = 2200
 subsample_seed = 42

@@ -1,5 +1,5 @@
 # The scorers read the problem protocol's whitened residuals: a DEGENERATE
-# measurement (VisualGeometryToolkitCore's one Sampson degeneracy rule — residual 0
+# correspondence (VisualGeometryToolkitCore's one Sampson degeneracy rule — residual 0
 # when the constraint vanishes, ±Inf otherwise) reaches the sweep as an outlier,
 # and the covariance-given predictive scorer reports the SAME distances
 # `mahalanobis_distances!` writes (`≥ 0`; it wrote the signed residual until

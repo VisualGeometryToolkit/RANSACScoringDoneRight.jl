@@ -142,12 +142,11 @@ defines the scoring contract:
 pkg> add RANSACScoringDoneRight VisualGeometryToolkitCore
 ```
 
-**git** — clone the repository and instantiate it; the checkout's `neurips2026/`
-project needs VisualGeometryToolkitEval, which is in CauRegistry, so the command
-adds it:
+**git** — clone the repository and instantiate it (every dependency, the
+`neurips2026/` project's VisualGeometryToolkitEval included, is in General):
 
 ```bash
-git clone https://github.com/VisualGeometryToolkit/RANSACScoringDoneRight.jl.git && cd RANSACScoringDoneRight.jl && julia --project=. -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
+git clone https://github.com/VisualGeometryToolkit/RANSACScoringDoneRight.jl.git && cd RANSACScoringDoneRight.jl && julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
 ## Getting started

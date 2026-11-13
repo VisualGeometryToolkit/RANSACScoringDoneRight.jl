@@ -24,7 +24,7 @@
 #   endpoints; ~100 nodes reproduce a 40001-node reference to ~1e-15 relative
 #   when the endpoints carry no mass.  The 13-node cubic-Hermite spline the
 #   full-data marginal used until 2026-09-30 was off by a median 3e-3 … 0.18 and
-#   up to Inf in log-evidence (marg_sweep_ka.jl's header has the measurement),
+#   up to Inf in log-evidence (marg_sweep_ka.jl's header has the benchmark),
 #   which fails a <1e-6 accuracy requirement.  Fixed
 #   nodes also make the per-node data sufficient statistic D_k(w²_j)
 #   incremental in k (the evidence kernel `marg_mix_evidence_kernel!`).

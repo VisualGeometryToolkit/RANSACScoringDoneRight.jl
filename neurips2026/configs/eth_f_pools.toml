@@ -8,7 +8,7 @@
 # eval/generate_roma_scoring_data.jl --problem=fundmat into [experiment]
 # pool_dir (since rewritten; REPRODUCE.md, "Not ported"). Load-bearing today:
 # [source], from which configs/data_artifacts.toml derives the file list of
-# the published `eth3d_splg_csponds` artifact (shared with accv2026).
+# the published `eth3d_splg_correspondences` artifact (shared with accv2026).
 # =============================================================================
 
 [experiment]
@@ -21,7 +21,7 @@ pool_dir = "datasets/eth3d/derived/splg/scoring_data_F"   # RELATIVE to data_roo
 route = "roma"
 splits = ["eth3d:validation", "eth3d:test"]
 image_unit = "px"
-input_jld2_dir = "datasets/eth3d/derived/splg/csponds"
+input_jld2_dir = "datasets/eth3d/derived/splg/csponds"   # the published tree's directory (Zenodo 23240469), a foreign token: never renamed
 
 [pool]
 sampler = "gaussian"
@@ -29,6 +29,6 @@ gaussian_sigma = 0.125
 target = 1000
 max_attempts = 100000
 snn_threshold = 0.7
-min_csponds = 20
+min_correspondences = 20
 max_pairs_per_scene = 2200
 subsample_seed = 42

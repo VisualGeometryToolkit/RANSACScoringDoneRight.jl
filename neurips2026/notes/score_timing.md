@@ -103,14 +103,14 @@ of them.
 ## Qualifications
 
 **These are scoring costs given residuals.** A deployed RANSAC trial also
-computes each hypothesis's residuals from the model; this measurement reads
+computes each hypothesis's residuals from the model; this benchmark reads
 stored residuals so every scorer sees identical data. That cost is
 scorer-independent and cancels in all ratios above, but the absolute figures
 understate a full trial.
 
 **Only our score currently runs inside our RANSAC.** The framework dispatches on
 the marginal scoring type; the baselines are evaluated over the same stored
-hypotheses. The comparison is like-for-like as a measurement of scoring cost,
+hypotheses. The comparison is like-for-like as a benchmark of scoring cost,
 but it is not a comparison of complete estimators.
 
 **The lower-density regime is the first twenty pairs in pool storage order**,

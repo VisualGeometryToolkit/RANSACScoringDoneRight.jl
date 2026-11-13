@@ -9,7 +9,7 @@
     rng = MersenneTwister(1)
     I3 = SMatrix{3, 3, Float64, 9}(I); KC = SMatrix{3, 3, Float64, 9}(400.0, 0, 0, 0, 400.0, 0, 320.0, 240.0, 1.0)
     n, M = 40, 3
-    pair = PoolPair{typeof(I3)}(; csponds = [SVector(0.0, 0.0) => SVector(0.0, 0.0) for _ in 1:n], K1 = KC, K2 = KC, R_gt = I3,
+    pair = PoolPair{typeof(I3)}(; correspondences = [SVector(0.0, 0.0) => SVector(0.0, 0.0) for _ in 1:n], K1 = KC, K2 = KC, R_gt = I3,
                                 t_gt = SVector(1.0, 0.0, 0.0), models = [I3 for _ in 1:M],
                                 sample_indices = reduce(hcat, [sort(randperm(rng, n)[1:5]) for _ in 1:M]),
                                 errors_r = rand(rng, M), errors_t = zeros(M), gt_inliers = falses(n), gt_variance = NaN,

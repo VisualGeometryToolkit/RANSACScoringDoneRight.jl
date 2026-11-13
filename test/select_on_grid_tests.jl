@@ -106,12 +106,12 @@
         r = MersenneTwister(77)
         sp = map(1:4) do k
             n, K = 120 + 20k, 6
-            csponds = [SVector(2rand(r) - 1, 2rand(r) - 1) => SVector(2rand(r) - 1, 2rand(r) - 1) for _ in 1:n]
+            correspondences = [SVector(2rand(r) - 1, 2rand(r) - 1) => SVector(2rand(r) - 1, 2rand(r) - 1) for _ in 1:n]
             models = [FundMat(Tuple(SMatrix{3,3,Float64,9}(randn(r, 9)...))) for _ in 1:K]
-            D = Float32[sampson_distance(models[j], csponds[i].first, csponds[i].second) for i in 1:n, j in 1:K]
+            D = Float32[sampson_distance(models[j], correspondences[i].first, correspondences[i].second) for i in 1:n, j in 1:K]
             S = reduce(hcat, [sort(randperm(r, n)[1:7]) for _ in 1:K])
             s = 1 / (300.0 + 100k)
-            pair = PoolPair(; csponds, K1 = Kc, K2 = Kc, R_gt = I3s, t_gt = SVector(1.0, 0.0, 0.0), models,
+            pair = PoolPair(; correspondences, K1 = Kc, K2 = Kc, R_gt = I3s, t_gt = SVector(1.0, 0.0, 0.0), models,
                             sample_indices = S, errors_r = fill(NaN, K), errors_t = fill(NaN, K),
                             gt_inliers = falses(n), gt_variance = 1.0e-4 * k,
                             source_map = sim(s, -0.9, -0.7), destination_map = sim(s, -0.95, -0.65))

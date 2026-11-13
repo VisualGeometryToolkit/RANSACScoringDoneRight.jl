@@ -1,6 +1,32 @@
 # RANSACScoringDoneRight changelog
 
-## 0.7.2 (unreleased)
+## 0.8.0 (unreleased, the VisualGeometryToolkit wave-10 stack)
+
+On the wave-10 stack: VisualGeometryToolkitCore 0.10 and VisualGeometryToolkitEstimation 0.11 (the package and its
+tests); neurips2026 also VisualGeometryToolkitEval 0.8. No scoring change: the same results, bit for bit.
+
+### Breaking
+
+- **[compat]:** VisualGeometryToolkitCore 0.10, VisualGeometryToolkitEstimation 0.11; neurips2026 VisualGeometryToolkitEval 0.8.
+  Core 0.10's terminology (detection, correspondence, observation) reaches this package only through the pool record:
+  `PoolPair`'s correspondences are `PoolPair(; correspondences, …)` and the way back to pixels is Core's
+  `pixel_correspondences` (both renamed in Core; `pixel_residuals`, this package's one exit to pixels, is unchanged).
+- **neurips2026: the ETH3D SuperPoint+LightGlue artifact is bound as `eth3d_splg_correspondences`** (`Artifacts.toml`,
+  `configs/data_artifacts.toml`). The published Zenodo record is unchanged (record 23240469, the same tarball, sha256 and
+  tree): its file name of record is the entry's `published_name` (VisualGeometryToolkitEval DataArtifacts), and the
+  published tree's directory name stays as published (`configs/eth_f_pools.toml` `input_jld2_dir`).
+- **neurips2026: the pool configs of record spell `min_correspondences`** (`eth_f_pools`, `heb_h_pools`, `pt_e_pools`),
+  VisualGeometryToolkitEval's keyword for the dropped-pair floor.
+- **neurips2026 no longer depends on VisualGeometryToolkitIO** directly (nothing in it loads it; VisualGeometryToolkitEval
+  does).
+
+### Other
+
+- The whole stack is in General: the install lines (README, docs, REPRODUCE.md) and the CI, docs and Downgrade
+  workflows add no other registry.
+- Prose follows the terminology ruling: a correspondence where a pair's datum is meant, "benchmark" for a timing.
+
+## 0.7.2 (2026-11-13)
 
 A patch: requires Julia 1.13 (`julia = "1.13"` in the `[compat]` of the package and of every
 workspace member: test, docs and neurips2026). CI runs Julia 1.13 only. No API change.

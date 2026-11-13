@@ -35,7 +35,7 @@ What the rule then demands of this package:
 * **There is one exit to pixels.** VisualGeometryToolkitCore's `Pools.pixel_residuals` is the image-plane
   Sampson residual of the pool's models in pixels, computed from the light
   record alone: the correspondences come back through the stored maps
-  (VisualGeometryToolkitCore's `pixel_csponds`), each model by composition with the
+  (VisualGeometryToolkitCore's `pixel_correspondences`), each model by composition with the
   normalization's sides (`inv(D) ∘ M ∘ S`). It never reads the stored residual
   matrix, so it does not depend on that matrix's residual kind — tangent
   Sampson for an essential pool, image-plane Sampson for F and H.

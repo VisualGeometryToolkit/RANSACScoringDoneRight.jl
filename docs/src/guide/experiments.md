@@ -7,7 +7,7 @@ The paper's figures are drawn by drivers in the research project
 
 ```bash
 cd neurips2026
-julia --project=. -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
 julia --project=. scripts/fetch_data.jl          # a machine without the data (neurips2026/data/README.md)
 julia --project=. scripts/fig_profile.jl --plan
 julia --project=. test/runtests.jl
@@ -48,7 +48,7 @@ does not depend on, and the concrete problem types of
 VisualGeometryToolkitEstimation, which the package itself uses only for SIMFIT++.
 
 ```bash
-cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(url = "https://github.com/prittjam/CauRegistry.jl"); Pkg.instantiate()'
+cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
 Each study is one driver and one config of record under `neurips2026/configs/`:
