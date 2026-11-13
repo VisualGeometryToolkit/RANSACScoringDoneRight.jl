@@ -1,4 +1,4 @@
-docs-pass: 438108c
+docs-pass: 707f0bc
 landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no change: a compat patch; nothing the site shows moved)
 
 # 0.7.1 docs pass (julia-docs-pass) — on VisualGeometryToolkitEstimation 0.10
@@ -6,6 +6,9 @@ landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no cha
 RANSACScoringDoneRight 0.7.1 is a patch: `[compat]` VisualGeometryToolkitEstimation "0.10" in every member that declares it, and the
 CHANGELOG section. No public name added, removed or re-signatured.
 - API diff since the last release: none.
+- docs build: the overview's `score_sq_residuals!` link pointed at a name Core's inventory holds only per method (three
+  method docstrings, no generic one), so `@extref` was ambiguous and the build failed; it links Core's Student-t scoring
+  page now.
 - stale mentions: nothing here names the SplineLens image-space refine Estimation 0.10.0 retired (its free route,
   `penalty`, the GCV and window metadata): checked by grep over src, docs, README and the paper projects.
 - README / install lines: unchanged (no version is named); the README rows resolve the registry and pass once
