@@ -1,3 +1,21 @@
+docs-pass: 9b032d1
+landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src; the install line there changes when main's Docs job deploys this tree)
+
+# 0.8.0 docs pass at the release (julia-docs-pass), resolved from General alone
+
+The release tree is the wave branch's (9ca9c3f) with no temporary [sources] (none was ever on the wave branch; the -tmp
+branch carried them) and the CHANGELOG section dated. Resolved from General (refreshed from GitHub) alone: Core 0.10.0,
+IO 0.10.0, Estimation 0.11.0, Eval 0.8.0 (job 15031). floor_compat --raise: 0 entries raised (every stack entry, "0.10",
+"0.11", "0.8", is the registered wave version's range; the third-party floors were raised at b4c5b15); --report --latest: 0.
+[x] API diff since 0.7.2: as in the wave pass below (none).
+[x] Docstrings, terminology, install lines: unchanged since the wave pass below; README, docs/src, neurips2026/README.md and
+    REPRODUCE.md name no other registry and no "until registered" note.
+[x] README rows: the readme item resolves the install line from the registry. It was the known pre-registration failure on
+    every -tmp gate; the release gate (fresh clone of the release commit, no temporary sources) runs it against General.
+[x] Docs build: docs/make.jl (strict) in the release gate, against the registered stack.
+
+---
+
 docs-pass: b4c5b15
 landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src; the install line there changes when main's Docs job deploys this tree)
 
