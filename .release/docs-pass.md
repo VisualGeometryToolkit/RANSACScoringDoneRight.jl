@@ -1,5 +1,22 @@
-docs-pass: 702d03a
-landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src, which says Julia 1.13 from this commit on; it shows 1.13 once main's Docs job deploys it)
+docs-pass: b4c5b15
+landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src; the install line there changes when main's Docs job deploys this tree)
+
+# 0.8.0 docs pass (julia-docs-pass), the wave-10 stack
+
+[x] API diff since 0.7.2: none in this package (no public name added, removed or re-signatured; src/ changes are comments and
+    the five loss-width scorer structs dropping a written-out default constructor, so `S{DG, T}(threshold)` is unchanged).
+[x] Docstrings: unchanged. The suite's `docs` item (Core's test_docs) passes in the wave-10 gate.
+[x] Terminology (owner ruling 2026-11-13): docs/src/conventions.md names Core's `pixel_correspondences`. CLAUDE.md says the pool
+    record holds correspondences. "measurement" left in prose meant a timing or an error table and now says so. No
+    keypoint or sighting appears. check_naming finds 0 in the gate.
+[x] Install lines: README, docs/src/index.md, docs/src/guide/experiments.md, neurips2026/README.md and REPRODUCE.md add
+    no registry (the whole stack is in General). REPRODUCE.md keeps a one-line note for a depot that holds another registry.
+    The CI and docs workflows install from General alone; the Downgrade workflow is deleted.
+[x] neurips2026: REPRODUCE.md names the artifact `eth3d_splg_correspondences` and points to its `published_name` (the Zenodo
+    file of record), without spelling the published token in prose.
+[x] Docs build: docs/make.jl (strict, doctests, linkcheck) green in the wave-10 gate against the upstream snapshot.
+[x] README example: the `readme` item runs the example in a fresh environment (on the -tmp branch it develops the snapshot's
+    Core, since the wave's Core is not registered yet).
 
 # 0.7.2 docs pass (julia-docs-pass) — Julia 1.13
 
