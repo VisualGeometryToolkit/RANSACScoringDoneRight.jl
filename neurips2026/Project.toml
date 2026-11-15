@@ -1,23 +1,3 @@
-# =============================================================================
-# neurips2026 — the NeurIPS 2026 research project of RANSACScoringDoneRight
-# ("RANSAC Scoring Done Right"): drivers (scripts/), configs of record
-# (configs/), data bindings (data/), the paper (paper/) and its asset index
-# (REPRODUCE.md). A DrWatson project (VisualGeometryToolkitEval PaperProjects
-# conventions), not a package: it devs the repository's package by relative
-# path and carries every dependency the drivers need; the package's own
-# Project.toml stays a library and never depends on this project. A member of
-# the repository's workspace (../Project.toml): the package, its tests, its docs
-# and this project resolve together, in the one untracked root Manifest.
-#
-# RANSACScoringDoneRight has no pool IO (pools are read with
-# VisualGeometryToolkitEval.Pools) and no concrete problem types (they are
-# VisualGeometryToolkitEstimation's); the studies here need both, so they live in this
-# environment rather than widening the package's [deps].
-#
-#   cd neurips2026 && julia --project=. -e 'using Pkg; Pkg.instantiate()'
-#   julia --project=. scripts/<driver>.jl --plan
-#   julia --project=. test/runtests.jl          # the project's tests
-# =============================================================================
 name = "NeurIPS2026"
 
 [deps]
@@ -27,14 +7,14 @@ DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 RANSACScoringDoneRight = "084d9f33-8b05-4903-a655-8a8c4926d033"
-VisualGeometryToolkitEstimation = "9a478df9-9a37-4dc7-9070-58617efe7573"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 VisualGeometryToolkitCore = "96820d6b-1dad-4e77-ad4a-8276f2ec1ce7"
+VisualGeometryToolkitEstimation = "9a478df9-9a37-4dc7-9070-58617efe7573"
 VisualGeometryToolkitEval = "86c88899-11c8-4b8e-8d7a-f01a8ab99b28"
 
-[sources]
-RANSACScoringDoneRight = {path = ".."}
+[sources.RANSACScoringDoneRight]
+path = ".."
 
 [compat]
 DataFrames = "1.8"
@@ -43,9 +23,9 @@ DrWatson = "2.19"
 JLD2 = "0.6"
 Printf = "1"
 RANSACScoringDoneRight = "0.8"
-VisualGeometryToolkitEstimation = "0.11"
 TOML = "1"
 Test = "1"
 VisualGeometryToolkitCore = "0.10"
-VisualGeometryToolkitEval = "0.8"
+VisualGeometryToolkitEstimation = "0.11"
+VisualGeometryToolkitEval = "0.8, 0.9"
 julia = "1.13"
