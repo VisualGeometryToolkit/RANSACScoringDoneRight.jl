@@ -1,3 +1,19 @@
+docs-pass: 97595d7
+landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src; the install line there changes when main's Docs job deploys this tree)
+
+# 0.8.1 docs pass (julia-docs-pass), on VisualGeometryToolkitCore 0.11 / Estimation 0.12 / Eval 0.9.2
+
+[x] API diff since 0.8.0: none. src/ and docs/ are unchanged (git diff 849a84c..97595d7 -- src docs is empty); the release
+    changes [compat] (package, test, neurips2026), the CHANGELOG (with neurips2026's pending Eval 0.9 port), the version and neurips2026/Project.toml's restored
+    header.
+[x] Docstrings: unchanged; the suite's `docs` item (Core's test_docs) runs in the gate.
+[x] README, docs/src, neurips2026/README.md and REPRODUCE.md: no stack version is named in prose, and the install lines
+    add the packages by name from General. Nothing to update.
+[x] LM verdict (Core 0.11.0): no docstring or guide describes an LM's return code; nothing here reads one.
+[x] README rows and the docs build: the readme item and docs/make.jl (strict) run in the gate, against the registered stack.
+
+---
+
 docs-pass: eb06027
 landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src; the install line there changes when main's Docs job deploys this tree)
 
