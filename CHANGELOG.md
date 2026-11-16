@@ -1,5 +1,14 @@
 # RANSACScoringDoneRight changelog
 
+## 0.8.1 (2026-11-16)
+
+On VisualGeometryToolkitCore 0.11 and VisualGeometryToolkitEstimation 0.12 (`[compat]` in the package, test and
+neurips2026); neurips2026 also on VisualGeometryToolkitEval 0.9.2. No API change.
+
+Core 0.11.0 reports a host-LM tolerance stop on a finite step as `Success` (it used to be `Stalled` at a
+non-stationary point). Nothing here reads an LM verdict or runs an LM: SIMFIT++ (`SimFitPP`, `simfitpp_select`), the
+one Estimation entry point, scores a pool on a grid. The scorers return the same results, so this is a patch.
+
 ## 0.8.0 (2026-11-13, the VisualGeometryToolkit wave-10 stack)
 
 On the wave-10 stack: VisualGeometryToolkitCore 0.10 and VisualGeometryToolkitEstimation 0.11 (the package and its
