@@ -5,6 +5,11 @@
 On VisualGeometryToolkitCore 0.11 and VisualGeometryToolkitEstimation 0.12 (`[compat]` in the package, test and
 neurips2026); neurips2026 also on VisualGeometryToolkitEval 0.9.2. No API change.
 
+neurips2026 needs the Eval 0.9 port (held on port-eval09 for the owner); the package itself is unaffected. Core 0.11
+admits no Eval 0.8, and neurips2026's drivers and its studies test still call the Eval 0.8 caching API that Eval 0.9.0
+removed (`keyed_cell_dir`, `run_complete`, `fresher`, the 4-argument `Stage`), so its suite fails until the port lands.
+neurips2026/Project.toml gets back the header comments and the `[sources]` form that CompatHelper's rewrite dropped.
+
 Core 0.11.0 reports a host-LM tolerance stop on a finite step as `Success` (it used to be `Stalled` at a
 non-stationary point). Nothing here reads an LM verdict or runs an LM: SIMFIT++ (`SimFitPP`, `simfitpp_select`), the
 one Estimation entry point, scores a pool on a grid. The scorers return the same results, so this is a patch.
