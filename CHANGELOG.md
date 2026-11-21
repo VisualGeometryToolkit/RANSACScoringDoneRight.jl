@@ -1,5 +1,28 @@
 # RANSACScoringDoneRight changelog
 
+## 0.8.3 (unreleased)
+
+On VisualGeometryToolkitCore 0.13 (`[compat]` in the package, test and neurips2026; neurips2026 also
+VisualGeometryToolkitEval 0.10): the release of the artifact store and of the site profiles' `[storage]`. The
+package uses neither. No API change; the scorers return the same results.
+
+neurips2026 follows the stack's storage design. Its stage graph names no machine path: `[sites.dgx01]` is
+removed, and a launch takes its roots from the environment or the site profile. Its published tiers install into the
+machine's artifact store, never a cluster's Julia depot. The stored runs of record (`neurips2026_paper_runs`) were
+repacked from the author's copy to the bound git-tree-sha1 and installed in the vcai store; through that artifact
+view, every paper/figures fragment and every Sec. 4 number checks byte for byte, as on 0.8.2. The tarball's
+sha256 is set when its Zenodo record is deposited.
+
+The drivers are on VisualGeometryToolkitEval's keyed products (`Product`, `produce`). The Eval 0.8 caching API
+that Eval 0.9 retired (`keyed_cell_dir`, `run_complete`, `fresher`, the 4-argument `Stage`) is gone, so the drivers load
+again. Their results move from `figures/fig_profile-<key>/` to `figures/fig_profile/<key>/` (likewise `fig_sensitivity`),
+and `numbers/paper_numbers-<key>/` splits into `numbers/paper_numbers/<key>/` and `numbers/paper_macros/<key>/`. A key
+now also folds the code the product runs. Earlier results stay where they are.
+
+The three scoring studies (`score_timing`, `sample_budget_miscal`, `f32_radix_probe`) are retired. None was a paper
+asset, and their pool of record is in a format Eval no longer reads. Their write-ups stay in `neurips2026/notes/`,
+and the drivers are in the history up to `v0.8.2`.
+
 ## 0.8.2 (2026-11-21)
 
 On VisualGeometryToolkitCore 0.12 (`[compat]` in the package, test and neurips2026), whose radiometric types (vignetting fields,

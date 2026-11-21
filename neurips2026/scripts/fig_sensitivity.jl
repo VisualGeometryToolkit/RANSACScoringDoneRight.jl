@@ -53,21 +53,15 @@ function render(dir)
         c["key"] == SENS["styles_from"] && (styles = data)
     end
     styles === nothing && error("[sensitivity] styles_from = $(repr(SENS["styles_from"])) names no cell")
-    open(joinpath(dir, CFG["render"]["styles"]), "w") do s
-        open(sh -> write_sensitivity_styles(s, sh, styles), joinpath(dir, CFG["render"]["styles_shared"]), "w")
-    end
-    return nothing
+    return write_style_sheets((s, sh) -> write_sensitivity_styles(s, sh, styles), dir, CFG)
 end
 
 const STAGES = [
     Stage(:render, "the six Sensitivity panels and the style sheets, keyed by the config and the code";
           items = () -> [renders()], product = identity,
           run = p -> produce(render, p; driver = "fig_sensitivity.jl", config_source = CFG_PATH,
-                             inputs = [input_path(CFG, c["input"]) for c in CELLS])),
-    Stage(:verify, "each render against the submitted asset (bytes, coordinates)";
-          check = () -> verify_paper_assets(product_dir(renders()), ASSETS)),
-    Stage(:deploy, "into paper/figures where nothing changes (or signed off)";
-          check = () -> deploy_paper_assets(product_dir(renders()), CFG, ASSETS)),
+                             inputs = [input_path(CFG, c["input"]) for c in CELLS]));
+    asset_stages(renders, CFG, ASSETS)...
 ]
 
 run_stages("fig_sensitivity", STAGES)

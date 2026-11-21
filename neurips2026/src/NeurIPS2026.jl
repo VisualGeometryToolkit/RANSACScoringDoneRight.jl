@@ -16,8 +16,9 @@ using DrWatson
 using TOML: TOML
 using JLD2: JLD2
 using DataFrames: DataFrames, DataFrame
-using VisualGeometryToolkitEval.Experiments: Stage, run_stages, run_key, set_project_root!, data_root, results_root,
-    read_provenance, input_path, Product, produce, product_dir, product_output
+using VisualGeometryToolkitEval.Experiments: Stage, run_stages, run_key, set_project_root!, read_provenance, input_path,
+    Product, produce, product_dir, product_output
+using VisualGeometryToolkitEval.Render: write_tsv, read_tsv
 # The one writer of a paper's number macros (prose_numbers, numbers.jl).
 using VisualGeometryToolkitEval.Reproduce: PaperNumbers, add_number!, write_numbers
 

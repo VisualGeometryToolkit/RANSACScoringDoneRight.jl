@@ -58,14 +58,13 @@ under "Not ported".
 
 ## Data
 
-Inputs are read from `data_root()` (read-only: `VGTK_DATA_ROOT`, else
-`data/exp_raw`, else the `data_root` of the machine's VisualGeometryToolkitEval
-site profile, `VGTK_SITE`, else the artifact view of the published data);
-results are written under `results_root()` (`VGTK_RESULTS_ROOT`, else
-`data/exp_pro`, else the site profile's `results_root`), one directory per run
-key, each with its `_config.toml` and `_provenance.toml`. Machine paths live
-only in the site profiles (VisualGeometryToolkitEval's "Machines and storage"):
-this project names none.
+Inputs are read from `data_root()` (read-only), results are written under
+`results_root()`, one directory per keyed product, each with its
+`_config.toml` and `_provenance.toml`; how each root and the artifact store
+resolve on a machine is VisualGeometryToolkitEval's ("Machines and storage":
+the environment, `data/exp_raw` / `data/exp_pro`, the `VGTK_SITE` site
+profile, the artifact view; `data/README.md`). This project names no machine
+path.
 The stored runs are inputs like any other: the configs name each table as an
 `[inputs.<id>]` under `data_root()`. The published data
 (`configs/data_artifacts.toml`, `Artifacts.toml`): the stored runs
@@ -73,10 +72,8 @@ The stored runs are inputs like any other: the configs name each table as an
 raw inputs of the paper's pools, shared with LocalOptimizationDoneRight's
 accv2026 (`pt_raw_validation`, `pt_raw_test`, `heb_raw`,
 `eth3d_splg_correspondences`, its Zenodo file under its published name, `configs/data_artifacts.toml` `published_name`: the same records and hashes).
-`scripts/fetch_data.jl` installs them into the machine's artifact store
-(VisualGeometryToolkitCore's `artifact_store`: `VGTK_ARTIFACT_STORE`, else the
-site profile's `artifact_store`; never a cluster's Julia depot) and links them
-into the artifact view.
+`scripts/fetch_data.jl` installs them into the machine's artifact store (never
+a cluster's Julia depot) and links them into the artifact view.
 
 A regenerated figure never replaces the submitted one silently: a driver
 renders into its keyed results directory, `verify` writes `verify.tsv` (byte

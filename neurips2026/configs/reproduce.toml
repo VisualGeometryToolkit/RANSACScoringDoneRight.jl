@@ -2,9 +2,9 @@
 # (VisualGeometryToolkitEval Reproduce, the runner: its docs, "One command: the runner"). Data only: which driver runs on
 # which config of record, after what. How a stage runs (Slurm or here, the CPUs, the memory) is the site's, a machine
 # profile shipped with VisualGeometryToolkitEval (configs/sites/dgx01.toml, desktop.toml, vcai.toml; _template.toml to add
-# one), and so is where a machine keeps every project's data, results and artifact store (its [storage] table). This
-# graph names no machine path: a launch's roots are --data-root / --results-root, else VGTK_DATA_ROOT /
-# VGTK_RESULTS_ROOT, else [sites.<name>] below (relative paths only), else the site profile's [storage].
+# one), and so is where a machine keeps every project's data, results and artifact store (its [storage] table;
+# VisualGeometryToolkitEval "Machines and storage"). This graph names no machine path ([sites.<name>] below: relative
+# paths only).
 #
 #   bash neurips2026/scripts/reproduce/reproduce_results_vcai.sh [--dry-run] [--only=<stage>,…] [--no-deps] [status]
 #   bash neurips2026/scripts/reproduce/reproduce_results_dgx.sh [--dry-run] [--only=<stage>,…] [--no-deps] [status]

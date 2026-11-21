@@ -35,6 +35,34 @@ deploy_paper_assets(outdir::AbstractString, cfg::AbstractDict, assets) =
     (deploy_assets(outdir, paper_figures_dir(), assets; replace_submitted = replace_submitted(cfg)); nothing)
 
 """
+    asset_stages(product, cfg, assets) -> Vector{Stage}
+
+The verify and deploy check stages of a driver whose renders `assets` are the
+files of the keyed product `product()` (a function: the product is built when
+its stage runs).
+"""
+asset_stages(product, cfg::AbstractDict, assets) = [
+    Stage(:verify, "each render against the paper's copy (bytes, coordinates)";
+          check = () -> verify_paper_assets(product_dir(product()), assets)),
+    Stage(:deploy, "into paper/figures where nothing changes (or signed off)";
+          check = () -> deploy_paper_assets(product_dir(product()), cfg, assets)),
+]
+
+"""
+    write_style_sheets(write_styles, dir, cfg)
+
+A figure's two style sheets, `cfg["render"]["styles"]` and
+`cfg["render"]["styles_shared"]` in `dir`, by `write_styles(styles_io,
+shared_io)`; the shared sheet, written last, is the figure product's output.
+"""
+function write_style_sheets(write_styles, dir::AbstractString, cfg::AbstractDict)
+    open(joinpath(dir, cfg["render"]["styles"]), "w") do s
+        open(sh -> write_styles(s, sh), joinpath(dir, cfg["render"]["styles_shared"]), "w")
+    end
+    return nothing
+end
+
+"""
     replace_submitted(cfg) -> Bool | Vector{String}
 
 The author's sign-off of a figure config, its [deploy] replace_submitted:

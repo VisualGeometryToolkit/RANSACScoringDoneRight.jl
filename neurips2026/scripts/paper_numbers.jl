@@ -32,40 +32,38 @@ const CFG_PATH = projectdir("configs", "paper_numbers.toml")
 const CFG = TOML.parsefile(CFG_PATH)
 const ASSETS = [CFG["render"]["macros"]]
 const RECORDS = (; driver = "paper_numbers.jl", config_source = CFG_PATH)
-# the statistics, keyed by the config and the code; the macro file, keyed by them (its upstream) and [render]
+# the statistics, keyed by the config and the code; the macro file, keyed by them (its upstream) and the [render] table
+# (under its own name: a whole config's key excludes [render])
 numbers() = Product("numbers", "paper_numbers", CFG; output = "numbers.tsv")
-macros_product() = Product("numbers", "paper_macros", Dict("render" => CFG["render"]); output = only(ASSETS),
+macros_product() = Product("numbers", "paper_macros", Dict("macros" => CFG["render"]); output = only(ASSETS),
                            upstream = ("numbers" => numbers(),))
 inputs() = [input_path(CFG, id) for id in sort(collect(keys(CFG["inputs"])))]   # resolved when a stage runs (--plan needs no data)
 
-check_all() = [check_prose_number(CFG, e) for e in CFG["numbers"]]
+const COLUMNS = ("id", "computed", "rounded", "stated", "relation", "ok")
+_cell(x) = x isa AbstractVector ? join(x, ",") : x
+compute(dir) = (write_tsv(joinpath(dir, "numbers.tsv"), COLUMNS,
+                          ([_cell(getfield(r, Symbol(c))) for c in COLUMNS] for r in (check_prose_number(CFG, e) for e in CFG["numbers"])));
+                nothing)
 
-function compute(dir)
-    open(joinpath(dir, "numbers.tsv"), "w") do io
-        println(io, join(("id", "computed", "rounded", "stated", "relation", "ok"), '\t'))
-        for r in check_all()
-            println(io, join((r.id, join(r.computed, ","), join(r.rounded, ","), join(r.stated, ","), r.relation, r.ok), '\t'))
-        end
-    end
-    return nothing
-end
+# the upstream table's rows, as check_prose_number returns them (the macros read the numbers they are keyed by)
+_floats(s) = parse.(Float64, split(s, ","))
+read_numbers() = [(id = r["id"], computed = _floats(r["computed"]), rounded = _floats(r["rounded"]), stated = _floats(r["stated"]),
+                   relation = r["relation"], ok = r["ok"] == "true") for r in read_tsv(product_output(numbers()))]
 
 function macros(dir)
     up = numbers()
     write_numbers(joinpath(dir, only(ASSETS)),
-                  prose_numbers(CFG, check_all(); run_key = up.key, commit = string(read_provenance(product_dir(up))["gitcommit"])))
+                  prose_numbers(CFG, read_numbers(); run_key = up.key, commit = string(read_provenance(product_dir(up))["gitcommit"])))
     return nothing
 end
 
 function report()
-    lines = readlines(product_output(numbers()))[2:end]
-    for l in lines
-        id, computed, rounded, stated, relation, ok = split(l, '\t')
-        println("   ", rpad(id, 30), ok == "true" ? "ok       " : "DIFFERS  ",
-                "stated ", stated, relation == "lt" ? " (upper bound)" : "", ", computed ", rounded, " (", computed, ")")
+    rows = read_numbers()
+    for r in rows
+        println("   ", rpad(r.id, 30), r.ok ? "ok       " : "DIFFERS  ", "stated ", join(r.stated, ","),
+                r.relation == "lt" ? " (upper bound)" : "", ", computed ", join(r.rounded, ","), " (", join(r.computed, ","), ")")
     end
-    nbad = count(l -> endswith(l, "\tfalse"), lines)
-    println("   $(length(lines) - nbad) of $(length(lines)) prose numbers match their data")
+    println("   $(count(r -> r.ok, rows)) of $(length(rows)) prose numbers match their data")
     return nothing
 end
 
@@ -73,10 +71,8 @@ const STAGES = [
     Stage(:compute, "the prose numbers from the stored runs, keyed by the config and the code";
           items = () -> [numbers()], product = identity, run = p -> produce(compute, p; RECORDS..., inputs = inputs())),
     Stage(:macros, "the generated numbers as a macro file, keyed by the numbers";
-          items = () -> [macros_product()], product = identity, run = p -> produce(macros, p; RECORDS..., inputs = inputs())),
-    Stage(:verify, "the macro file against the paper's copy"; check = () -> verify_paper_assets(product_dir(macros_product()), ASSETS)),
-    Stage(:deploy, "into paper/figures where nothing changes (or signed off)";
-          check = () -> deploy_paper_assets(product_dir(macros_product()), CFG, ASSETS)),
+          items = () -> [macros_product()], product = identity, run = p -> produce(macros, p; RECORDS...)),
+    asset_stages(macros_product, CFG, ASSETS)...,
     Stage(:report, "each against the value main.tex states (prints; writes nothing)"; check = report),
 ]
 
