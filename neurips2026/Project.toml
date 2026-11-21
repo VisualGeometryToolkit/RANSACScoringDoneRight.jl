@@ -32,9 +32,13 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 VisualGeometryToolkitCore = "96820d6b-1dad-4e77-ad4a-8276f2ec1ce7"
 VisualGeometryToolkitEstimation = "9a478df9-9a37-4dc7-9070-58617efe7573"
 VisualGeometryToolkitEval = "86c88899-11c8-4b8e-8d7a-f01a8ab99b28"
+VisualGeometryToolkitIO = "0a7ae7e7-e931-45f8-9bba-03d07899cebc"   # TEMPORARY, with its [sources] entry
 
 [sources]
 RANSACScoringDoneRight = {path = ".."}
+# TEMPORARY (until VisualGeometryToolkitEval 0.10.0 and IO 0.11.1 merge in General; IO is in [deps] only for this):
+VisualGeometryToolkitEval = {path = "/home/jbpritts/src/_wt-rsdr-vgtk013/VisualGeometryToolkitEval"}
+VisualGeometryToolkitIO = {path = "/home/jbpritts/src/_wt-rsdr-vgtk013/VisualGeometryToolkitIO"}
 
 [compat]
 DataFrames = "1.8"
@@ -45,7 +49,7 @@ Printf = "1"
 RANSACScoringDoneRight = "0.8"
 TOML = "1"
 Test = "1"
-VisualGeometryToolkitCore = "0.12"
+VisualGeometryToolkitCore = "0.13"
 VisualGeometryToolkitEstimation = "0.12"
-VisualGeometryToolkitEval = "0.9.2"
+VisualGeometryToolkitEval = "0.10"
 julia = "1.13"
