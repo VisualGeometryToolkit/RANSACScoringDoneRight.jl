@@ -14,7 +14,7 @@ The JLD2 data itself is not committed, since it is regenerable from the
 committed driver and does not belong in the package.
 
 Regenerate any of these through the paper's stage graph
-(`bash ../scripts/reproduce/reproduce_results_dgx.sh --only=<study>`), which
+(`bash ../scripts/reproduce/reproduce_results_vcai.sh --only=<study>`), which
 runs the driver on its config of record (`../configs/<study>.toml`: the protocol
 of the published numbers and its declared inputs). Changing `npairs` or `reps`
 there invalidates cross-row comparisons, because each figure is a
