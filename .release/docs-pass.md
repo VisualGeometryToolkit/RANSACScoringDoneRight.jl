@@ -1,7 +1,7 @@
-docs-pass: 781e646
+docs-pass: cdf76aa
 landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src; it changes when main's Docs job deploys this tree)
 
-# 0.8.3 docs pass (julia-docs-pass), on VisualGeometryToolkitCore 0.13 / Estimation 0.12.2 / Eval 0.10.0
+# 0.8.3 docs pass (julia-docs-pass, at cdf76aa; the review of 781e646 plus the dated CHANGELOG), on VisualGeometryToolkitCore 0.13 / Estimation 0.12.2 / Eval 0.10.0
 
 [x] API diff since 0.8.2: none. src/ is unchanged (git diff v0.8.2..781e646 -- src is empty). The release changes
     [compat] (Core 0.13 in the package, test and neurips2026; neurips2026 Eval 0.10), neurips2026 (storage, the
