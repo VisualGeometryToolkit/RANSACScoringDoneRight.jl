@@ -17,7 +17,10 @@ The drivers are on VisualGeometryToolkitEval's keyed products (`Product`, `produ
 that Eval 0.9 retired (`keyed_cell_dir`, `run_complete`, `fresher`, the 4-argument `Stage`) is gone, so the drivers load
 again. Their results move from `figures/fig_profile-<key>/` to `figures/fig_profile/<key>/` (likewise `fig_sensitivity`),
 and `numbers/paper_numbers-<key>/` splits into `numbers/paper_numbers/<key>/` and `numbers/paper_macros/<key>/`. A key
-now also folds the code the product runs. Earlier results stay where they are.
+now also folds the code the product runs. Earlier results stay where they are. The regenerated figures are byte for byte
+the committed ones. `paper/figures/paper_numbers.tex` is redeployed from the regenerated run: the same macros and values,
+with the provenance comments of VisualGeometryToolkitEval's number writer (the driver, the config, the run key and the
+commit), which the committed copy predated.
 
 The three scoring studies (`score_timing`, `sample_budget_miscal`, `f32_radix_probe`) are retired. None was a paper
 asset, and their pool of record is in a format Eval no longer reads. Their write-ups stay in `neurips2026/notes/`,
