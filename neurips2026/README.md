@@ -22,13 +22,13 @@ make -C paper                                         # the PDF
 |---|---|
 | `paper/` | the manuscript as posted to arXiv (`main.tex`, `main.bib`, the NeurIPS style), `Makefile`; generated figures under `paper/figures/` |
 | `REPRODUCE.md` | the asset index: every figure the paper reads → its generator, config and data, with its verification status; what is not ported, and the reruns it would take |
-| `configs/` | the configs of record (TOML): the figures (`fig_profile`, `fig_sensitivity`), the prose-number check (`paper_numbers`), the scoring studies (`score_timing`, `sample_budget_miscal`, `f32_radix_probe`), the stage graph (`reproduce`), the pools of record (`*_pools`), the data catalog (`data_artifacts`) |
-| `scripts/` | the drivers, stage-idempotent (`--plan`, `--stage=NAME`, `--force`); `scripts/studies/` the scoring studies (write-ups in `notes/`); `scripts/reproduce/` the one-command reproduction per machine (`configs/reproduce.toml`) |
+| `configs/` | the configs of record (TOML): the figures (`fig_profile`, `fig_sensitivity`), the prose-number check (`paper_numbers`) the stage graph (`reproduce`), the pools of record (`*_pools`), the data catalog (`data_artifacts`) |
+| `scripts/` | the drivers, stage-idempotent (`--plan`, `--stage=NAME`, `--force`); `scripts/reproduce/` the one-command reproduction per machine (`configs/reproduce.toml`) |
 | `src/` | the shared prelude (`NeurIPS2026.jl`): the panel renderers (`panels.jl`), the verify/deploy stages (`assets.jl`), the prose-number statistics (`numbers.jl`), the data catalog binding (`data_artifacts.jl`) |
 | `test/` | the suite: `paper_project_violations`, and the renderers reproduce every submitted fragment byte for byte |
 | `data/exp_raw`, `data/exp_pro` | this machine's input and results trees (links or directories, never tracked; `data/README.md`) |
 | `Artifacts.toml`, `configs/data_artifacts.toml` | the published data (Zenodo) and their catalog |
-| `notes/` | write-ups of the scoring studies (not paper assets) |
+| `notes/` | write-ups of the retired scoring studies (not paper assets; their drivers are in the history up to `v0.8.2`) |
 
 `Project.toml` devs the package (`..`) and takes the rest of the stack from
 the registry. It is a member of the repository's workspace: the package, its

@@ -175,13 +175,13 @@ docs/                  the documentation site (Documenter)
 neurips2026/           the research project (DrWatson layout, devs this package):
   Project.toml         every dependency the drivers need (`@quickactivate "NeurIPS2026"`)
   paper/               the manuscript (arXiv version); generated figures in paper/figures/
-  scripts/             the figure drivers (stage-idempotent), the data fetch,
-                       studies/ (the scoring studies) and slurm/ (their launchers)
+  scripts/             the figure drivers (stage-idempotent), the data fetch and
+                       reproduce/ (the one-command reproduction per site)
   configs/             configs of record (figures, prose-number check, pools, data catalog)
   src/                 the shared prelude: the ported panel renderers, verify/deploy
   test/                the project's tests (`julia --project=. test/runtests.jl`)
   data/                exp_raw / exp_pro bindings (per machine, not tracked)
-  notes/               write-ups of the scoring studies
+  notes/               write-ups of the retired scoring studies
   REPRODUCE.md         the figure → generator → config → data index, and what is not ported
 ```
 

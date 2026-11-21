@@ -1,5 +1,8 @@
 # Per-hypothesis scoring cost on CPU
 
+> **Not reproducible from VisualGeometryToolkitEval 0.10 on.** The study was retired in 0.8.3 (`../REPRODUCE.md`,
+> "Scoring studies (retired)"); its driver and config of record are in the repository's history up to tag `v0.8.2`.
+
 Cost of scoring a single model hypothesis, in microseconds, for our
 profile-marginal sort-and-sweep and four baseline scoring rules. Every scorer is
 an implementation shipped in this package; the driver

@@ -65,7 +65,8 @@ continues from here.
 - [Overview](https://ransacscoringdoneright.github.io/overview/): scoring
   versus selection, the scorers, the scale priors and the pool frame.
 - [Experiments](https://ransacscoringdoneright.github.io/guide/experiments/):
-  the scoring studies shipped with the repository.
+  reproducing the paper's figures, and the write-ups of the retired scoring
+  studies.
 - [Conventions](https://ransacscoringdoneright.github.io/conventions/): units,
   frames and widths, and why they are named as they are.
 - [API Reference](https://ransacscoringdoneright.github.io/api/scoring/).

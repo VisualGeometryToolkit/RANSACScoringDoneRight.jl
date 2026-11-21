@@ -217,30 +217,16 @@ reads; the others are literals in the prose. The suite requires every number
 to match its data exactly, and the macro file to be what the driver writes
 (`test/test_figures.jl`).
 
-## Scoring studies (not paper assets)
+## Scoring studies (retired)
 
-`scripts/studies/` holds the package's scoring studies (sample budget under
-scale miscalibration, per-hypothesis scoring cost, a Float32 radix-sort
-probe), with write-ups in `notes/`. The paper reads none of their outputs.
-Each is a driver on its config of record (`configs/score_timing.toml`,
-`sample_budget_miscal.toml`, `f32_radix_probe.toml`: the protocol of the
-write-up's run, and its pools as `[inputs.<id>]`), writing into its keyed run
-directory under `results_root()`; they are stages of `configs/reproduce.toml`
-that run only when named (`--only=score_timing`).
+The package's scoring studies (sample budget under scale miscalibration,
+per-hypothesis scoring cost, a Float32 radix-sort probe) were retired in 0.8.3;
+their write-ups stay in `notes/` as records of the runs they describe. None was
+a paper asset. Their pool of record, accv2026's PT-E-SIFT-4K, is pool format 1
+(which VisualGeometryToolkitEval's `load_pool` refuses) without residuals
+files, and the pools that replace it are a produced tier of
+LocalOptimizationDoneRight's accv2026, which no stage of this project can
+produce. The drivers and their configs of record are in the repository's history
+up to tag `v0.8.2` (`neurips2026/scripts/studies/`, `configs/score_timing.toml`,
+`sample_budget_miscal.toml`, `f32_radix_probe.toml`).
 
-**Known gap: the studies do not run on 0.9.** Their pool of record,
-accv2026's PT-E-SIFT-4K, is pool FORMAT 1 (pairs stored as the retired
-`StereoScoringData`; no `pool_format` key), which VisualGeometryToolkitEval's
-0.9 `load_pool` refuses, and it has no residuals files. A 0.9 residuals file is
-bound to a format-5 light pool by its `pool_key`, so the pool itself needs
-conversion first, and that needs two things that do not exist yet: a format-1
-→ format-4 converter (the `convert_pools_v4.jl` Eval's refusal names is in no
-repository), and a ruling on the residual kind and frame (the format-1
-`distances` are Sampson distances in the old canonical frame; 0.9 E pools
-store tangent Sampson in `NormalizedImageFrame`, and the protocol widths
-1.64e-3 are on the stored axis). Until then `score_timing`, `f32_radix_probe`
-and `sample_budget_miscal` cannot run, and the dry run with `--only` reports
-`score_timing`'s and `f32_radix_probe`'s `[inputs.residuals]` missing
-(`sample_budget_miscal`'s input is the pool directory, so the dry run cannot
-show it). Owner ruling 2026-11-12: recorded as a gap, no other pool
-substituted.

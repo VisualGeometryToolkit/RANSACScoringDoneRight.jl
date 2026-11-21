@@ -186,7 +186,7 @@ carries that prior).
 - **Start here:** the [Overview](overview.md) — scoring versus selection, the
   scorers, the scale priors, native widths and the pool frame.
 - **How to:** [Experiments](guide/experiments.md) reproduces the paper's
-  figures and runs the scoring studies shipped with the repository.
+  figures, with the write-ups of the retired scoring studies.
 - **Explanation:** [Conventions](conventions.md) — units, frames and widths;
   [Working on the stack](guide/stack.md) — the contracts the package
   implements, its GPU evaluators and its vocabulary.

@@ -178,7 +178,7 @@ package.
 This repository holds the package and, in `neurips2026/`, the paper's
 research project: the manuscript, the drivers that draw its Profile and
 Sensitivity figures, their configs of record and the asset index
-`neurips2026/REPRODUCE.md`, plus the scoring studies
+`neurips2026/REPRODUCE.md`, plus the write-ups of the retired scoring studies
 ([Experiments](guide/experiments.md)). The figures regenerate byte for byte
 from the six stored evaluation runs of record; the evaluation that produced
 those runs (pools, coarse probes, the per-pair grid evaluation and the

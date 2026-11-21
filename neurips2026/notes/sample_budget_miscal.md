@@ -1,5 +1,8 @@
 # Sample budget under scale miscalibration
 
+> **Not reproducible from VisualGeometryToolkitEval 0.10 on.** The study was retired in 0.8.3 (`../REPRODUCE.md`,
+> "Scoring studies (retired)"); its driver and config of record are in the repository's history up to tag `v0.8.2`.
+
 How well does each scoring function select a model as the hypothesis budget
 grows, and how much of that survives a mis-estimated noise scale?
 
