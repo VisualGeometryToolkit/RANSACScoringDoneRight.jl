@@ -1,6 +1,6 @@
 # RANSACScoringDoneRight changelog
 
-## 0.8.3 (unreleased)
+## 0.8.3 (2026-11-21)
 
 On VisualGeometryToolkitCore 0.13 (`[compat]` in the package, test and neurips2026; neurips2026 also
 VisualGeometryToolkitEval 0.10): the release of the artifact store and of the site profiles' `[storage]`. The
