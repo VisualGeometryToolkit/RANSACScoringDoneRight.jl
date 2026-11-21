@@ -22,7 +22,6 @@ the stage graph of record `configs/reproduce.toml`; from the repository root):
 ```
 bash neurips2026/scripts/reproduce/reproduce_results_vcai.sh --dry-run   # the jobs, the run keys, every missing input
 bash neurips2026/scripts/reproduce/reproduce_results_vcai.sh             # Slurm (the vcai cluster; its data on the project space)
-bash neurips2026/scripts/reproduce/reproduce_results_dgx.sh              # Slurm (the owner's server)
 bash neurips2026/scripts/reproduce/reproduce_results_desktop.sh          # no scheduler
 ```
 

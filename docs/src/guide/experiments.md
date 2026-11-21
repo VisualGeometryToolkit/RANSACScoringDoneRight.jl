@@ -23,7 +23,7 @@ is documented there but not yet ported to the current stack.
 
 Two scoring studies and a decision probe used to ship beside the package as
 drivers in `neurips2026/scripts/studies/`. They were retired in 0.8.3 and are
-**not reproducible from 0.10 on**: their pool of record (PT-E-SIFT-4K) is a
+**not reproducible from VisualGeometryToolkitEval 0.10 on**: their pool of record (PT-E-SIFT-4K) is a
 pool format that VisualGeometryToolkitEval no longer reads. Their write-ups
 stay in `neurips2026/notes/` as records of the runs they describe, and the
 drivers and configs are in the repository's history up to tag `v0.8.2`. Both

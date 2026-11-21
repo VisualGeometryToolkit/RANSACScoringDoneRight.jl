@@ -12,7 +12,9 @@ accv2026 is the worked example — and `test/runtests.jl` enforces them
   path, numeric table) lives in a driver;
 - outputs are VisualGeometryToolkitEval keyed products (`Product`, `produce`):
   `results_root()/<experiment>/<product>/<key>/`, keyed by only what they read
-  and the code they run, with `_config.toml` / `_provenance.toml` beside them; inputs under
+  and the code they load (the stack packages and this project's `src/`; a
+  driver's own source under `scripts/` is not keyed: logic that shapes an
+  output belongs in `src/`), with `_config.toml` / `_provenance.toml` beside them; inputs under
   `data_root()` are read-only; results are add-only (move a superseded run
   aside, never delete it); no machine path, no `artifact"…"` in code;
 - every figure the paper reads is a row of `REPRODUCE.md`;

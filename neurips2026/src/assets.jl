@@ -16,8 +16,7 @@
 # holds only where the paper is. (A config's inputs are read with Eval's
 # `input_path(cfg, id)`: the tier's root, the sha256 checked.)
 # =============================================================================
-using VisualGeometryToolkitEval.Reproduce: verify_assets, assets_deployed, deploy_assets,
-    fragment_coordinates, compare_fragments, VERIFY_REPORT
+using VisualGeometryToolkitEval.Reproduce: verify_assets, deploy_assets, fragment_coordinates, compare_fragments
 using VisualGeometryToolkitEval.PaperProjects: paper_figures_dir   # paper/figures/: where the paper reads its generated assets
 
 
@@ -39,14 +38,24 @@ deploy_paper_assets(outdir::AbstractString, cfg::AbstractDict, assets) =
 
 The verify and deploy check stages of a driver whose renders `assets` are the
 files of the keyed product `product()` (a function: the product is built when
-its stage runs).
+its stage runs). Each refuses a product that is not produced under its current
+key (a commit re-keys it): run its producing stage first.
 """
 asset_stages(product, cfg::AbstractDict, assets) = [
     Stage(:verify, "each render against the paper's copy (bytes, coordinates)";
-          check = () -> verify_paper_assets(product_dir(product()), assets)),
+          check = () -> verify_paper_assets(produced_dir(product()), assets)),
     Stage(:deploy, "into paper/figures where nothing changes (or signed off)";
-          check = () -> deploy_paper_assets(product_dir(product()), cfg, assets)),
+          check = () -> deploy_paper_assets(produced_dir(product()), cfg, assets)),
 ]
+
+"""
+    produced_dir(p::Product) -> String
+
+The directory of `p` when it is produced under its current key; an error naming
+the product otherwise (its producing stage has not run since the key changed).
+"""
+produced_dir(p::Product) = produced(p) ? product_dir(p) :
+    error("$(p.experiment)/$(p.name)/$(p.key) is not produced: run its producing stage first (a commit re-keys a product)")
 
 """
     write_style_sheets(write_styles, dir, cfg)

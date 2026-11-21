@@ -1,13 +1,12 @@
 # The stage graph of record of the paper: every result and figure from its declared inputs, in one command
 # (VisualGeometryToolkitEval Reproduce, the runner: its docs, "One command: the runner"). Data only: which driver runs on
 # which config of record, after what. How a stage runs (Slurm or here, the CPUs, the memory) is the site's, a machine
-# profile shipped with VisualGeometryToolkitEval (configs/sites/dgx01.toml, desktop.toml, vcai.toml; _template.toml to add
-# one), and so is where a machine keeps every project's data, results and artifact store (its [storage] table;
-# VisualGeometryToolkitEval "Machines and storage"). This graph names no machine path ([sites.<name>] below: relative
-# paths only).
+# profile shipped with VisualGeometryToolkitEval (configs/sites/vcai.toml, desktop.toml; _template.toml to add one), and
+# so is where a machine keeps every project's data, results and artifact store, in its [storage] table (vcai's names
+# the cluster's project space; VisualGeometryToolkitEval "Machines and storage"). This graph names no machine path:
+# [sites.desktop] below binds this checkout's data/exp_raw and data/exp_pro by relative path.
 #
 #   bash neurips2026/scripts/reproduce/reproduce_results_vcai.sh [--dry-run] [--only=<stage>,…] [--no-deps] [status]
-#   bash neurips2026/scripts/reproduce/reproduce_results_dgx.sh [--dry-run] [--only=<stage>,…] [--no-deps] [status]
 #   bash neurips2026/scripts/reproduce/reproduce_results_desktop.sh [--dry-run] [--only=<stage>,…] [--no-deps] [status]
 #
 # Without --only: every stage that is not `default = false` — the environment, the two figures and the prose numbers,

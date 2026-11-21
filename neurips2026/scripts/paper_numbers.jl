@@ -48,7 +48,7 @@ compute(dir) = (write_tsv(joinpath(dir, "numbers.tsv"), COLUMNS,
 # the upstream table's rows, as check_prose_number returns them (the macros read the numbers they are keyed by)
 _floats(s) = parse.(Float64, split(s, ","))
 read_numbers() = [(id = r["id"], computed = _floats(r["computed"]), rounded = _floats(r["rounded"]), stated = _floats(r["stated"]),
-                   relation = r["relation"], ok = r["ok"] == "true") for r in read_tsv(product_output(numbers()))]
+                   relation = r["relation"], ok = r["ok"] == "true") for r in read_tsv(joinpath(produced_dir(numbers()), "numbers.tsv"))]
 
 function macros(dir)
     up = numbers()

@@ -31,9 +31,9 @@ const CFG_PATH = projectdir("configs", "fig_profile.toml")
 const CFG = TOML.parsefile(CFG_PATH)
 const CELLS = CFG["profile"]["cells"]
 const ASSETS = vcat([c["asset"] for c in CELLS], [CFG["render"]["styles"], CFG["render"]["styles_shared"]])
-# the renders, keyed by the config ([render] is excluded from a config's key) and the code they run; the shared
-# style sheet is written last, so it is the product's output
-renders() = Product("figures", "fig_profile", CFG; output = CFG["render"]["styles_shared"])
+# the renders, keyed by the config and the code they load; [render] (the file names they write) under its own name, since
+# a config's key excludes a top-level [render]. The shared style sheet is written last: the product's output
+renders() = Product("figures", "fig_profile", merge(CFG, Dict("render_files" => CFG["render"])); output = CFG["render"]["styles_shared"])
 
 function render(dir)
     crit = CFG["profile"]["criterion"]

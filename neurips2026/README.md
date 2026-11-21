@@ -22,7 +22,7 @@ make -C paper                                         # the PDF
 |---|---|
 | `paper/` | the manuscript as posted to arXiv (`main.tex`, `main.bib`, the NeurIPS style), `Makefile`; generated figures under `paper/figures/` |
 | `REPRODUCE.md` | the asset index: every figure the paper reads → its generator, config and data, with its verification status; what is not ported, and the reruns it would take |
-| `configs/` | the configs of record (TOML): the figures (`fig_profile`, `fig_sensitivity`), the prose-number check (`paper_numbers`) the stage graph (`reproduce`), the pools of record (`*_pools`), the data catalog (`data_artifacts`) |
+| `configs/` | the configs of record (TOML): the figures (`fig_profile`, `fig_sensitivity`), the prose-number check (`paper_numbers`), the stage graph (`reproduce`), the pools of record (`*_pools`), the data catalog (`data_artifacts`) |
 | `scripts/` | the drivers, stage-idempotent (`--plan`, `--stage=NAME`, `--force`); `scripts/reproduce/` the one-command reproduction per machine (`configs/reproduce.toml`) |
 | `src/` | the shared prelude (`NeurIPS2026.jl`): the panel renderers (`panels.jl`), the verify/deploy stages (`assets.jl`), the prose-number statistics (`numbers.jl`), the data catalog binding (`data_artifacts.jl`) |
 | `test/` | the suite: `paper_project_violations`, and the renderers reproduce every submitted fragment byte for byte |
