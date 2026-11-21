@@ -34,6 +34,17 @@ deploy_paper_assets(outdir::AbstractString, cfg::AbstractDict, assets) =
     (deploy_assets(outdir, paper_figures_dir(), assets; replace_submitted = replace_submitted(cfg)); nothing)
 
 """
+    figure_product(name, cfg) -> Product
+
+The keyed renders of figure driver `name` (`<results>/figures/<name>/<key>/`):
+keyed by its config and the code it loads, with `[render]` (the file names it
+writes) under its own name, since a config's key excludes a top-level
+`[render]`. The shared style sheet, written last, is its output.
+"""
+figure_product(name::AbstractString, cfg::AbstractDict) =
+    Product("figures", name, merge(cfg, Dict("render_files" => cfg["render"])); output = cfg["render"]["styles_shared"])
+
+"""
     asset_stages(product, cfg, assets) -> Vector{Stage}
 
 The verify and deploy check stages of a driver whose renders `assets` are the
