@@ -1,5 +1,5 @@
 #!/usr/bin/env julia
-# provenance: every run writes _config.toml and _provenance.toml (write_run_records) beside its renders.
+# provenance: every product writes _config.toml and _provenance.toml (produce) beside its renders.
 # =============================================================================
 # scripts/fig_profile.jl — Fig. 1 (\label{fig:profile-grid}, "Profile"): the
 # three Profile cells (PT/E, ETH3D/F, HEB/H) and the Profile style sheets,
@@ -14,8 +14,8 @@
 #
 # STAGES
 #   render  each cell's fragment and the two style sheets from its stored
-#           `source.jld2` (src/panels.jl, the port of the submitted renderer)
-#           → <results>/figures/fig_profile-<run key>/
+#           `source.jld2` (src/panels.jl, the port of the submitted renderer):
+#           the keyed product → <results>/figures/fig_profile/<key>/
 #   verify  each render against the submitted paper/figures copy, byte for
 #           byte and by coordinates → verify.tsv beside the renders
 #   deploy  into paper/figures — only where that changes nothing, unless
@@ -29,42 +29,40 @@ include(srcdir("NeurIPS2026.jl"))
 
 const CFG_PATH = projectdir("configs", "fig_profile.toml")
 const CFG = TOML.parsefile(CFG_PATH)
-const KEY = run_key(CFG)                       # [render] is excluded
-const OUTDIR = keyed_cell_dir(CFG, "figures", "fig_profile"; base = results_root())   # <results>/figures/fig_profile-<KEY>
 const CELLS = CFG["profile"]["cells"]
 const ASSETS = vcat([c["asset"] for c in CELLS], [CFG["render"]["styles"], CFG["render"]["styles_shared"]])
+# the renders, keyed by the config ([render] is excluded from a config's key) and the code they run; the shared
+# style sheet is written last, so it is the product's output
+renders() = Product("figures", "fig_profile", CFG; output = CFG["render"]["styles_shared"])
 
-function render()
+function render(dir)
     crit = CFG["profile"]["criterion"]
-    mkpath(OUTDIR)
-    inputs = String[]
+    styles = nothing
     for c in CELLS
         records = profile_records(JLD2.load(input_path(CFG, c["input"]), "profile"), crit)
         isempty(records) && error("no Profile records for criterion $crit in input $(c["input"])")
         oracle_y, pmb = profile_references(JLD2.load(input_path(CFG, c["input"]), "profile_oracle"), crit)
-        open(joinpath(OUTDIR, c["asset"]), "w") do io
+        open(joinpath(dir, c["asset"]), "w") do io
             write_profile_group(io, records, c["title"]; oracle_y, per_method_best = pmb, bands = c["bands"])
         end
-        if c["key"] == CFG["profile"]["styles_from"]
-            open(joinpath(OUTDIR, CFG["render"]["styles"]), "w") do s
-                open(sh -> write_profile_styles(s, sh, records, crit), joinpath(OUTDIR, CFG["render"]["styles_shared"]), "w")
-            end
-        end
-        push!(inputs, input_path(CFG, c["input"]))
+        c["key"] == CFG["profile"]["styles_from"] && (styles = records)
     end
-    write_run_records(OUTDIR, CFG; driver = "fig_profile.jl", config_source = CFG_PATH, key = KEY, inputs)
+    styles === nothing && error("[profile] styles_from = $(repr(CFG["profile"]["styles_from"])) names no cell")
+    open(joinpath(dir, CFG["render"]["styles"]), "w") do s
+        open(sh -> write_profile_styles(s, sh, styles, crit), joinpath(dir, CFG["render"]["styles_shared"]), "w")
+    end
     return nothing
 end
 
-verify() = verify_paper_assets(OUTDIR, ASSETS)
-deploy() = deploy_paper_assets(OUTDIR, CFG, ASSETS)
-
 const STAGES = [
-    Stage(:render, "the three Profile fragments and the style sheets, keyed by the run key",
-          () -> run_complete(OUTDIR; sidecar = first(ASSETS)) && all(a -> isfile(joinpath(OUTDIR, a)), ASSETS), render),
-    Stage(:verify, "each render against the submitted asset (bytes, coordinates)",
-          () -> fresher(joinpath(OUTDIR, VERIFY_REPORT), (joinpath(OUTDIR, a) for a in ASSETS)...), verify),
-    Stage(:deploy, "into paper/figures where nothing changes (or signed off)", () -> assets_deployed(OUTDIR, paper_figures_dir(), ASSETS), deploy),
+    Stage(:render, "the three Profile fragments and the style sheets, keyed by the config and the code";
+          items = () -> [renders()], product = identity,
+          run = p -> produce(render, p; driver = "fig_profile.jl", config_source = CFG_PATH,
+                             inputs = [input_path(CFG, c["input"]) for c in CELLS])),
+    Stage(:verify, "each render against the submitted asset (bytes, coordinates)";
+          check = () -> verify_paper_assets(product_dir(renders()), ASSETS)),
+    Stage(:deploy, "into paper/figures where nothing changes (or signed off)";
+          check = () -> deploy_paper_assets(product_dir(renders()), CFG, ASSETS)),
 ]
 
 run_stages("fig_profile", STAGES)

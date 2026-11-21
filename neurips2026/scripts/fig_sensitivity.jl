@@ -1,5 +1,5 @@
 #!/usr/bin/env julia
-# provenance: every run writes _config.toml and _provenance.toml (write_run_records) beside its renders.
+# provenance: every product writes _config.toml and _provenance.toml (produce) beside its renders.
 # =============================================================================
 # scripts/fig_sensitivity.jl — Fig. 2 (\label{fig:sensitivity-grid},
 # "Sensitivity"): the six panels (expected test rotation error and its std
@@ -20,7 +20,7 @@
 # STAGES
 #   render  each cell's panels and the two style sheets from its stored
 #           `source.jld2` `summary` (src/panels.jl, the port of the submitted
-#           renderer) → <results>/figures/fig_sensitivity-<run key>/
+#           renderer): the keyed product → <results>/figures/fig_sensitivity/<key>/
 #   verify  each render against the submitted paper/figures copy, byte for
 #           byte and by coordinates → verify.tsv beside the renders
 #   deploy  into paper/figures — only where that changes nothing, unless
@@ -34,42 +34,40 @@ include(srcdir("NeurIPS2026.jl"))
 
 const CFG_PATH = projectdir("configs", "fig_sensitivity.toml")
 const CFG = TOML.parsefile(CFG_PATH)
-const KEY = run_key(CFG)                       # [render] is excluded
-const OUTDIR = keyed_cell_dir(CFG, "figures", "fig_sensitivity"; base = results_root())   # <results>/figures/fig_sensitivity-<KEY>
 const SENS = CFG["sensitivity"]
 const CELLS = SENS["cells"]
 const ASSETS = vcat([c["assets"][p] for c in CELLS for p in SENS["panels"]],
                     [CFG["render"]["styles"], CFG["render"]["styles_shared"]])
+# the renders, keyed by the config ([render] is excluded from a config's key) and the code they run; the shared
+# style sheet is written last, so it is the product's output
+renders() = Product("figures", "fig_sensitivity", CFG; output = CFG["render"]["styles_shared"])
 
-function render()
-    mkpath(OUTDIR)
-    inputs = String[]
+function render(dir)
+    styles = nothing
     for c in CELLS
         data = results_by_method(JLD2.load(input_path(CFG, c["input"]), "summary"))
         for p in SENS["panels"]
             open(io -> write_sensitivity_group(io, sensitivity_panel(p), data, SENS["tune"], c["title"]),
-                 joinpath(OUTDIR, c["assets"][p]), "w")
+                 joinpath(dir, c["assets"][p]), "w")
         end
-        if c["key"] == SENS["styles_from"]
-            open(joinpath(OUTDIR, CFG["render"]["styles"]), "w") do s
-                open(sh -> write_sensitivity_styles(s, sh, data), joinpath(OUTDIR, CFG["render"]["styles_shared"]), "w")
-            end
-        end
-        push!(inputs, input_path(CFG, c["input"]))
+        c["key"] == SENS["styles_from"] && (styles = data)
     end
-    write_run_records(OUTDIR, CFG; driver = "fig_sensitivity.jl", config_source = CFG_PATH, key = KEY, inputs)
+    styles === nothing && error("[sensitivity] styles_from = $(repr(SENS["styles_from"])) names no cell")
+    open(joinpath(dir, CFG["render"]["styles"]), "w") do s
+        open(sh -> write_sensitivity_styles(s, sh, styles), joinpath(dir, CFG["render"]["styles_shared"]), "w")
+    end
     return nothing
 end
 
-verify() = verify_paper_assets(OUTDIR, ASSETS)
-deploy() = deploy_paper_assets(OUTDIR, CFG, ASSETS)
-
 const STAGES = [
-    Stage(:render, "the six Sensitivity panels and the style sheets, keyed by the run key",
-          () -> run_complete(OUTDIR; sidecar = first(ASSETS)) && all(a -> isfile(joinpath(OUTDIR, a)), ASSETS), render),
-    Stage(:verify, "each render against the submitted asset (bytes, coordinates)",
-          () -> fresher(joinpath(OUTDIR, VERIFY_REPORT), (joinpath(OUTDIR, a) for a in ASSETS)...), verify),
-    Stage(:deploy, "into paper/figures where nothing changes (or signed off)", () -> assets_deployed(OUTDIR, paper_figures_dir(), ASSETS), deploy),
+    Stage(:render, "the six Sensitivity panels and the style sheets, keyed by the config and the code";
+          items = () -> [renders()], product = identity,
+          run = p -> produce(render, p; driver = "fig_sensitivity.jl", config_source = CFG_PATH,
+                             inputs = [input_path(CFG, c["input"]) for c in CELLS])),
+    Stage(:verify, "each render against the submitted asset (bytes, coordinates)";
+          check = () -> verify_paper_assets(product_dir(renders()), ASSETS)),
+    Stage(:deploy, "into paper/figures where nothing changes (or signed off)";
+          check = () -> deploy_paper_assets(product_dir(renders()), CFG, ASSETS)),
 ]
 
 run_stages("fig_sensitivity", STAGES)

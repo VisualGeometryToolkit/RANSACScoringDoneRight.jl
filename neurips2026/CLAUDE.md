@@ -10,8 +10,9 @@ accv2026 is the worked example — and `test/runtests.jl` enforces them
   (`run_stages`: `--plan`, `--stage=NAME`, `--force`) reading a TOML config of
   record under `configs/`; no data constant (seed, scene or frame list, data
   path, numeric table) lives in a driver;
-- outputs go under `results_root()` in a directory keyed by `run_key(cfg)`,
-  with `write_run_records` / `write_provenance` beside them; inputs under
+- outputs are VisualGeometryToolkitEval keyed products (`Product`, `produce`):
+  `results_root()/<experiment>/<product>/<key>/`, keyed by only what they read
+  and the code they run, with `_config.toml` / `_provenance.toml` beside them; inputs under
   `data_root()` are read-only; results are add-only (move a superseded run
   aside, never delete it); no machine path, no `artifact"…"` in code;
 - every figure the paper reads is a row of `REPRODUCE.md`;

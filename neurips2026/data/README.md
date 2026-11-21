@@ -19,7 +19,7 @@ On the author's host both are links: `exp_raw` to the immutable input root
 name, accv2026's pools, and `neurips2026/paper_runs/`: the six evaluated runs
 behind Fig. 1, Fig. 2 and the Sec. 4 numbers, with `PROVENANCE.toml`,
 `SHA256SUMS` and `MOVED.toml`) and `exp_pro` to the paper's results root, which
-holds the keyed run directories of the drivers (`figures/fig_profile-<key>/`, …).
+holds the keyed run directories of the drivers (`figures/fig_profile/<key>/`, …: VisualGeometryToolkitEval keyed products).
 
 ## A machine without the data: the published artifacts
 
