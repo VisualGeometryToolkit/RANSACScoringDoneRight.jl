@@ -1,5 +1,6 @@
-docs-pass: 97595d7
+docs-pass: 7b4a471
 landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src; the install line there changes when main's Docs job deploys this tree)
+(a compat-only patch on VisualGeometryToolkitCore 0.12: no page, docstring, README line or example names a stack version or a moved name — checked by search; the docs build is part of the release gate)
 
 # 0.8.1 docs pass (julia-docs-pass), on VisualGeometryToolkitCore 0.11 / Estimation 0.12 / Eval 0.9.2
 

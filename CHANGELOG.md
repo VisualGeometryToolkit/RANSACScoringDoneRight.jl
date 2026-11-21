@@ -1,5 +1,10 @@
 # RANSACScoringDoneRight changelog
 
+## 0.8.2 (2026-11-21)
+
+On VisualGeometryToolkitCore 0.12 (`[compat]` in the package, test and neurips2026), whose radiometric types (vignetting fields,
+the environment light) moved to VisualRadiometryToolkitCore; this package uses none of them. No API change.
+
 ## 0.8.1 (2026-11-16)
 
 On VisualGeometryToolkitCore 0.11 and VisualGeometryToolkitEstimation 0.12 (`[compat]` in the package, test and
