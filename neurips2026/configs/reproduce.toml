@@ -1,8 +1,10 @@
 # The stage graph of record of the paper: every result and figure from its declared inputs, in one command
 # (VisualGeometryToolkitEval Reproduce, the runner: its docs, "One command: the runner"). Data only: which driver runs on
 # which config of record, after what. How a stage runs (Slurm or here, the CPUs, the memory) is the site's, a machine
-# profile shipped with VisualGeometryToolkitEval (configs/sites/dgx01.toml, desktop.toml; _template.toml to add one);
-# where this project's data and results are on each machine is [sites.<name>] below.
+# profile shipped with VisualGeometryToolkitEval (configs/sites/dgx01.toml, desktop.toml, vcai.toml; _template.toml to add
+# one), and so is where a machine keeps every project's data, results and artifact store (its [storage] table). This
+# graph names no machine path: a launch's roots are --data-root / --results-root, else VGTK_DATA_ROOT /
+# VGTK_RESULTS_ROOT, else [sites.<name>] below (relative paths only), else the site profile's [storage].
 #
 #   bash neurips2026/scripts/reproduce/reproduce_results_dgx.sh [--dry-run] [--only=<stage>,…] [--no-deps] [status]
 #   bash neurips2026/scripts/reproduce/reproduce_results_desktop.sh [--dry-run] [--only=<stage>,…] [--no-deps] [status]
@@ -19,12 +21,6 @@ workdir = "../.."
 julia_project = "neurips2026"
 # the code every stage runs: a change here re-keys every stage; the paper's text and the docs do not
 code = ["Project.toml", "src", "neurips2026/Project.toml", "neurips2026/src", "neurips2026/scripts"]
-
-[sites.dgx01]
-# the shared input root of record on dgx01 (the accv2026 pools, the raw datasets, neurips2026/paper_runs) and this
-# paper's results root
-data_root = "/raid/data/jpr"
-results_root = "/raid/data/jpr/results/neurips2026"
 
 [sites.desktop]
 # the data ladder's own binding (neurips2026/data/exp_raw: a link, or the artifact view scripts/fetch_data.jl builds)

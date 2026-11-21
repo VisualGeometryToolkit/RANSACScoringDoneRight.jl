@@ -13,8 +13,9 @@
 # The command line, the fetch and the report are VisualGeometryToolkitEval
 # DataArtifacts' `fetch_data!` (every paper project's one fetch driver; this
 # script's own copy is deleted, 2026-11-12): each artifact is downloaded once
-# into the Julia depot (sha256 and tree hash verified) and linked file by file
-# into its mount root, an existing binding (VGTK_DATA_ROOT / VGTK_RESULTS_ROOT,
+# into the machine's artifact store (VisualGeometryToolkitCore's
+# `artifact_store`: VGTK_ARTIFACT_STORE, else the VGTK_SITE site profile's;
+# sha256 and tree hash verified) and linked file by file into its mount root, an existing binding (VGTK_DATA_ROOT / VGTK_RESULTS_ROOT,
 # or the author's data/exp_raw, data/exp_pro links) winning and never written to.
 # =============================================================================
 using DrWatson

@@ -4,13 +4,15 @@ DrWatson's data directory, bound per machine (VisualGeometryToolkitEval Experime
 
 | Tree | Resolved by | Access |
 |---|---|---|
-| `data_root()` — inputs | `VGTK_DATA_ROOT`, else `data/exp_raw` (a link or a directory), else the artifact view of the published data (`configs/data_artifacts.toml`) | read-only: a driver never writes here |
-| `results_root()` — results | `VGTK_RESULTS_ROOT`, else `data/exp_pro` (created when absent) | add-only: one directory per run key, each with `_config.toml` and `_provenance.toml` |
+| `data_root()` — inputs | `VGTK_DATA_ROOT`, else `data/exp_raw` (a link or a directory), else the `VGTK_SITE` site profile's `[storage] data_root` (once it exists), else the artifact view of the published data (`configs/data_artifacts.toml`) | read-only: a driver never writes here |
+| `results_root()` — results | `VGTK_RESULTS_ROOT`, else `data/exp_pro` (a link or a directory), else the site profile's `[storage] results_root`, else `data/exp_pro` (created) | add-only: one directory per run key, each with `_config.toml` and `_provenance.toml` |
 | `datadir("sims")` | — | smoke runs, never read by a paper asset |
 
 `data/exp_raw`, `data/exp_pro` and `data/sims` are ignored by git. Configs name
 every input as an `[inputs.<id>]` table, its path relative to `data_root()`;
-no code names a machine path.
+no code or config names a machine path: those live only in
+VisualGeometryToolkitEval's site profiles (`configs/sites/<site>.toml`,
+`[storage]`), selected by `VGTK_SITE`.
 
 On the author's host both are links: `exp_raw` to the immutable input root
 (the PhotoTourism, HEB and ETH3D trees the pool configs' `[source]` tables
@@ -27,8 +29,10 @@ julia --project=. scripts/fetch_data.jl --all    # also the raw PhotoTourism / H
 julia --project=. scripts/fetch_data.jl --list   # the catalog, nothing fetched
 ```
 
-downloads them once into the Julia depot (sha256 and tree hash verified) and
-links them into `data/exp_raw` (an artifact view). An
+downloads them once into the machine's artifact store (VisualGeometryToolkitCore's
+`artifact_store`: `VGTK_ARTIFACT_STORE`, else the `VGTK_SITE` site profile's
+`artifact_store`; sha256 and tree hash verified; never a cluster's Julia depot)
+and links them into `data/exp_raw` (an artifact view). An
 existing binding always wins and is never written to. The stored runs'
 Zenodo record is not deposited yet (its URL carries the placeholder
 `ZENODO_RECORD_NEURIPS2026`, which the fetch refuses); the raw inputs are the
