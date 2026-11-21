@@ -1,3 +1,19 @@
+docs-pass: 781e646
+landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src; it changes when main's Docs job deploys this tree)
+
+# 0.8.3 docs pass (julia-docs-pass), on VisualGeometryToolkitCore 0.13 / Estimation 0.12.2 / Eval 0.10.0
+
+[x] API diff since 0.8.2: none. src/ is unchanged (git diff v0.8.2..781e646 -- src is empty). The release changes
+    [compat] (Core 0.13 in the package, test and neurips2026; neurips2026 Eval 0.10), neurips2026 (storage, the
+    Product port, the retired studies) and docs/src.
+[x] Docstrings: unchanged; the suite's `docs` item (Core's test_docs) runs in the gate.
+[x] Guides: docs/src/guide/experiments.md, guide/stack.md, overview.md and index.md, the README and neurips2026's
+    README, REPRODUCE.md, data/README.md, notes/ describe the retired studies (not reproducible from Eval 0.10 on), the
+    vcai launcher, the site profiles' storage and the keyed-product layout. No stack version is named in an install line.
+[x] README rows and the docs build: the readme item and docs/make.jl (strict) run in the gate, against General alone.
+
+---
+
 docs-pass: 7b4a471
 landing: RansacScoringDoneRight/ransacscoringdoneright.github.io a44d59e (no hand edit: the site is the Docs workflow's build of docs/src; the install line there changes when main's Docs job deploys this tree)
 (a compat-only patch on VisualGeometryToolkitCore 0.12: no page, docstring, README line or example names a stack version or a moved name — checked by search; the docs build is part of the release gate)
