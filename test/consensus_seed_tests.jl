@@ -1,9 +1,11 @@
 # The Student-t + uniform scorer's consensus set as a seed: `score!` sweeps,
 # `consensus_order`'s first `inlier_count` entries ARE the swept partition, and
 # VisualGeometryToolkitCore's toolkit seeds from it — `PosteriorWeightState(…; order,
-# prior)`, its internal `_posterior_weights!`/`_posterior_inlier_probs!`, `consensus_s2` — under
+# prior)`, `consensus_s2` and the scoring contract's `inlier_probabilities!` — under
 # the scorer's OWN scale prior (the one the sweep scored the partition under).
-# The seeds themselves are pinned in VisualGeometryToolkitCore (its ScaleMAP tests).
+# Every check goes through Core's PUBLIC entries (the partition's Student-t is
+# `ScaleMAP` for ŝ² and the documented ν rule, its mixture `StudentTMixture`);
+# the seeds themselves are pinned in VisualGeometryToolkitCore (its ScaleMAP tests).
 
 @testitem "consensus_seed" begin
     using VisualGeometryToolkitCore: StudentTUniformScoring, FlatLabelPrior, ProfiledLabelPrior, label_prior, sweep_order, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
@@ -11,8 +13,9 @@
     using Random: MersenneTwister
     import VisualGeometryToolkitCore as VGC
     using VisualGeometryToolkitCore: IGPrior, score!, inlier_count, consensus_order, consensus_s2, scale_prior,
-        _partition_student_t, partition_rss, PosteriorWeightState, s_hat_sq, student_t_dof, sq_distances,
-        inlier_prior, _posterior_weights!, _posterior_inlier_probs!, decision_boundary, ScoreBuffers,
+        partition_rss, PosteriorWeightState, s_hat_sq, student_t_dof, sq_distances,
+        inlier_prior, inlier_probabilities!, StudentTMixture, posterior_weight, inlier_posterior,
+        EstimationProblem, SquaredScale, ScaleMAP, solve, decision_boundary, ScoreBuffers,
         GauInlier, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth
     using RANSACScoringDoneRight
 
@@ -43,18 +46,25 @@
             pws = PosteriorWeightState(q, n, model_dof, k; order, prior = scale_prior(s), w = zeros(n),
                                        inlier_posterior = zeros(n), sq_r = zeros(n),
                                        log_two_outlier_halfwidth = log(2 * halfwidth), codimension = 2)
-            ν, s2 = _partition_student_t(prior, partition_rss(order, r, k), k; model_dof, codimension = 2)
+            # the partition's Student-t: ŝ² the inverse-gamma MAP of its RSS over
+            # ν_data = (k − model_dof)·d_g components, ν = max(ν_data + 2α₀, 2)
+            ν_data = (k - model_dof) * 2
+            s2 = solve(EstimationProblem(SquaredScale, (; rss = partition_rss(order, r, k), dof = ν_data)), ScaleMAP(prior)).u
+            ν = max(ν_data + 2 * prior.alpha0, 2.0)
             @test s_hat_sq(pws) === s2 && student_t_dof(pws) === ν
             @test sq_distances(pws) == r .^ 2
             @test inlier_prior(pws) === 0.5
             @test consensus_s2(s, r, order, k; model_dof, d_g = 2) === s2
 
-            w = zeros(n); p = zeros(n)
-            kw = (; model_dof, log_two_outlier_halfwidth = log(2 * halfwidth), codimension = 2, prior)
-            _posterior_weights!(w, q, order, k; kw...)
-            _posterior_inlier_probs!(p, q, order, k; kw...)
+            # the seed's first E-step is the partition's Student-t + uniform mixture
+            m = StudentTMixture(ν, s2, log(2 * halfwidth), 2)
+            w = [posterior_weight(m, q[i]) for i in 1:n]
+            p = [inlier_posterior(m, q[i]) for i in 1:n]
             @test w ≈ pws.w rtol = 1e-12
             @test p ≈ pws.inlier_posterior rtol = 1e-12
+            # and the scoring contract's per-point inlier probabilities of the consensus set
+            pc = inlier_probabilities!(zeros(n), s, q, order, k; model_dof, d_g = 2)
+            @test pc ≈ pws.inlier_posterior rtol = 1e-12
         end
     end
 

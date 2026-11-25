@@ -28,8 +28,8 @@ grid families, `grid_evaluate` and the staging functions are unchanged. No expec
 - The documentation's examples and prose use the solve forms: `Ransac(; scoring, local_optimization_strategy)` on a
   family problem (was `find_*`), `ScaleMAP` on `EstimationProblem(SquaredScale, …)` (was `fit_scale`) and Eval's
   `PriorSpec` on `EstimationProblem(IGPrior, σ²s)` (was `fit_prior`).
-- The consensus-seed test reads Core's now-internal `_partition_student_t`, `_posterior_weights!` and
-  `_posterior_inlier_probs!`.
+- The consensus-seed test checks the seed through Core's public entries (`ScaleMAP`, `StudentTMixture`,
+  `inlier_probabilities!`), as `partition_student_t` and the posterior helpers are internal in Core 0.14.
 - `neurips2026/` is no longer a member of the workspace: it reproduces with RANSACScoringDoneRight 0.8.x (`v0.8.3`)
   and the Core 0.13 stack, its own pinned environment, until its run of record is archived (migration plan §5); its
   migration is the planned paper re-run.
