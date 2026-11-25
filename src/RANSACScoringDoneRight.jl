@@ -16,8 +16,8 @@ import VisualGeometryToolkitCore as VgtkCore
 # depends on VisualGeometryToolkitCore (for Uncertain and the constraint-problem protocol)
 # and StaticArrays/SpecialFunctions; the GPU sweep port adds KernelAbstractions,
 # and the scoring VOCABULARY layer adds Statistics (`cov` of an `Uncertain`).
-# SIMFIT++ is VisualGeometryToolkitEstimation's (`SimFitPP`, `simfitpp_select`;
-# moved there on 2026-11-11): this package only gives it a grid on the
+# SIMFIT++ is VisualGeometryToolkitEstimation's (`SimFitPP` on
+# `EstimationProblem(PoolSelection, …)`; moved there on 2026-11-11): this package only gives it a grid on the
 # pool-selection contract (selection.jl). The bootstrap harness that once lived here —
 # and the JLD2/HDF5/DrWatson/DataFrames/Bootstrap/Optim deps it carried — moved
 # to the evaluation engine on 2026-07-18 (now VisualGeometryToolkitEval) and is NOT a dependency of this
@@ -75,11 +75,14 @@ using VisualGeometryToolkitCore.Pools: PoolPair, num_points, num_models, pool_im
     # the record's residual-matrix contract and the one
     # pixel → pool-frame scale
     check_residual_matrix, pool_pixel_scale
-# SIMFIT++ is VisualGeometryToolkitEstimation's: its configuration and its pool
-# adapter. This package gives `SimFitPP` a width axis, a tag and a grid on the
+# SIMFIT++ is VisualGeometryToolkitEstimation's: the algorithm `SimFitPP` and the
+# model tag of a pool's selection, `PoolSelection` (solved through Core's
+# `solve(EstimationProblem(PoolSelection, residuals, (; initial_loss_width)), SimFitPP(); rng)`).
+# This package gives `SimFitPP` a width axis, a tag and a grid on the
 # pool-selection contract (native_widths.jl, selection.jl) and re-exports
 # nothing of it: callers take both names from VisualGeometryToolkitEstimation.
-using VisualGeometryToolkitEstimation: SimFitPP, simfitpp_select
+using VisualGeometryToolkitEstimation: SimFitPP, PoolSelection
+using VisualGeometryToolkitCore: EstimationProblem, solve   # Core's estimation interface (CommonSolve's `solve`)
 import VisualGeometryToolkitEstimation as VgtkEstimation   # its scorer TOML reader and writer (`scoring_from_toml`, `config_dict`), extended for this package's scorers
 # The scoring families' tag registry, merged with this package's (native_widths.jl).
 using VisualGeometryToolkitCore: TagRegistry
@@ -125,7 +128,7 @@ public precompute_pair
 # StudentTUniformScoring (extreme_value.jl; the scorer, its label priors and the
 # supplied half-width `FixedHalfwidth` are Core's).
 export TailRules, ExtremeValueHalfwidth, GeneralizedParetoOutliers, OutlierTerm
-public gpd_pwm_fit, tail_fit, gpd_support, gpd_outlier_cost
+public gpd_support, gpd_outlier_cost
 
 # GPU scoring (KernelAbstractions): flat-layout staging + THE grid verb.
 # `grid_evaluate` dispatches on the scoring: the loss-width families
@@ -152,7 +155,7 @@ public ALL_SCORING_TAGS
 # `best_pool_model` (its `score!`, scoring_eval_common.jl); the staged grid
 # selection of every grid family is selection.jl's (VisualGeometryToolkitCore's
 # `select_on_grid!`).
-export WelschMarginal
+export ScaleMarginal   # the scale-marginal spec of a loss shape: ScaleMarginal{WelschShape}, ScaleMarginal{SmoothTLSShape}
 public pair_chunk_budget
 # The loss-width grid's log-binned aggregation (its exact selection is
 # VisualGeometryToolkitCore's `select_on_grid!` on the `:pool` staging)
@@ -197,7 +200,7 @@ include("loss_width_sweep_ka.jl")     # RANSAC/MSAC/GaU/MAGSAC++ device kernels 
 include("scoring_eval_common.jl")     # per-pair scorers, pool scorers, per-pair staging precompute
 include("inlier_potentials.jl")       # canonical depths of the loss shapes; ρ̃ = (Δ/sq_loss_width)·VGC's ρ
 include("welsch_marginal.jl")         # ScaleMarginal{K} + shared evidence machinery; Welsch methods
-include("smoothtls_marginal.jl")      # marginal smooth-TLS spec: SmoothTLSMarginal
+include("smoothtls_marginal.jl")      # marginal smooth-TLS: ScaleMarginal{SmoothTLSShape}
 include("inlier_losses.jl")           # Track B: redescending losses as inlier/outlier mixtures
 include("marg_sweep_ka.jl")           # KA marginal kernels: grid_evaluate(::ScaleMarginal), grid_evaluate(::LossSpec)
 include("native_widths.jl")           # width_axis of the grid families

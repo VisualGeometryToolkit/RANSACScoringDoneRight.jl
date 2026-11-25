@@ -50,7 +50,7 @@
                    WelschCostScoring(), SmoothTLSScoring(), GemanScoring())
             @test width_axis(sc) === LossWidth()
         end
-        @test width_axis(WelschMarginal(; prior_loss_width = 0.1, outlier_halfwidth = 1.0)) === LossWidth()
+        @test width_axis(ScaleMarginal{WelschShape}(; prior_loss_width = 0.1, outlier_halfwidth = 1.0)) === LossWidth()
         @test width_axis(SimFitPP()) === LossWidth()
         # the axis is the one `with_width` rebuilds the marginal on
         @test VgtkCore.with_width(m, OutlierHalfwidth(0.7)) == StudentTUniformScoring(5, 0.7; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())

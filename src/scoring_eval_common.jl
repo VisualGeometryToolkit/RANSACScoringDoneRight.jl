@@ -49,7 +49,7 @@
 
 # (`_loss_width_sum!` and `_quality` — Σ quality over a row subset, SIMFIT++'s
 #  train-split MSAC sum — are deleted with this package's SIMFIT++ copy
-#  (2026-11-11): VisualGeometryToolkitEstimation's `simfitpp_select` scores the
+#  (2026-11-11): VisualGeometryToolkitEstimation's `SimFitPP` pool selection scores the
 #  train split by VisualGeometryToolkitCore's threshold `score!`.)
 
 # log(1 + eˣ), stable over the whole range, is LogExpFunctions' `log1pexp` (a
@@ -86,10 +86,10 @@ const _SOFTPLUS_HALF = log1pexp(0.5)      # MLESAC's quality normaliser (loss_wi
 #  it returned 0.0 for no errors (VGC: NaN) and let a NaN error poison the sum
 #  (VGC: a failure, scoring 0). Every caller now uses VGC's.)
 
-# (`fit_ig_mle_prior` is deleted: no caller anywhere, and a second copy of
-#  `fit_prior(::InverseGamma, ::MLE)` — the same `fit_mle(Gamma, 1 ./ σ²)` —
-#  with different edge handling (a `(3, 2μ)` fallback where `fit_prior` returns
-#  `nothing`). Of the four scripts its docstring named, only one still exists,
+# (This package's inverse-gamma MLE prior fit is deleted: no caller anywhere,
+#  and a second copy of VisualGeometryToolkitEval's `PriorSpec(InverseGamma(), MLE())`
+#  — the same `fit_mle(Gamma, 1 ./ σ²)` — with different edge handling (a
+#  `(3, 2μ)` fallback where Eval's fit fails). Of the four scripts its docstring named, only one still exists,
 #  LocalOptimizationDoneRight's `_research/exploratory/test_sigma2_synthetic.jl`,
 #  which mentions it in a comment and does not call it.)
 

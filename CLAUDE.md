@@ -13,7 +13,7 @@ pool-selection contract (`select_on_grid!` over its CPU/GPU grid families:
 the marginal, the loss-width baselines, `LossSpec`, `ScaleMarginal`, and the
 grid of VisualGeometryToolkitEstimation's SIMFIT++). It depends on
 VisualGeometryToolkitCore and on VisualGeometryToolkitEstimation for SIMFIT++
-alone (`SimFitPP`, `simfitpp_select`; never re-exported), never on
+alone (`SimFitPP`, `PoolSelection`; never re-exported), never on
 LocalOptimizationDoneRight or VisualGeometryToolkitEval.
 Problem-agnostic: problems implement VisualGeometryToolkitCore's
 `AbstractConstraintProblem`, and the Student-t scorer, the posterior-weighting
@@ -24,7 +24,9 @@ The repository has two halves, like LocalOptimizationDoneRight's: the
 registered package (`src/`, `test/`, `docs/`) and the research project
 `neurips2026/` — the NeurIPS 2026 paper, its figure drivers, configs of record,
 the REPRODUCE.md asset index and its own environment (a DrWatson project that
-devs this package by path; see `neurips2026/CLAUDE.md`). The package never
+devs this package by path; see `neurips2026/CLAUDE.md`). Since 0.9.0 the project
+is out of the workspace: it reproduces with the released 0.8.x (`v0.8.3`) and the
+Core 0.13 stack until its paper re-run. The package never
 depends on the project; paper material (drivers, studies, write-ups, stored
 results) never goes in `src/`.
 

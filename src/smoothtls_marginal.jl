@@ -8,21 +8,8 @@
 # the Z̃ truncation to the outlier support, the declared `POOL_FRAME_R_MAX`.
 # =============================================================================
 
-# `SmoothTLSMarginal` is the `ScaleMarginal{SmoothTLSShape}` alias
-# (welsch_marginal.jl); only the keyword constructor is family-specific.
-"""
-    SmoothTLSMarginal(; alpha0=1.0, prior_loss_width, outlier_halfwidth)
-
-Marginal smooth-TLS scoring spec.  `prior_loss_width` is the IG-prior centre on
-the smooth-TLS loss width (`beta0 = alpha0·prior_loss_width²` ⇒ `2·alpha0`
-pseudo-observations at pseudo-squared-width `prior_loss_width²`);
-`outlier_halfwidth` bounds the density normalizer Z̃ (set to
-`POOL_FRAME_R_MAX`, the declared outlier support in the pool frame's unit —
-required, no default).
-`alpha0`/`beta0` match `IGPrior`, as for `WelschMarginal`.  The evidence is the
-trapezoid scale quadrature of [`loss_spec`](@ref)`(::ScaleMarginal)`.
-"""
-SmoothTLSMarginal(; kw...) = _centred_marginal(SmoothTLSShape; kw...)
+# The spec is `ScaleMarginal{SmoothTLSShape}`; its constructors are every
+# scale-marginal family's (welsch_marginal.jl): nothing here is family-specific.
 
 # The evidence of this spec is evaluated by the ONE device kernel
 # (`grid_evaluate(::ScaleMarginal, …)`, marg_sweep_ka.jl), on CPU() or a GPU backend.

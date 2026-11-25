@@ -29,7 +29,7 @@
     import VisualGeometryToolkitCore as VGC
     using RANSACScoringDoneRight
     using VisualGeometryToolkitCore: WelschShape, GemanMcclureShape, SmoothTLSShape
-    using RANSACScoringDoneRight: WelschMarginal, SmoothTLSMarginal, _default_depth
+    using RANSACScoringDoneRight: ScaleMarginal, _default_depth
     using VisualGeometryToolkitCore: IGPrior
     using LogExpFunctions: logsumexp
     const _R = RANSACScoringDoneRight
@@ -61,8 +61,8 @@
         # (above) at k = K with every point counted.
         sq_r = [0.0, 0.0, 1e-4, 4e-4, 2.5e-3, 0.01, 0.04, 0.3, 0.9, 2.0]
         n = length(sq_r); be = _R.KernelAbstractions.CPU()
-        for (m, shape) in ((WelschMarginal(; alpha0 = 1.5, prior_loss_width = 0.05, outlier_halfwidth = 1.0), WelschShape()),
-                       (SmoothTLSMarginal(; alpha0 = 1.5, prior_loss_width = 0.05, outlier_halfwidth = 1.0), SmoothTLSShape()))
+        for (m, shape) in ((ScaleMarginal{WelschShape}(; alpha0 = 1.5, prior_loss_width = 0.05, outlier_halfwidth = 1.0), WelschShape()),
+                       (ScaleMarginal{SmoothTLSShape}(; alpha0 = 1.5, prior_loss_width = 0.05, outlier_halfwidth = 1.0), SmoothTLSShape()))
             spec = _R.loss_spec(m; NG = 129); q = spec.quad; NG = length(q.sq_loss_width_nodes)
             @test spec.Δ == _default_depth(shape)
             h = q.tnodes[2] - q.tnodes[1]                  # t0 ± L, snapped to the lattice

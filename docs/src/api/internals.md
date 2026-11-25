@@ -18,7 +18,5 @@ the API.
 
 ```@docs
 RANSACScoringDoneRight.PrecomputedPair
-RANSACScoringDoneRight.ScaleMarginal
-RANSACScoringDoneRight.SmoothTLSMarginal
 RANSACScoringDoneRight._build_score_weight_matrix
 ```

@@ -211,7 +211,7 @@ end
                   NG = _MARG_NG, return_idxs = false, mem_budget = 6_000_000_000)
         -> Matrix{Float64}
 
-Full-data scale-marginal scoring (`WelschMarginal`, `SmoothTLSMarginal`) at
+Full-data scale-marginal scoring (`ScaleMarginal{WelschShape}`, `ScaleMarginal{SmoothTLSShape}`) at
 precision `S` (Float32 by default; Float64 for full precision), on the staged
 data's backend — KernelAbstractions `CPU()` or a GPU. The scale is integrated
 out by the package's one scale quadrature, the trapezoid logsumexp over `NG`

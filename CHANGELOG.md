@@ -1,5 +1,44 @@
 # RANSACScoringDoneRight changelog
 
+## 0.9.0 (unreleased): on VisualGeometryToolkitCore 0.14's `solve(problem, algorithm)`
+
+The breaking minor on VisualGeometryToolkitCore 0.14 and VisualGeometryToolkitEstimation 0.13 (`[compat]` `"0.14"`,
+`"0.13"`), the stack's SciML-style estimation interface. The scorers are values, as before, and score the same; the
+grid families, `grid_evaluate` and the staging functions are unchanged. No expected value of the suite changes.
+
+### Breaking
+
+- **`tail_fit` and `gpd_pwm_fit` are internal steps** (`_tail_fit`, `_gpd_pwm_fit`; no longer `public`). They are the
+  generalized Pareto tail fit of the extreme-value outlier models, and this package is their one caller, so under the
+  stack's naming rules (no public `fit_`-style verb outside `solve`) they become `_`-prefixed steps rather than
+  algorithm types. Same arithmetic. `gpd_support` and `gpd_outlier_cost` stay public.
+- **`WelschMarginal` and `SmoothTLSMarginal` are deleted; the spec is the spelled `ScaleMarginal{K}`** (now exported),
+  as the stack's naming rule R20 asks (no `const` names one instantiation of a type): `WelschMarginal(; alpha0,
+  prior_loss_width, outlier_halfwidth)` → `ScaleMarginal{WelschShape}(; …)`, `SmoothTLSMarginal(; …)` →
+  `ScaleMarginal{SmoothTLSShape}(; …)` (the shapes are VisualGeometryToolkitCore's). One keyword constructor for every
+  shape; the same specs.
+- The unused accessor `fit_per(::GeneralizedParetoOutliers)` is deleted (dead code, and a `fit_` name outside
+  `solve`); the constructor keyword `fit_per` is unchanged.
+
+### Changed
+
+- SIMFIT++'s grid on the pool-selection contract calls Estimation's algorithm:
+  `simfitpp_select(D, initial_loss_width, cfg; rng)` → `solve(EstimationProblem(PoolSelection, D, (;
+  initial_loss_width)), cfg; rng).u`. Same selections.
+- The documentation's examples and prose use the solve forms: `Ransac(; scoring, local_optimization_strategy)` on a
+  family problem (was `find_*`), `ScaleMAP` on `EstimationProblem(SquaredScale, …)` (was `fit_scale`) and Eval's
+  `PriorSpec` on `EstimationProblem(IGPrior, σ²s)` (was `fit_prior`).
+- The consensus-seed test reads Core's now-internal `_partition_student_t`, `_posterior_weights!` and
+  `_posterior_inlier_probs!`.
+- `neurips2026/` is no longer a member of the workspace: it reproduces with RANSACScoringDoneRight 0.8.x (`v0.8.3`)
+  and the Core 0.13 stack, its own pinned environment, until its run of record is archived (migration plan §5); its
+  migration is the planned paper re-run.
+
+### On the solve branch only (TEMPORARY, removed when Core 0.14 etc. are registered)
+
+- `[sources]` path entries (root and test `Project.toml`) point at the monorepo's solve branch; the README test
+  develops the sourced stack packages from their paths.
+
 ## 0.8.3 (2026-11-21)
 
 On VisualGeometryToolkitCore 0.13 (`[compat]` in the package, test and neurips2026; neurips2026 also

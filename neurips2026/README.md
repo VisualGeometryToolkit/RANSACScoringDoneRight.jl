@@ -31,6 +31,7 @@ make -C paper                                         # the PDF
 | `notes/` | write-ups of the retired scoring studies (not paper assets; their drivers are in the history up to `v0.8.2`) |
 
 `Project.toml` devs the package (`..`) and takes the rest of the stack from
-the registry. It is a member of the repository's workspace: the package, its
-tests, its docs and this project resolve together in one untracked Manifest at
-the repository root.
+the registry. It reproduces with RANSACScoringDoneRight 0.8.x and the
+VisualGeometryToolkitCore 0.13 stack: run it in a checkout of the `v0.8.3` tag,
+where it is a member of the repository's workspace. From 0.9.0 it is not (it
+stays on its released environment until its run of record is archived).

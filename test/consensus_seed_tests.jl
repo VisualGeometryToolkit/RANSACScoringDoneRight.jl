@@ -1,9 +1,9 @@
 # The Student-t + uniform scorer's consensus set as a seed: `score!` sweeps,
 # `consensus_order`'s first `inlier_count` entries ARE the swept partition, and
 # VisualGeometryToolkitCore's toolkit seeds from it — `PosteriorWeightState(…; order,
-# prior)`, `posterior_weights!`/`posterior_inlier_probs!`, `consensus_s2` — under
+# prior)`, its internal `_posterior_weights!`/`_posterior_inlier_probs!`, `consensus_s2` — under
 # the scorer's OWN scale prior (the one the sweep scored the partition under).
-# The seeds themselves are pinned in VisualGeometryToolkitCore (fit_scale_tests.jl).
+# The seeds themselves are pinned in VisualGeometryToolkitCore (its ScaleMAP tests).
 
 @testitem "consensus_seed" begin
     using VisualGeometryToolkitCore: StudentTUniformScoring, FlatLabelPrior, ProfiledLabelPrior, label_prior, sweep_order, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
@@ -11,8 +11,8 @@
     using Random: MersenneTwister
     import VisualGeometryToolkitCore as VGC
     using VisualGeometryToolkitCore: IGPrior, score!, inlier_count, consensus_order, consensus_s2, scale_prior,
-        partition_student_t, partition_rss, PosteriorWeightState, s_hat_sq, student_t_dof, sq_distances,
-        inlier_prior, posterior_weights!, posterior_inlier_probs!, decision_boundary, ScoreBuffers,
+        _partition_student_t, partition_rss, PosteriorWeightState, s_hat_sq, student_t_dof, sq_distances,
+        inlier_prior, _posterior_weights!, _posterior_inlier_probs!, decision_boundary, ScoreBuffers,
         GauInlier, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth
     using RANSACScoringDoneRight
 
@@ -43,7 +43,7 @@
             pws = PosteriorWeightState(q, n, model_dof, k; order, prior = scale_prior(s), w = zeros(n),
                                        inlier_posterior = zeros(n), sq_r = zeros(n),
                                        log_two_outlier_halfwidth = log(2 * halfwidth), codimension = 2)
-            ν, s2 = partition_student_t(prior, partition_rss(order, r, k), k; model_dof, codimension = 2)
+            ν, s2 = _partition_student_t(prior, partition_rss(order, r, k), k; model_dof, codimension = 2)
             @test s_hat_sq(pws) === s2 && student_t_dof(pws) === ν
             @test sq_distances(pws) == r .^ 2
             @test inlier_prior(pws) === 0.5
@@ -51,8 +51,8 @@
 
             w = zeros(n); p = zeros(n)
             kw = (; model_dof, log_two_outlier_halfwidth = log(2 * halfwidth), codimension = 2, prior)
-            posterior_weights!(w, q, order, k; kw...)
-            posterior_inlier_probs!(p, q, order, k; kw...)
+            _posterior_weights!(w, q, order, k; kw...)
+            _posterior_inlier_probs!(p, q, order, k; kw...)
             @test w ≈ pws.w rtol = 1e-12
             @test p ≈ pws.inlier_posterior rtol = 1e-12
         end

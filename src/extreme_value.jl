@@ -98,7 +98,6 @@ struct GeneralizedParetoOutliers{F} <: AbstractOutlierModel
     end
 end
 GeneralizedParetoOutliers(; fit_per::Symbol = :prefix, kw...) = GeneralizedParetoOutliers{fit_per}(TailRules(; kw...))
-fit_per(::GeneralizedParetoOutliers{F}) where {F} = F
 
 """
     OutlierTerm(cost)
@@ -118,33 +117,27 @@ end
 # The generalized Pareto fit
 # -----------------------------------------------------------------------------
 
-"""
-    gpd_pwm_fit(n, sum_excess, sum_rank_excess) -> (shape, scale)
-
-The generalized Pareto shape and scale of `n` excesses, from two sums.
-
-The probability-weighted-moment fit of a generalized Pareto law
-`G(y) = 1 - (1 + shape·y/scale)^(-1/shape)` to `n` excesses, from their sum
-and their rank-weighted sum `Σ_j j·y_(j)` (ascending ranks), with the
-plotting positions `(j - 0.35)/n` (Hosking & Wallis 1987; Hosking's `k` is
-`-shape`). Taking the sums rather than the excesses lets the sweep fit every
-prefix's tail in O(1) from prefix sums.
-"""
-function gpd_pwm_fit(n::Integer, sum_excess::Float64, sum_rank_excess::Float64)
+# `_gpd_pwm_fit(n, sum_excess, sum_rank_excess) -> (shape, scale)`: the
+# generalized Pareto shape and scale of `n` excesses, from two sums — the
+# probability-weighted-moment fit of a generalized Pareto law
+# `G(y) = 1 - (1 + shape·y/scale)^(-1/shape)` to `n` excesses, from their sum
+# and their rank-weighted sum `Σ_j j·y_(j)` (ascending ranks), with the
+# plotting positions `(j - 0.35)/n` (Hosking & Wallis 1987; Hosking's `k` is
+# `-shape`). Taking the sums rather than the excesses lets the sweep fit every
+# prefix's tail in O(1) from prefix sums. An internal step of the tail fit
+# (RSDR is its one caller).
+function _gpd_pwm_fit(n::Integer, sum_excess::Float64, sum_rank_excess::Float64)
     a0 = sum_excess / n
     a1 = a0 - (sum_rank_excess - 0.35 * sum_excess) / n^2
     d = a0 - 2a1
     return (-(a0 / d - 2), 2a0 * a1 / d)
 end
 
-"""
-    gpd_pwm_fit(excess) -> (shape, scale)
-
-The same fit from the excesses themselves (any order).
-"""
-function gpd_pwm_fit(excess::AbstractVector{<:Real})
+# `_gpd_pwm_fit(excess) -> (shape, scale)`: the same fit from the excesses
+# themselves (any order).
+function _gpd_pwm_fit(excess::AbstractVector{<:Real})
     y = sort(Float64.(excess))
-    return gpd_pwm_fit(length(y), sum(y), sum(j * y[j] for j in eachindex(y)))
+    return _gpd_pwm_fit(length(y), sum(y), sum(j * y[j] for j in eachindex(y)))
 end
 
 # The no-fit result: the uniform support of the largest value.
@@ -181,7 +174,7 @@ end
     m >= rules.min_excess || return _no_tail_fit(zmax)
     sz = T1[g]                                          # Σ_{l=g}^{n} z[l]
     sjz = (m + 1) * sz - T2[g]                          # Σ_{j=1}^{m} j·z[g-1+j], ascending ranks
-    shape, scale = gpd_pwm_fit(m, sz - m * u, sjz - u * m * (m + 1) / 2)
+    shape, scale = _gpd_pwm_fit(m, sz - m * u, sjz - u * m * (m + 1) / 2)
     (shape < rules.finite_shape_limit && scale > 0) || return _no_tail_fit(zmax)
     endpoint = u - scale / shape
     return (; outlier_halfwidth = max(endpoint, zmax), fitted_endpoint = endpoint, shape)
@@ -190,19 +183,15 @@ end
 _rules(m::Union{ExtremeValueHalfwidth, GeneralizedParetoOutliers}) = m.rules
 _rules(r::TailRules) = r
 
-"""
-    tail_fit(rules, z) -> (; outlier_halfwidth, fitted_endpoint, shape)
-
-The tail fit of `rules` to the sorted values `z`.
-
-The peaks-over-threshold fit of `rules` (a [`TailRules`](@ref) or an
-extreme-value outlier model) to the sorted values `z`: `outlier_halfwidth` is
-the uniform half-width (the fitted endpoint, raised to the largest value);
-`fitted_endpoint` is `-Inf` and `shape` `NaN` wherever the rules fall back
-(too few excesses, or no finite-endpoint fit). The sweep fits every prefix's
-complement the same way, in O(log n) each, from suffix sums it builds once.
-"""
-function tail_fit(rules, z::AbstractVector{Float64})
+# `_tail_fit(rules, z) -> (; outlier_halfwidth, fitted_endpoint, shape)`: the
+# peaks-over-threshold fit of `rules` (a `TailRules` or an extreme-value
+# outlier model) to the whole of the sorted values `z`: `outlier_halfwidth` is
+# the uniform half-width (the fitted endpoint, raised to the largest value);
+# `fitted_endpoint` is `-Inf` and `shape` `NaN` wherever the rules fall back
+# (too few excesses, or no finite-endpoint fit). The sweep fits every prefix's
+# complement the same way (the five-argument method), in O(log n) each, from
+# suffix sums it builds once. An internal step (RSDR is its one caller).
+function _tail_fit(rules, z::AbstractVector{Float64})
     n = length(z)
     T1, T2 = suffix_sums!(Vector{Float64}(undef, n + 1), Vector{Float64}(undef, n + 1), z)
     return _tail_fit(_rules(rules), z, 1, T1, T2)

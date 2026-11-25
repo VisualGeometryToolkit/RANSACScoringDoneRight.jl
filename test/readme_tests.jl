@@ -12,12 +12,17 @@
 
 @testitem "readme" begin
     using Test
+    using TOML
     import VisualGeometryToolkitCore as VgtkCore
     import RANSACScoringDoneRight
     # The README's example, run as a reader runs it (VisualGeometryToolkitCore's
     # test_readme_example): one block shown on the landing page, its install line
     # adding exactly what it loads, run in an environment built from that line.
-    VgtkCore.test_readme_example(pkgdir(RANSACScoringDoneRight); checks = """
+    # TEMPORARY: solve branch; remove when Core 0.14 etc. are registered. The unregistered
+    # stack packages the root Project.toml sources by path are developed from that path.
+    sourced = get(TOML.parsefile(joinpath(pkgdir(RANSACScoringDoneRight), "Project.toml")), "sources", Dict{String, Any}())
+    developed = Dict{String, String}(name => src["path"] for (name, src) in sourced)
+    VgtkCore.test_readme_example(pkgdir(RANSACScoringDoneRight); developed, checks = """
     # The sweep selects the 80 inliers it was given, give or take the
     # outliers that land inside the inlier band, and their scale is the
     # noise scale 0.01.

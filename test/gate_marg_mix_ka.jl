@@ -32,7 +32,7 @@ const RSDR = RANSACScoringDoneRight
 using RANSACScoringDoneRight: IGSharedData, LossSpec,
     loss_spec, loss_scale_bounds,
     grid_evaluate,
-    WelschMarginal, SmoothTLSMarginal
+    ScaleMarginal
 using KernelAbstractions
 import VisualGeometryToolkitCore as VGC
 using VisualGeometryToolkitCore: WelschShape, GemanMcclureShape, SmoothTLSShape, IGPrior
@@ -160,8 +160,8 @@ function reference_marg_errs(family_sym::Symbol, flat, pair_offset, K_arr, M_arr
     out = Matrix{Float64}(undef, P, T)
     for (t, prior_loss_width) in enumerate(prior_loss_width_grid)
         m = family_sym === :welsch ?
-            WelschMarginal(; prior_loss_width = Float64(prior_loss_width), outlier_halfwidth) :
-            SmoothTLSMarginal(; prior_loss_width = Float64(prior_loss_width), outlier_halfwidth)
+            ScaleMarginal{WelschShape}(; prior_loss_width = Float64(prior_loss_width), outlier_halfwidth) :
+            ScaleMarginal{SmoothTLSShape}(; prior_loss_width = Float64(prior_loss_width), outlier_halfwidth)
         spec = loss_spec(m); q = spec.quad; NG = length(q.sq_loss_width_nodes)
         for p in 1:P
             K = Int(K_arr[p]); M = Int(M_arr[p])
@@ -241,8 +241,8 @@ function run_gate(; cuda::Bool = false)
     for fam in (:welsch, :smoothtls_marg)
         ref = reference_marg_errs(fam, flat, pair_offset, K_arr, M_arr,
                                   errs, errors_offset, prior_loss_width_grid, outlier_halfwidth)
-        m = fam === :welsch ? WelschMarginal(; prior_loss_width = 1.0, outlier_halfwidth) :
-                              SmoothTLSMarginal(; prior_loss_width = 1.0, outlier_halfwidth)
+        m = fam === :welsch ? ScaleMarginal{WelschShape}(; prior_loss_width = 1.0, outlier_halfwidth) :
+                              ScaleMarginal{SmoothTLSShape}(; prior_loss_width = 1.0, outlier_halfwidth)
         dev64 = grid_evaluate(Float64, m, shared, prior_loss_width_grid)
         exact = dev64 == ref
         exact || (fails += 1)

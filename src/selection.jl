@@ -63,8 +63,8 @@ end
 
 # SIMFIT++ over the initial-loss-width grid `grid` (the pool's residual unit):
 # per pair the models' residuals in PIXELS (`pixel_residuals`, once per pair,
-# shared by every column); for every initial guess `simfitpp_select`
-# re-estimates the loss width (the reference's pixel bounds untouched) and
+# shared by every column); for every initial guess `SimFitPP` on the pair's
+# `EstimationProblem(PoolSelection, …)` re-estimates the loss width (the reference's pixel bounds untouched) and
 # selects the MSAC argmax at the estimate. Only the initial guess crosses
 # frames, through the pair's pool-frame-per-pixel scale (VisualGeometryToolkitCore's
 # `pool_pixel_scale`). `rng_of(fingerprint, t)` is the caller's generator
@@ -80,8 +80,8 @@ function select_on_grid!(idxs::AbstractMatrix{Int32}, ::Type, cfg::SimFitPP, gri
         s = pool_pixel_scale(pair)
         fp = (num_points(pair), num_models(pair), pair.gt_variance)   # the pair's content fingerprint
         @inbounds for t in 1:T
-            j, _, _ = simfitpp_select(Dpx, grid[t] / s, cfg; rng = rng_of(fp, t))
-            idxs[p, t] = j
+            idxs[p, t] = solve(EstimationProblem(PoolSelection, Dpx, (; initial_loss_width = grid[t] / s)), cfg;
+                               rng = rng_of(fp, t)).u
         end
     end
     return idxs

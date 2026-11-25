@@ -29,11 +29,11 @@ precompute_pair
 VisualGeometryToolkitCore's `select_on_grid!(idxs, P, scoring, grid, staged)`
 fills `idxs[p, t]` with the model selected for pair `p` at width `grid[t]`. Every
 grid family of this package (`StudentTUniformScoring`, the width-free
-loss-width families, [`LossSpec`](@ref), `ScaleMarginal`, [`SimFitPP`](@extref VisualGeometryToolkitEstimation.SimFitPP))
+loss-width families, [`LossSpec`](@ref), [`ScaleMarginal`](@ref), [`SimFitPP`](@extref VisualGeometryToolkitEstimation.SimFitPP))
 declares the staging `:rsdr`: `stage_selection(selection_staging(scoring), pairs, residuals; backend)`
 is one [`stage_ig_shared_from_pairs`](@ref) shared by all of them, and its
-`select_on_grid!` is one [`grid_evaluate`](@ref) (SIMFIT++: its host loop over
-[`simfitpp_select`](@extref VisualGeometryToolkitEstimation.simfitpp_select)). [`pair_chunk_budget`](@ref) sizes the device chunks.
+`select_on_grid!` is one [`grid_evaluate`](@ref) (SIMFIT++: its host loop of
+`solve(EstimationProblem(PoolSelection, residuals, (; initial_loss_width)), SimFitPP(); rng)`). [`pair_chunk_budget`](@ref) sizes the device chunks.
 
 ```@docs
 pair_chunk_budget
@@ -66,7 +66,7 @@ VisualGeometryToolkitCore's.
 ## Scale marginals of redescending losses
 
 ```@docs
-WelschMarginal
+ScaleMarginal
 LossSpec
 loss_spec
 loss_scale_bounds
@@ -77,15 +77,14 @@ loss_scale_bounds
 The empirical-Bayes variants of the paper fit VisualGeometryToolkitCore's `IGPrior`
 from per-pair noise-variance estimates on a validation set: IG-MLE by type-II
 maximum likelihood, IG-Robust with `α₀ = 1` and a median-anchored `β₀`. The
-fits (`PriorSpec`, `fit_prior`, `ALL_PRIOR_SPECS`) are VisualGeometryToolkitEval's
+fits (the algorithm `PriorSpec` on `EstimationProblem(IGPrior, σ²s)`, `ALL_PRIOR_SPECS`) are VisualGeometryToolkitEval's
 `Tuning`; a fitted prior enters a scorer as `StudentTUniformScoring(P, a; scale_prior, label_prior)`.
 
 ## SIMFIT++ loss-width estimation
 
 SIMFIT++ (Edstedt, CVPRW 2025; [Parskatt/simfitpp](https://github.com/Parskatt/simfitpp))
-is VisualGeometryToolkitEstimation's: [`SimFitPP`](@extref VisualGeometryToolkitEstimation.SimFitPP),
-[`simfitpp_loss_width`](@extref VisualGeometryToolkitEstimation.simfitpp_loss_width) and
-[`simfitpp_select`](@extref VisualGeometryToolkitEstimation.simfitpp_select) (exported there),
-`unbiased_median_variance` and `with_residual_unit` (public there). This
+is VisualGeometryToolkitEstimation's: the algorithm [`SimFitPP`](@extref VisualGeometryToolkitEstimation.SimFitPP),
+solved on `EstimationProblem(LossWidth, …)` (a caller's estimator) or `EstimationProblem(PoolSelection, …)`
+(a hypothesis pool), and `with_residual_unit` (public there). This
 package gives `SimFitPP` its width axis (`LossWidth`), its tag `"sim_fit_pp"` and
 its grid on the pool-selection contract (above).

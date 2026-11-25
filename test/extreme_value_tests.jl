@@ -1,7 +1,7 @@
 @testitem "extreme_value" begin
     using VisualGeometryToolkitCore: StudentTUniformScoring, Predictive, FlatLabelPrior, ProfiledLabelPrior, BetaLabelPrior, label_prior_table, FixedHalfwidth, outlier_model, label_prior, suffix_sums!, alloc_scoring_workspace, score_residuals!, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: tail_fit, gpd_pwm_fit, gpd_support, gpd_outlier_cost, _tail_fit, _sorted_quantile
+    using RANSACScoringDoneRight: gpd_support, gpd_outlier_cost, _tail_fit, _gpd_pwm_fit, _sorted_quantile
     using VisualGeometryToolkitCore
     using VisualGeometryToolkitCore: IGPrior, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth
     using Distributions: GeneralizedPareto, logpdf
@@ -34,7 +34,7 @@
         n = length(z)
         T1, T2 = suffix_sums!(zeros(n + 1), zeros(n + 1), z)
         rules = TailRules(; pot_threshold_quantile = 0.9)
-        @test tail_fit(ExtremeValueHalfwidth(), z) == _tail_fit(rules, z, 1, T1, T2)
+        @test _tail_fit(ExtremeValueHalfwidth(), z) == _tail_fit(rules, z, 1, T1, T2)
         for lo in (1, 2, 50, 200, 330, n - 30, n - 3)
             got = _tail_fit(rules, z, lo, T1, T2)
             want = naive_tail(z[lo:n], 0.9)
@@ -51,10 +51,10 @@
         end
     end
 
-    @testset "gpd_pwm_fit recovers Distributions' GeneralizedPareto" begin
+    @testset "the probability-weighted-moment fit recovers Distributions' GeneralizedPareto" begin
         rng = Xoshiro(2)
         for shape in (-1.0, -0.5, -0.25), scale in (1.0, 40.0)
-            ŝ, ω̂ = gpd_pwm_fit(rand(rng, GeneralizedPareto(0.0, scale, shape), 200_000))
+            ŝ, ω̂ = _gpd_pwm_fit(rand(rng, GeneralizedPareto(0.0, scale, shape), 200_000))
             @test ŝ ≈ shape atol = 0.02
             @test ω̂ ≈ scale rtol = 0.02
         end
@@ -157,7 +157,7 @@
         rules = TailRules()
         # a shape at or above the finite-shape limit falls back to the uniform support
         heavy = sort(rand(Xoshiro(21), GeneralizedPareto(0.0, 1.0, 0.3), 2000))
-        f = tail_fit(rules, heavy)
+        f = _tail_fit(rules, heavy)
         @test isnan(f.shape) && f.fitted_endpoint == -Inf && f.outlier_halfwidth == heavy[end]
         # tied maxima: the support lies beyond them, so every cost is finite
         z = [collect(0.1:0.1:5.0); 9.0; 9.0]

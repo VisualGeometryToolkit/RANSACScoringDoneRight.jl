@@ -17,8 +17,8 @@
     using KernelAbstractions
     using RANSACScoringDoneRight
     using RANSACScoringDoneRight: stage_ig_shared_from_pairs, loss_spec, LossSpec, pair_chunk_budget
-    using VisualGeometryToolkitEstimation: SimFitPP, simfitpp_select   # SIMFIT++ is Estimation's
-    using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, IGPrior, WelschShape,
+    using VisualGeometryToolkitEstimation: SimFitPP, PoolSelection   # SIMFIT++ is Estimation's
+    using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, IGPrior, WelschShape, EstimationProblem, solve,
         FundMat, sampson_distance, select_on_grid!, selection_staging, stage_selection, best_pool_model
     using VisualGeometryToolkitCore.Pools: PoolPair, pixel_residuals, pool_pixel_scale
     import VisualGeometryToolkitCore as VGC
@@ -57,7 +57,7 @@
         fams = (StudentTUniformScoring(5, 1.0; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), MsacScoring(), RansacScoring(), MlesacScoring(),
                 MagsacScoring(), WelschCostScoring(), SmoothTLSScoring(), GemanScoring(),
                 loss_spec(WelschShape(), IGPrior(); Δ = 0.5, t_lo = -10.0, t_hi = 0.0, NG = 33),
-                WelschMarginal(; prior_loss_width = 0.1, outlier_halfwidth = 1.0), SimFitPP())
+                ScaleMarginal{WelschShape}(; prior_loss_width = 0.1, outlier_halfwidth = 1.0), SimFitPP())
         @test all(sc -> selection_staging(sc) === :rsdr, fams)
         st = stage_selection(:rsdr, pairs, Rs; backend = be)
         @test st.pairs === pairs
@@ -86,7 +86,7 @@
         # the mixture marginal reads the problem's minimal sample size and codimension
         st = stage_selection(:rsdr, pairs, Rs; backend = be)
         @test_throws MethodError select_on_grid!(Matrix{Int32}(undef, length(pairs), 4), spec, hw, st)
-        m = WelschMarginal(; prior_loss_width = 0.1, outlier_halfwidth = 1.0)
+        m = ScaleMarginal{WelschShape}(; prior_loss_width = 0.1, outlier_halfwidth = 1.0)
         @test _select(m, [0.05, 0.2, 1.0], pairs, Rs) == last(grid_evaluate(m, sh, [0.05, 0.2, 1.0]; return_idxs = true))
     end
 
@@ -122,8 +122,8 @@
         cfg = SimFitPP()
         rng_of(fp, t) = MersenneTwister(hash((fp, t)))
         got = _select(cfg, grid, spairs, sRs; rng_of)
-        want = [Int32(first(simfitpp_select(pixel_residuals(p), grid[t] / pool_pixel_scale(p), cfg;
-                                            rng = rng_of((VGC.Pools.num_points(p), VGC.Pools.num_models(p), p.gt_variance), t))))
+        want = [Int32(solve(EstimationProblem(PoolSelection, pixel_residuals(p), (; initial_loss_width = grid[t] / pool_pixel_scale(p))), cfg;
+                            rng = rng_of((VGC.Pools.num_points(p), VGC.Pools.num_models(p), p.gt_variance), t)).u)
                 for p in spairs, t in eachindex(grid)]
         @test got == want
         @test all(j -> 0 <= j <= 6, got)

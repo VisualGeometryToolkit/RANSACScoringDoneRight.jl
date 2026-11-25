@@ -46,10 +46,10 @@ local-optimization strategies are VisualGeometryToolkitEstimation's and
 LocalOptimizationDoneRight's. A caller composes them, for example
 
 ```julia
-find_essential(camera1, camera2, cs;
-               scoring = scoring_from_toml(Dict("type" => "student_t_uniform", "outlier_halfwidth" => a);
+solve(EstimationProblem(EssentialProblem(camera1, camera2, cs)),
+      Ransac(; scoring = scoring_from_toml(Dict("type" => "student_t_uniform", "outlier_halfwidth" => a);
                                            problem = EssentialProblem),   # priors from the stack defaults
-               local_optimization_strategy = …)
+             local_optimization_strategy = …); rng)
 ```
 
 RANSAC and MSAC at a threshold (`RansacScoring`, `MsacScoring`) are
@@ -77,7 +77,7 @@ dispatches on the scoring:
   is the IG/Jeffreys marginal sweep. The grid replaces the scoring's own `h`.
 - `grid_evaluate([S,] loss_spec(shape, prior; Δ, …), staged, outlier_halfwidths; model_dof, dg)`
   is the Track-B redescending-loss mixture marginal.
-- `grid_evaluate([S,] WelschMarginal(; prior_loss_width, outlier_halfwidth), staged, prior_loss_widths)`
+- `grid_evaluate([S,] ScaleMarginal{WelschShape}(; prior_loss_width, outlier_halfwidth), staged, prior_loss_widths)`
   evaluates the full-data scale marginals. The grid replaces the prior centre.
 
 VisualGeometryToolkitCore's `width_axis(scoring)` names the axis a scoring's
@@ -95,12 +95,13 @@ instead of waiting for Julia's garbage collector.
 ## SIMFIT++
 
 SIMFIT++ (Edstedt, CVPRW 2025, [Parskatt/simfitpp](https://github.com/Parskatt/simfitpp))
-is VisualGeometryToolkitEstimation's: its step-for-step port, `SimFitPP`, `simfitpp_loss_width`,
-`simfitpp_select`, `unbiased_median_variance` and `with_residual_unit`, moved
-there from this package on 2026-11-11 ([`SimFitPP`](@extref VisualGeometryToolkitEstimation.SimFitPP)).
+is VisualGeometryToolkitEstimation's: its step-for-step port, the algorithm `SimFitPP` (solved on
+`EstimationProblem(LossWidth, …)` or, for a hypothesis pool, `EstimationProblem(PoolSelection, …)`) and
+`with_residual_unit`, moved there from this package on 2026-11-11
+([`SimFitPP`](@extref VisualGeometryToolkitEstimation.SimFitPP)).
 This package gives `SimFitPP` a grid on the pool-selection contract: for every
-initial loss width of the grid, `simfitpp_select` re-estimates the loss width on
-the pool and selects the MSAC-best hypothesis at the estimate.
+initial loss width of the grid, `solve(EstimationProblem(PoolSelection, …), SimFitPP(); rng)`
+re-estimates the loss width on the pool and selects the MSAC-best hypothesis at the estimate (its `u`).
 
 The reference's bounds, 0.25 and 8, are pixel constants. A pool stores its
 data in `NormalizedImageFrame` (image centre, half diagonal), and no single
@@ -108,9 +109,9 @@ scalar relates the two frames point by point. VisualGeometryToolkitCore's `Pools
 is the image-plane Sampson residual of the pool's models in pixels. It is
 computed from the light record and never reads the stored residual matrix, so
 it does not depend on that matrix's residual kind (tangent Sampson for E
-pools). The pair method of Estimation's `simfitpp_select` runs on it, so
-`initial_loss_width_px`, the bounds and the returned loss width are all in
-pixels. To work in the pool frame's unit instead, call the matrix method on the
+pools). SIMFIT++ on `EstimationProblem(PoolSelection, pair, …)` runs on it, so
+`initial_loss_width`, the bounds and the returned loss width (`metadata.loss_width`) are all in
+pixels. To work in the pool frame's unit instead, solve the problem on the
 pair's residual matrix with bounds in that unit.
 VisualGeometryToolkitCore's `Pools.pool_pixel_scale(pair)`, the larger of the
 two views' pool-frame-per-pixel scales, carries a pixel quantity into the pool
@@ -126,7 +127,7 @@ with), [`precompute_pair`](@ref) and the KernelAbstractions grids above. A
 scoring at its width is its own pool-selection handle.
 
 Other layers live elsewhere. The prior-spec layer that fits `IGPrior` from
-validation data (`PriorSpec`, `fit_prior`) is VisualGeometryToolkitEval's
+validation data (the algorithm `PriorSpec`, on `EstimationProblem(IGPrior, σ²s)`) is VisualGeometryToolkitEval's
 `Tuning`. The pool record, `PoolPair`, and its accessors (`num_points`,
 `num_models`, `pool_imc`, `pool_normalization` and others) belong to
 VisualGeometryToolkitCore's `Pools` module. Pool IO belongs to
@@ -161,9 +162,8 @@ On top of that, this package names the following quantities.
 | `inlier_prior` / `inlier_posterior` | the scalar mixing proportion π and the per-point `P(inlier \| r)` |
 
 A name that contains `scale` returns a linear scale (`pool_pixel_scale`).
-A name for a squared quantity says so (`unbiased_median_variance`, `s_hat_sq`,
-`sq_loss_width`). The one exception is `fit_scale`, which is named for the
-`fit` contract; its docstring states first that it returns the square.
+A name for a squared quantity says so (`s_hat_sq`, `sq_loss_width`,
+VisualGeometryToolkitCore's `SquaredScale`, the model tag whose `ScaleMAP` estimate is ŝ²).
 
 ## Repository layout
 

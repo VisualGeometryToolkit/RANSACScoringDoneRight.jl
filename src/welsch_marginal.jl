@@ -31,8 +31,8 @@
 # =============================================================================
 
 # ONE parametric spec for every scale-marginal family: the loss shape is the
-# type parameter, so `WelschMarginal`/`SmoothTLSMarginal` are aliases, and the
-# only per-family code is the keyword constructors. The shape math is
+# type parameter (`ScaleMarginal{WelschShape}`, `ScaleMarginal{SmoothTLSShape}`,
+# spelled out: no alias names one instantiation), and no code is per family. The shape math is
 # VisualGeometryToolkitCore's, and so is the prior: the field is its `IGPrior`, never
 # a loose `alpha0`/`beta0` pair restating it (`m.prior.alpha0`, `m.prior.beta0`).
 struct ScaleMarginal{K<:AbstractLossShape}
@@ -40,8 +40,6 @@ struct ScaleMarginal{K<:AbstractLossShape}
     outlier_halfwidth::Float64   # the Z̃ domain half-width
     t0::Float64                  # centre of the scale domain t0 ± _MARG_L, log(prior-centre²)
 end
-const WelschMarginal    = ScaleMarginal{WelschShape}
-const SmoothTLSMarginal = ScaleMarginal{SmoothTLSShape}
 """
     ScaleMarginal{K}(alpha0, beta0; outlier_halfwidth, t0 = nothing)
 
@@ -70,25 +68,26 @@ end
 _centred_marginal(::Type{K}, alpha0::Real, prior_loss_width::Real, outlier_halfwidth::Real) where {K} =
     ScaleMarginal{K}(alpha0, alpha0 * prior_loss_width^2; outlier_halfwidth,
                      t0 = log(prior_loss_width^2))
-# Its keyword form, the one signature of the centred constructors (`WelschMarginal`, `SmoothTLSMarginal`).
-_centred_marginal(::Type{K}; alpha0::Real = 1.0, prior_loss_width::Real, outlier_halfwidth::Real) where {K} =
-    _centred_marginal(K, alpha0, prior_loss_width, outlier_halfwidth)
 
 """
-    WelschMarginal(; alpha0=1.0, prior_loss_width, outlier_halfwidth)
+    ScaleMarginal{K}(; alpha0=1.0, prior_loss_width, outlier_halfwidth)
 
-Marginal-Welsch scoring spec.  `prior_loss_width` is the IG-prior centre on the
-Welsch loss width (`beta0 = alpha0·prior_loss_width²` ⇒ `2·alpha0`
+The scale-marginal spec of loss shape `K` (VisualGeometryToolkitCore's
+`WelschShape`: the marginal Welsch; `SmoothTLSShape`: the marginal smooth TLS)
+centred on a prior loss width. `prior_loss_width` is the IG-prior centre on the
+loss width (`beta0 = alpha0·prior_loss_width²` ⇒ `2·alpha0`
 pseudo-observations at pseudo-squared-width `prior_loss_width²`);
 `outlier_halfwidth` bounds the density normalizer Z̃ — REQUIRED, as for every
-scale-marginal spec.
+scale-marginal spec (`POOL_FRAME_R_MAX`, the declared outlier support in the
+pool frame's unit).
 `alpha0`/`beta0` are the same two IG hyperparameters `IGPrior` names. For an `(alpha0, beta0)` prior not tied to a
-centre, [`ScaleMarginal{WelschShape}`](@ref ScaleMarginal)`(alpha0, beta0; outlier_halfwidth)`.
+centre, `ScaleMarginal{K}(alpha0, beta0; outlier_halfwidth)`.
 
 The evidence is the trapezoid scale quadrature of
 [`loss_spec`](@ref)`(::ScaleMarginal)`.
 """
-WelschMarginal(; kw...) = _centred_marginal(WelschShape; kw...)
+ScaleMarginal{K}(; alpha0::Real = 1.0, prior_loss_width::Real, outlier_halfwidth::Real) where {K<:AbstractLossShape} =
+    _centred_marginal(K, alpha0, prior_loss_width, outlier_halfwidth)
 
 # (`welsch_sq_scale_mle` — the per-pair Welsch squared-scale MLE, the argmax of
 #  the Hermite-interpolated integrand — is deleted with its `_hermite_peak`: no

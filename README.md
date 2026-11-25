@@ -77,7 +77,8 @@ VisualGeometryToolkitCore defines the contracts it implements, and
 [BlobBoards](https://blobboards.github.io) and the ACCV 2026 study of
 [Robust Local Optimization Done Right](https://localoptimizationdoneright.github.io)
 use its scorers. The paper's research project, with the drivers of every
-figure, is in [`neurips2026/`](neurips2026/REPRODUCE.md).
+figure, is in [`neurips2026/`](neurips2026/REPRODUCE.md). It reproduces with
+RANSACScoringDoneRight 0.8.x (the `v0.8.3` tag), its own pinned environment.
 
 ## Citing
 

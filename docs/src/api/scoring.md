@@ -46,8 +46,6 @@ TailRules
 ExtremeValueHalfwidth
 GeneralizedParetoOutliers
 OutlierTerm
-tail_fit
-gpd_pwm_fit
 gpd_support
 gpd_outlier_cost
 ```

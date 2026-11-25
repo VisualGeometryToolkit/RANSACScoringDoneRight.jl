@@ -21,9 +21,10 @@ It sits in a stack of Julia packages:
 | LocalOptimizationDoneRight | the state-of-the-art local-optimization strategies |
 | VisualGeometryToolkitEval | pool IO, statistics, tuning (including the scale-prior fits), the evaluation engine, rendering |
 
-A caller composes them: VisualGeometryToolkitEstimation's `find_*` take a scorer from
+A caller composes them: VisualGeometryToolkitEstimation's `Ransac` takes a scorer from
 this package and a strategy from LocalOptimizationDoneRight as
-`scoring = …, local_optimization_strategy = …`.
+`Ransac(; scoring = …, local_optimization_strategy = …)`, solved on a family problem
+(`solve(EstimationProblem(HomographyProblem(cs)), Ransac(; …); rng)`).
 
 ## Scoring versus selection
 
@@ -133,8 +134,8 @@ pair has many inliers the data dominate and the informative priors approach the
 Jeffreys limit.
 
 The paper's empirical-Bayes variants fit the prior from per-pair noise-variance
-estimates on a validation set (VisualGeometryToolkitEval's `Tuning.PriorSpec` and
-`Tuning.fit_prior`):
+estimates on a validation set (VisualGeometryToolkitEval's `Tuning.PriorSpec`, the algorithm solved on
+`EstimationProblem(IGPrior, σ²s)`):
 
 | variant | prior | fit |
 |:---|:---|:---|

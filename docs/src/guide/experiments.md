@@ -3,7 +3,9 @@
 ## Reproducing the paper
 
 The paper's figures are drawn by drivers in the research project
-`neurips2026/`, which has its own environment:
+`neurips2026/`, which has its own environment. It reproduces with
+RANSACScoringDoneRight 0.8.x and the VisualGeometryToolkitCore 0.13 stack: run it in a
+checkout of the `v0.8.3` tag.
 
 ```bash
 cd neurips2026

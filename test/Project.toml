@@ -22,6 +22,9 @@ VisualGeometryToolkitEstimation = "9a478df9-9a37-4dc7-9070-58617efe7573"
 
 [sources]
 RANSACScoringDoneRight = {path = ".."}
+# TEMPORARY: solve branch; remove when Core 0.14 etc. are registered
+VisualGeometryToolkitCore = {path = "/home/jbpritts/src/_wt-solve-core014/VisualGeometryToolkitCore"}
+VisualGeometryToolkitEstimation = {path = "/home/jbpritts/src/_wt-solve-core014/VisualGeometryToolkitEstimation"}
 
 [compat]
 Aqua = "0.8.18"
@@ -33,7 +36,7 @@ KernelAbstractions = "0.9.45, 0.10"
 LinearAlgebra = "1"
 LogExpFunctions = "1"
 Printf = "1"
-RANSACScoringDoneRight = "0.8"
+RANSACScoringDoneRight = "0.9"
 Random = "1"
 ReTestItems = "1.35"
 SpecialFunctions = "2.9"
@@ -41,6 +44,6 @@ StaticArrays = "1.9"
 Statistics = "1.11"
 TOML = "1"
 Test = "1"
-VisualGeometryToolkitCore = "0.13"
-VisualGeometryToolkitEstimation = "0.12"
+VisualGeometryToolkitCore = "0.14"
+VisualGeometryToolkitEstimation = "0.13"
 julia = "1.13"
