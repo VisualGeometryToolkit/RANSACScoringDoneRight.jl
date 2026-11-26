@@ -9,9 +9,9 @@
 #   ExtremeValueHalfwidth                  the complement of prefix k is the
 #       suffix z[k+1:n] of the sorted distances and its upper tail a suffix of
 #       that: one O(log n) threshold and O(1) moments from two suffix sums
-#   GeneralizedParetoOutliers(:prefix)     Θ(n²): the density changes with
+#   GeneralizedParetoOutliers{PerPartition} Θ(n²): the density changes with
 #       every prefix's fit and Σ log p does not decompose
-#   GeneralizedParetoOutliers(:hypothesis) Θ(n): one fit to the upper tail of
+#   GeneralizedParetoOutliers{PerHypothesis} Θ(n): one fit to the upper tail of
 #       all distances, a fixed per-point cost, a suffix sum
 #   OutlierTerm                            the caller's cost per prefix
 #
@@ -24,25 +24,25 @@ outlier_cost(m::ExtremeValueHalfwidth, _, z, S1, S2, k, n) =
 scored_outlier_halfwidth(m::ExtremeValueHalfwidth, _, z, S1, S2, k, n) =
     _tail_fit(m.rules, z, k + 1, S1, S2).outlier_halfwidth
 
-function outlier_context!(m::GeneralizedParetoOutliers{:hypothesis}, z, S1, S2, n)
+function outlier_context!(m::GeneralizedParetoOutliers{PerHypothesis}, z, S1, S2, n)
     fit = _tail_fit(m.rules, z, 1, S1, S2)
-    endpoint = gpd_support(fit, z, 1, n)
+    endpoint = _gpd_support(fit, z, 1, n)
     suffix = S1                          # suffix[k] = Σ_{i≥k} cost_i, over T1 (no longer needed)
     suffix[n+1] = 0.0
     @inbounds for i in n:-1:1
-        suffix[i] = suffix[i+1] + gpd_outlier_cost(z[i], endpoint, fit.shape)
+        suffix[i] = suffix[i+1] + _gpd_outlier_cost(z[i], endpoint, fit.shape)
     end
     return (; suffix, outlier_halfwidth = _uniform_equivalent(endpoint, fit.shape))
 end
-outlier_cost(::GeneralizedParetoOutliers{:hypothesis}, ctx, z, S1, S2, k, n) = ctx.suffix[k+1]
-scored_outlier_halfwidth(::GeneralizedParetoOutliers{:hypothesis}, ctx, z, S1, S2, k, n) = ctx.outlier_halfwidth
-function outlier_cost(m::GeneralizedParetoOutliers{:prefix}, _, z, S1, S2, k, n)
+outlier_cost(::GeneralizedParetoOutliers{PerHypothesis}, ctx, z, S1, S2, k, n) = ctx.suffix[k+1]
+scored_outlier_halfwidth(::GeneralizedParetoOutliers{PerHypothesis}, ctx, z, S1, S2, k, n) = ctx.outlier_halfwidth
+function outlier_cost(m::GeneralizedParetoOutliers{PerPartition}, _, z, S1, S2, k, n)
     fit = _tail_fit(m.rules, z, k + 1, S1, S2)
-    return _gpd_complement_cost(z, k + 1, n, gpd_support(fit, z, k + 1, n), fit.shape)
+    return _gpd_complement_cost(z, k + 1, n, _gpd_support(fit, z, k + 1, n), fit.shape)
 end
-function scored_outlier_halfwidth(m::GeneralizedParetoOutliers{:prefix}, _, z, S1, S2, k, n)
+function scored_outlier_halfwidth(m::GeneralizedParetoOutliers{PerPartition}, _, z, S1, S2, k, n)
     fit = _tail_fit(m.rules, z, k + 1, S1, S2)
-    return _uniform_equivalent(gpd_support(fit, z, k + 1, n), fit.shape)
+    return _uniform_equivalent(_gpd_support(fit, z, k + 1, n), fit.shape)
 end
 
 outlier_cost(m::OutlierTerm, _, z, S1, S2, k, n) = Float64(m.cost(k, z))

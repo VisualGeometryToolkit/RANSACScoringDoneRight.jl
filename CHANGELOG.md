@@ -11,7 +11,21 @@ grid families, `grid_evaluate` and the staging functions are unchanged. No expec
 - **`tail_fit` and `gpd_pwm_fit` are internal steps** (`_tail_fit`, `_gpd_pwm_fit`; no longer `public`). They are the
   generalized Pareto tail fit of the extreme-value outlier models, and this package is their one caller, so under the
   stack's naming rules (no public `fit_`-style verb outside `solve`) they become `_`-prefixed steps rather than
-  algorithm types. Same arithmetic. `gpd_support` and `gpd_outlier_cost` stay public.
+  algorithm types. Same arithmetic.
+- **`gpd_support` and `gpd_outlier_cost` are internal steps** (`_gpd_support`, `_gpd_outlier_cost`; no longer
+  `public`): they read the tail fit's internal record, whose one consumer is this package's outlier-model sweep.
+  Same arithmetic.
+- **`GeneralizedParetoOutliers`' `fit_per` is a type, not a Symbol**: `fit_per = :prefix` → `fit_per = PerPartition()`
+  (the default), `fit_per = :hypothesis` → `fit_per = PerHypothesis()` (both new, `public`); the type parameter is the
+  scope's type (`GeneralizedParetoOutliers{PerPartition}`). Any other value is the keyword's `TypeError`. Same scores.
+- **`loss_width_scoring` is deleted**: a scorer is built by its constructor at the problem's codimension
+  (`loss_width_scoring("msac", dg)` → `MsacScoring(dg)`, `loss_width_scoring(tag, problem)` →
+  `F(codimension(problem))`); a tag converts only in the TOML loaders, through `ALL_SCORING_TAGS`.
+- **Versioned configuration** (Core's decision 11): `configs/default.toml` states `config_version = 2` and is read
+  through the new converter `RSDR_CONFIG_VERSIONS` (`public`). Version 1 is every earlier file; its one step renames
+  `[tail_rules] threshold_quantile` to `pot_threshold_quantile`, so a stored version-1 file that spells the old key is
+  migrated, not refused (it was refused before). A current file that spells it is refused, naming the new key. The
+  keyword `threshold_quantile` stays refused, naming `pot_threshold_quantile` (the owner's ruling). Same defaults.
 - **`WelschMarginal` and `SmoothTLSMarginal` are deleted; the spec is the spelled `ScaleMarginal{K}`** (now exported),
   as the stack's naming rule R20 asks (no `const` names one instantiation of a type): `WelschMarginal(; alpha0,
   prior_loss_width, outlier_halfwidth)` → `ScaleMarginal{WelschShape}(; …)`, `SmoothTLSMarginal(; …)` →
@@ -28,6 +42,10 @@ grid families, `grid_evaluate` and the staging functions are unchanged. No expec
 - The documentation's examples and prose use the solve forms: `Ransac(; scoring, local_optimization_strategy)` on a
   family problem (was `find_*`), `ScaleMAP` on `EstimationProblem(SquaredScale, …)` (was `fit_scale`) and Eval's
   `PriorSpec` on `EstimationProblem(IGPrior, σ²s)` (was `fit_prior`).
+- The default-device test pins the device for its block with Core's public `with_default_device`, no longer by
+  writing Core's private resolver.
+- The stack guide's example builds the Student-t scorer by its constructor
+  (`StudentTUniformScoring(EssentialProblem, a; scale_prior, label_prior)`), not from a TOML dictionary.
 - The consensus-seed test checks the seed through Core's public entries (`ScaleMAP`, `StudentTMixture`,
   `inlier_probabilities!`), as `partition_student_t` and the posterior helpers are internal in Core 0.14.
 - `neurips2026/` is no longer a member of the workspace: it reproduces with RANSACScoringDoneRight 0.8.x (`v0.8.3`)

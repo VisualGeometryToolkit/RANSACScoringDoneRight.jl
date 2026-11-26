@@ -1,7 +1,7 @@
 @testitem "extreme_value" begin
     using VisualGeometryToolkitCore: StudentTUniformScoring, Predictive, FlatLabelPrior, ProfiledLabelPrior, BetaLabelPrior, label_prior_table, FixedHalfwidth, outlier_model, label_prior, suffix_sums!, alloc_scoring_workspace, score_residuals!, JeffreysPrior, IGPrior   # the Student-t scorer (Core's)
     using RANSACScoringDoneRight
-    using RANSACScoringDoneRight: gpd_support, gpd_outlier_cost, _tail_fit, _gpd_pwm_fit, _sorted_quantile
+    using RANSACScoringDoneRight: PerPartition, PerHypothesis, _gpd_support, _gpd_outlier_cost, _tail_fit, _gpd_pwm_fit, _sorted_quantile
     using VisualGeometryToolkitCore
     using VisualGeometryToolkitCore: IGPrior, check_workspace, with_width, OutlierHalfwidth, outlier_halfwidth
     using Distributions: GeneralizedPareto, logpdf
@@ -87,15 +87,15 @@
         cost(v, a, ξ) = (isfinite(ξ) && ξ < 0) ? log(2.0) - logpdf(GeneralizedPareto(0.0, -ξ * a, ξ), v) : log(2a)
         support(f, zs) = f.fitted_endpoint > zs[end] ? f.fitted_endpoint :
                          (length(zs) > 1 && zs[end] > zs[1] ? zs[end] + (zs[end] - zs[1]) / (length(zs) - 1) : 2 * zs[end])
-        for fit_per in (:prefix, :hypothesis)
+        for fit_per in (PerPartition(), PerHypothesis())
             s = StudentTUniformScoring(m, GeneralizedParetoOutliers(; fit_per); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
             sws = alloc_scoring_workspace(n, 1, s)
             S, k = score_residuals!(sws, zeros(n), s, r, n)
             whole = naive_tail(z, 0.9)
             Sk = map(m+1:n) do k
                 k == n && return jeffreys(k, m, sum(abs2, z))
-                f = fit_per === :prefix ? naive_tail(z[k+1:n], 0.9) : whole
-                zs = fit_per === :prefix ? z[k+1:n] : z
+                f = fit_per === PerPartition() ? naive_tail(z[k+1:n], 0.9) : whole
+                zs = fit_per === PerPartition() ? z[k+1:n] : z
                 a = support(f, zs)
                 jeffreys(k, m, sum(abs2, z[1:k])) - sum(cost(v, a, f.shape) for v in z[k+1:n])
             end
@@ -106,19 +106,19 @@
 
     @testset "the generalized Pareto density is the uniform one at shape -1" begin
         for v in (0.1, 3.0, 9.9)
-            @test gpd_outlier_cost(v, 10.0, -1.0) ≈ log(20.0)
+            @test _gpd_outlier_cost(v, 10.0, -1.0) ≈ log(20.0)
         end
-        @test gpd_outlier_cost(10.0, 10.0, -0.5) == Inf
+        @test _gpd_outlier_cost(10.0, 10.0, -0.5) == Inf
         # the closed form is Distributions' GeneralizedPareto from zero, halved for the sign
         for (v, ξ) in ((0.3, -0.5), (7.0, -0.8), (2.0, -1.3))
-            @test gpd_outlier_cost(v, 10.0, ξ) ≈ log(2.0) - logpdf(GeneralizedPareto(0.0, -ξ * 10.0, ξ), v)
+            @test _gpd_outlier_cost(v, 10.0, ξ) ≈ log(2.0) - logpdf(GeneralizedPareto(0.0, -ξ * 10.0, ξ), v)
         end
-        @test gpd_outlier_cost(3.0, 10.0, NaN) == log(20.0)
+        @test _gpd_outlier_cost(3.0, 10.0, NaN) == log(20.0)
     end
 
     @testset "every outlier model and label prior is invariant to the residuals' units" begin
         for model in (ExtremeValueHalfwidth(), GeneralizedParetoOutliers(),
-                      GeneralizedParetoOutliers(; fit_per = :hypothesis)),
+                      GeneralizedParetoOutliers(; fit_per = PerHypothesis())),
             label_prior in (FlatLabelPrior(), ProfiledLabelPrior(), BetaLabelPrior(0.5, 0.5)), seed in 1:3
             r = draw(Xoshiro(seed))
             n = length(r)
@@ -143,7 +143,7 @@
         n = length(r)
         q = zeros(n)
         for model in (40.0, ExtremeValueHalfwidth(), GeneralizedParetoOutliers(),
-                      GeneralizedParetoOutliers(; fit_per = :hypothesis)),
+                      GeneralizedParetoOutliers(; fit_per = PerHypothesis())),
             label_prior in (FlatLabelPrior(), BetaLabelPrior(0.5, 0.5))
             s = StudentTUniformScoring(2, model; label_prior, scale_prior = JeffreysPrior())
             sws = alloc_scoring_workspace(n, 1, s)
@@ -161,12 +161,12 @@
         @test isnan(f.shape) && f.fitted_endpoint == -Inf && f.outlier_halfwidth == heavy[end]
         # tied maxima: the support lies beyond them, so every cost is finite
         z = [collect(0.1:0.1:5.0); 9.0; 9.0]
-        sup = gpd_support((; fitted_endpoint = -Inf), z, 1, length(z))
-        @test sup > 9.0 && isfinite(gpd_outlier_cost(9.0, sup, -0.5))
+        sup = _gpd_support((; fitted_endpoint = -Inf), z, 1, length(z))
+        @test sup > 9.0 && isfinite(_gpd_outlier_cost(9.0, sup, -0.5))
         # a non-finite residual is an outlier, never poisons the other partitions
         r = draw(Xoshiro(22))
         n = length(r)
-        for model in (ExtremeValueHalfwidth(), GeneralizedParetoOutliers(), GeneralizedParetoOutliers(; fit_per = :hypothesis))
+        for model in (ExtremeValueHalfwidth(), GeneralizedParetoOutliers(), GeneralizedParetoOutliers(; fit_per = PerHypothesis()))
             s = StudentTUniformScoring(2, model; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
             S0, k0 = score_residuals!(alloc_scoring_workspace(n, 1, s), zeros(n), s, r, n)
             rbad = [r; Inf]
@@ -198,7 +198,7 @@
         @test_throws ArgumentError StudentTUniformScoring{Predictive}(2, ExtremeValueHalfwidth(); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test_throws ArgumentError FixedHalfwidth(0.0)
         @test_throws ArgumentError ExtremeValueHalfwidth(; pot_threshold_quantile = 1.0)
-        @test_throws ArgumentError GeneralizedParetoOutliers(; fit_per = :pair)
+        @test_throws TypeError GeneralizedParetoOutliers(; fit_per = :pair)
         s = StudentTUniformScoring(2, ExtremeValueHalfwidth(); scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test outlier_halfwidth(s) === nothing              # the scoring contract: no supplied width
         @test_throws ArgumentError with_width(s, OutlierHalfwidth(1.0))

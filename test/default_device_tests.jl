@@ -1,6 +1,7 @@
 # The pool staging defaults to the stack's device (VisualGeometryToolkitCore's `default_device`), never a pinned CPU:
-# the GPU-first rule. The resolver is swapped for a distinguishable CPU backend, so the default is seen to follow it.
-@testitem "default_device: the pool staging follows the stack's device resolver" begin
+# the GPU-first rule. A distinguishable CPU backend is the default for one block (VisualGeometryToolkitCore's
+# `with_default_device`), so the staging is seen to follow it.
+@testitem "default_device: the pool staging follows the stack's default device" begin
     using Test, StaticArrays, Random, LinearAlgebra
     import KernelAbstractions
     import VisualGeometryToolkitCore as VgtkCore
@@ -16,13 +17,5 @@
                                 source_map = I3, destination_map = I3)
     R = rand(rng, Float32, n, M)
     marked = KernelAbstractions.CPU(; static = true)            # a CPU backend the plain default is not
-    old = VgtkCore._DEVICE_RESOLVER[]
-    try
-        VgtkCore._DEVICE_RESOLVER[] = () -> marked
-        VgtkCore.reset_default_device!()
-        @test stage_ig_shared_from_pairs([pair], [R]).backend === marked
-    finally
-        VgtkCore._DEVICE_RESOLVER[] = old
-        VgtkCore.reset_default_device!()
-    end
+    @test VgtkCore.with_default_device(() -> stage_ig_shared_from_pairs([pair], [R]).backend, marked) === marked
 end

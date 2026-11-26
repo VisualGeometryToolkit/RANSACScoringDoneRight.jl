@@ -89,7 +89,7 @@ using RANSACScoringDoneRight
 using VisualGeometryToolkitCore: weight_kind
 
 weight_kind(typeof(MagsacScoring(2)))                       # BinaryWeights()
-weight_kind(typeof(loss_width_scoring("welsch_cost", 1)))   # BinaryWeights()
+weight_kind(typeof(WelschCostScoring(1)))                   # BinaryWeights()
 ```
 
 `test/weight_kind_tests.jl` holds these claims for every scorer the package

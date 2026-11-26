@@ -47,8 +47,8 @@ LocalOptimizationDoneRight's. A caller composes them, for example
 
 ```julia
 solve(EstimationProblem(EssentialProblem(camera1, camera2, cs)),
-      Ransac(; scoring = scoring_from_toml(Dict("type" => "student_t_uniform", "outlier_halfwidth" => a);
-                                           problem = EssentialProblem),   # priors from the stack defaults
+      Ransac(; scoring = StudentTUniformScoring(EssentialProblem, a;
+                                                scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()),
              local_optimization_strategy = …); rng)
 ```
 
@@ -65,7 +65,7 @@ the light pool records (VisualGeometryToolkitCore's `PoolPair`) and their
 residual matrices. One verb, [`grid_evaluate`](@ref), evaluates a grid and
 dispatches on the scoring:
 
-- `grid_evaluate([S,] loss_width_scoring("msac", dg), staged, loss_widths; aggregation)`
+- `grid_evaluate([S,] MsacScoring(dg), staged, loss_widths; aggregation)`
   evaluates the loss-width baselines. These are RANSAC, MSAC, GaU (MLESAC) and
   MAGSAC++, plus the Welsch, smooth-TLS and Geman–McClure losses. Each scores
   through one per-residual scalar, `residual_quality(scoring, d², loss_width)`.

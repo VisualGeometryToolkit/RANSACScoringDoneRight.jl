@@ -29,11 +29,12 @@ end
 
 # The owner's ruling: TailRules' `threshold_quantile` is `pot_threshold_quantile`, the quantile level of the complement's
 # residuals at which the peaks-over-threshold threshold u is set (Coles 2001, §4.3). The old name is refused, naming the
-# new one, as a keyword (TailRules and the two extreme-value models that forward to it) and as a TOML key; the new one is
-# accepted, and the default TailRules is the file's.
-@testitem "config_defaults: pot_threshold_quantile; the retired threshold_quantile refused, as keyword and TOML key" begin
+# new one, as a keyword (TailRules and the two extreme-value models that forward to it); as a TOML key it is a step of
+# the versioned converter. The new one is accepted, and the default TailRules is the file's.
+@testitem "config_defaults: pot_threshold_quantile; the retired keyword refused, the TOML key migrated" begin
     using Test
     using TOML: TOML
+    using VisualGeometryToolkitCore: migrate_config, current_config_version
     using RANSACScoringDoneRight: TailRules, ExtremeValueHalfwidth, GeneralizedParetoOutliers
     import RANSACScoringDoneRight as RSDR
     @test TailRules(; pot_threshold_quantile = 0.8).pot_threshold_quantile === 0.8
@@ -47,6 +48,17 @@ end
     end
     toml = TOML.parsefile(joinpath(pkgdir(RSDR), "configs", "default.toml"))
     @test haskey(toml["tail_rules"], "pot_threshold_quantile") && !haskey(toml["tail_rules"], "threshold_quantile")
-    @test_throws r"pot_threshold_quantile" RSDR._check_retired_keys(Dict("tail_rules" => Dict("threshold_quantile" => 0.9)))
-    @test RSDR._check_retired_keys(toml) === toml
+    # the TOML key is a converter step: a version-1 file (no `config_version`) that spells it is migrated, a current
+    # one refused naming the new key; the shipped file is version 2 and reads to itself
+    V = RSDR.RSDR_CONFIG_VERSIONS
+    @test current_config_version(V) == 2 && toml["config_version"] == 2
+    @test migrate_config(toml, V) == toml
+    v1 = Dict("tail_rules" => Dict("threshold_quantile" => 0.8, "min_excess" => 5, "finite_shape_limit" => -1.0e-3),
+              "scale_marginal" => Dict("log_scale_span" => 7.0))
+    m = migrate_config(v1, V)
+    @test m["tail_rules"]["pot_threshold_quantile"] === 0.8 && !haskey(m["tail_rules"], "threshold_quantile")
+    @test m["config_version"] == 2 && m["scale_marginal"] == v1["scale_marginal"]
+    @test_throws r"pot_threshold_quantile" migrate_config(Dict("config_version" => 2,
+        "tail_rules" => Dict("threshold_quantile" => 0.8)), V)
+    @test_throws r"not a table" migrate_config(Dict("no_such_table" => Dict()), V)
 end

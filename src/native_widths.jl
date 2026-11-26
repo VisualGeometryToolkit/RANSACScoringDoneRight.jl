@@ -29,8 +29,7 @@ VisualGeometryToolkitCore's `SCORING_TAGS` (`"ransac"`, `"msac"`, `"student_t_un
 VisualGeometryToolkitCore's `StudentTUniformScoring`) merged with this
 package's — `"mlesac"`, `"magsac"`, `"welsch_cost"`, `"smooth_tls"`, `"geman"`
 (the loss-width families) and `"sim_fit_pp"` ([`SimFitPP`](@extref VisualGeometryToolkitEstimation.SimFitPP), VisualGeometryToolkitEstimation's SIMFIT++). The retired tags `"gau"`, `"welsch"` and
-`"simfitpp"` name their successors. [`loss_width_scoring`](@ref) and every config
-loader read it; `tag_of(ALL_SCORING_TAGS, x)` is the writer side. It holds Core's
+`"simfitpp"` name their successors. Every config loader reads it; `tag_of(ALL_SCORING_TAGS, x)` is the writer side. It holds Core's
 `SCORING_TAGS` and is named apart from it: Core owns that name.
 """
 const ALL_SCORING_TAGS = merge(VgtkCore.SCORING_TAGS, TagRegistry(:scoring, "Scoring",

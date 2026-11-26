@@ -12,9 +12,11 @@
     using VisualGeometryToolkitCore: weight_kind, BinaryWeights, PosteriorWeights, AbstractThresholdScoring,
         StudentTUniformScoring, JeffreysPrior, FlatLabelPrior, outlier_halfwidth
 
-    # every loss-width family, width-free and at a loss width, through its tag and its type
-    for tag in ("ransac", "msac", "mlesac", "magsac", "welsch_cost", "smooth_tls", "geman"), dg in (1, 2)
-        s = loss_width_scoring(tag, dg)
+    # every loss-width family, width-free and at a loss width, through its type
+    using VisualGeometryToolkitCore: RansacScoring, MsacScoring
+    for F in (RansacScoring, MsacScoring, MlesacScoring, MagsacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring),
+        dg in (1, 2)
+        s = F(dg)
         @test s isa AbstractThresholdScoring
         @test @inferred(weight_kind(typeof(s))) === BinaryWeights()
     end

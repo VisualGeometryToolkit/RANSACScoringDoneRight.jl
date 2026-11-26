@@ -76,28 +76,43 @@ struct ExtremeValueHalfwidth <: AbstractOutlierModel
 end
 ExtremeValueHalfwidth(; kw...) = ExtremeValueHalfwidth(TailRules(; kw...))
 
+# Where a `GeneralizedParetoOutliers` fits its tail (its `fit_per`): a type, never a Symbol.
+abstract type AbstractTailFitScope end
+
 """
-    GeneralizedParetoOutliers(; fit_per = :prefix, tail rules...)
+    PerPartition()
+
+[`GeneralizedParetoOutliers`](@ref)' tail fit to each partition's complement, refitted for every partition (exact,
+`Θ(N²)` per hypothesis); the default.
+"""
+struct PerPartition <: AbstractTailFitScope end
+
+"""
+    PerHypothesis()
+
+[`GeneralizedParetoOutliers`](@ref)' tail fit once per hypothesis, to the upper tail of all its residuals (`Θ(N)`,
+without the prefix-optimality guarantee).
+"""
+struct PerHypothesis <: AbstractTailFitScope end
+
+"""
+    GeneralizedParetoOutliers(; fit_per = PerPartition(), tail rules...)
 
 An outlier model whose density is the fitted generalized Pareto law.
 
 The fitted generalized Pareto law itself as the outlier density: the law of
 the [`TailRules`](@ref) fit, carried down to zero by threshold stability, with
 scale `|ξ|·a` at zero and endpoint `a` — the uniform density at `ξ = -1`, and
-the uniform one where there is no finite-endpoint fit. `fit_per = :prefix`
+the uniform one where there is no finite-endpoint fit. `fit_per = PerPartition()`
 refits the tail for every partition (exact, `Θ(N²)` per hypothesis);
-`:hypothesis` fits it once to the upper tail of all residuals (`Θ(N)`,
+`PerHypothesis()` fits it once to the upper tail of all residuals (`Θ(N)`,
 without the prefix-optimality guarantee).
 """
-struct GeneralizedParetoOutliers{F} <: AbstractOutlierModel
+struct GeneralizedParetoOutliers{F <: AbstractTailFitScope} <: AbstractOutlierModel
     rules::TailRules
-    function GeneralizedParetoOutliers{F}(rules::TailRules) where {F}
-        F in (:prefix, :hypothesis) ||
-            throw(ArgumentError("fit_per must be :prefix or :hypothesis, got $(repr(F))"))
-        return new{F}(rules)
-    end
 end
-GeneralizedParetoOutliers(; fit_per::Symbol = :prefix, kw...) = GeneralizedParetoOutliers{fit_per}(TailRules(; kw...))
+GeneralizedParetoOutliers(; fit_per::AbstractTailFitScope = PerPartition(), kw...) =
+    GeneralizedParetoOutliers{typeof(fit_per)}(TailRules(; kw...))
 
 """
     OutlierTerm(cost)
@@ -198,7 +213,7 @@ function _tail_fit(rules, z::AbstractVector{Float64})
 end
 
 """
-    gpd_support(fit, z, lo, hi) -> endpoint
+    _gpd_support(fit, z, lo, hi) -> endpoint
 
 The support endpoint of the fitted generalized Pareto density.
 
@@ -208,7 +223,7 @@ endpoint, so the largest value cannot sit on it), else the largest value plus
 the mean spacing of `z[lo:hi]` (positive unless every value ties) —
 equivariant under a change of units.
 """
-@inline function gpd_support(fit, z, lo::Int, hi::Int)
+@inline function _gpd_support(fit, z, lo::Int, hi::Int)
     fit.fitted_endpoint > z[hi] && return fit.fitted_endpoint
     spacing = hi > lo ? (z[hi] - z[lo]) / (hi - lo) : 0.0
     return spacing > 0 ? z[hi] + spacing : 2 * z[hi]
@@ -217,7 +232,7 @@ end
 _is_pareto(shape) = isfinite(shape) && shape < 0
 
 """
-    gpd_outlier_cost(z, endpoint, shape) -> Float64
+    _gpd_outlier_cost(z, endpoint, shape) -> Float64
 
 The outlier cost of one residual under the generalized Pareto density.
 
@@ -227,7 +242,7 @@ generalized Pareto outlier density of endpoint `endpoint` and shape `shape`
 sign): `log 2 + log σ + (1 + 1/shape)·log(1 - z/endpoint)`; the uniform
 `log(2·endpoint)` where `shape` is not a finite-endpoint fit.
 """
-@inline function gpd_outlier_cost(z::Float64, endpoint::Float64, shape::Float64)
+@inline function _gpd_outlier_cost(z::Float64, endpoint::Float64, shape::Float64)
     _is_pareto(shape) || return log(2endpoint)
     z < endpoint || return Inf
     return log(-2shape * endpoint) + (1 + 1 / shape) * log1p(-z / endpoint)

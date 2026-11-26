@@ -46,8 +46,8 @@ TailRules
 ExtremeValueHalfwidth
 GeneralizedParetoOutliers
 OutlierTerm
-gpd_support
-gpd_outlier_cost
+PerPartition
+PerHypothesis
 ```
 
 ## Loss-width scorings
@@ -68,6 +68,5 @@ MagsacScoring
 WelschCostScoring
 SmoothTLSScoring
 GemanScoring
-loss_width_scoring
 ALL_SCORING_TAGS
 ```

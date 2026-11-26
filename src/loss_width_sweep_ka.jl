@@ -17,7 +17,7 @@
 #
 # Usage:
 #   staged = stage_ig_shared_from_pairs(pairs, residuals; backend)
-#   errs = grid_evaluate(loss_width_scoring("magsac", codimension(PT)),
+#   errs = grid_evaluate(MagsacScoring(codimension(PT)),
 #                        staged, loss_widths)                       # Float32, LogBinned(200)
 
 # (`_ka_softplus` lived here, byte-identical to `_softplus` in
@@ -135,8 +135,8 @@ end
 # -----------------------------------------------------------------------------
 # Threshold-scoring families (D): singleton types replacing the `method::Symbol`
 # + if/elseif kernel selection. `grid_evaluate` dispatches on these via
-# `residual_quality` and `support_sq_loss_width` below; a config's tag converts at the boundary with
-# `loss_width_scoring("ransac", dg)` (the tags are `ALL_SCORING_TAGS`).
+# `residual_quality` and `support_sq_loss_width` below; each is built by its constructor at the problem's
+# codimension (`RansacScoring(dg)`), and a config's tag converts at the boundary through `ALL_SCORING_TAGS`.
 # -----------------------------------------------------------------------------
 # The loss-width-swept scorings, split by whether a mixture sits underneath (the two
 # branches and the traits are declared in scoring.jl).
@@ -330,34 +330,6 @@ loss_shape(::SmoothTLSScoring)  = VgtkCore.SmoothTLSShape()
 #  has no accessor here: nothing consumes one, and accessors are added only where
 #  something does. The arithmetic is VGC's: `loss_width(deploy(shape, ŝ²; codim))`.)
 
-"""
-    loss_width_scoring(tag) -> LossWidthScoring
-    loss_width_scoring(tag, dg::Integer) -> LossWidthScoring
-    loss_width_scoring(tag, problem) -> LossWidthScoring
-    loss_width_scoring(tag, ::Type{<:AbstractConstraintProblem}) -> LossWidthScoring
-
-The width-free [`LossWidthScoring`](@ref) family a tag of [`ALL_SCORING_TAGS`](@ref)
-names, at a codimension: `"ransac"`, `"msac"`, `"mlesac"`, `"magsac"`,
-`"welsch_cost"`, `"smooth_tls"` or `"geman"`. A retired tag (`"gau"`) is an
-`ArgumentError` naming its successor, and a tag of a family that takes no loss
-width (`"student_t_uniform"`, `"sim_fit_pp"`) is refused. The codimension is
-`dg`, or `codimension(problem)`; bare, it is 1.
-
-Supply the codimension whenever the problem has one other than 1: the tag
-vocabulary must not be a back door that silently re-defaults `DG`.
-"""
-function loss_width_scoring(tag::AbstractString, dg::Integer = 1)
-    S = ALL_SCORING_TAGS[tag]
-    (S isa Type && S <: LossWidthScoring) || throw(ArgumentError(
-        "loss_width_scoring: tag \"$tag\" names $S, which takes no loss width; the loss-width tags are " *
-            join(("\"$t\"" for (t, F) in ALL_SCORING_TAGS if F isa Type && F <: LossWidthScoring), ", ")))
-    return S(dg)
-end
-loss_width_scoring(tag::AbstractString, problem::AbstractConstraintProblem) =
-    loss_width_scoring(tag, codimension(problem))
-loss_width_scoring(tag::AbstractString, ::Type{P}) where {P <: AbstractConstraintProblem} =
-    loss_width_scoring(tag, codimension(P))
-
 # =============================================================================
 # The per-residual QUALITY — one scalar per family, of the SQUARED residual d²
 # and the loss width. Core's exact kernel calls it at every residual,
@@ -481,8 +453,8 @@ The exact selection (every residual) is VisualGeometryToolkitCore's
 `select_on_grid!` on the `:pool` staging. `S` is the bin-index precision
 (Float32, the default, is the production setting); scores accumulate in Float64.
 
-`scoring` is a `LossWidthScoring` member — build it with [`loss_width_scoring`](@ref),
-supplying the problem's codimension.
+`scoring` is a `LossWidthScoring` member, built by its constructor at the problem's codimension
+(`MagsacScoring(codimension(problem))`).
 """
 function grid_evaluate(::Type{S}, scoring::LossWidthScoring, staged::IGSharedData,
                        loss_widths::AbstractVector{<:Real};

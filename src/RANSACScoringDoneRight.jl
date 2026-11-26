@@ -87,7 +87,7 @@ import VisualGeometryToolkitEstimation as VgtkEstimation   # its scorer TOML rea
 # The scoring families' tag registry, merged with this package's (native_widths.jl).
 using VisualGeometryToolkitCore: TagRegistry
 # The stack's defaults mechanism (config_defaults.jl): configs/default.toml, parsed once.
-using VisualGeometryToolkitCore: parse_defaults, toml_default
+using VisualGeometryToolkitCore: parse_defaults, toml_default, ConfigVersions, ConfigMigration
 # The width axes, their native maps and the native-axis conversions are
 # VisualGeometryToolkitCore's; this package states the axis of its grid families.
 using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth
@@ -96,8 +96,7 @@ using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth
 # and the robust-statistics toolkit. RSDR implements the scoring contract for
 # its own scorers and adds its grid algorithms and paper baselines; it
 # re-exports nothing VGC owns.
-using VisualGeometryToolkitCore: AbstractConstraintProblem,
-    IGPrior,
+using VisualGeometryToolkitCore: IGPrior,
     truncated_log_normaliser,
     RansacScoring, MsacScoring, AbstractThresholdScoring, @threshold_scoring_constructors,
     argmax_models_kernel!, sorted_squared_residuals   # the grids' model argmax and staging (Core's)
@@ -123,12 +122,14 @@ import VisualGeometryToolkitCore: loss_shape, codimension, score_bound,
 
 # The pool record's per-pair staging precompute.
 public precompute_pair
+# The configuration converter (config_defaults.jl): a stored configs/default.toml of any version, read at the current one.
+public RSDR_CONFIG_VERSIONS
 
 # The outlier models that estimate the support of VisualGeometryToolkitCore's
 # StudentTUniformScoring (extreme_value.jl; the scorer, its label priors and the
 # supplied half-width `FixedHalfwidth` are Core's).
 export TailRules, ExtremeValueHalfwidth, GeneralizedParetoOutliers, OutlierTerm
-public gpd_support, gpd_outlier_cost
+public PerPartition, PerHypothesis   # where a GeneralizedParetoOutliers fits its tail (its `fit_per`)
 
 # GPU scoring (KernelAbstractions): flat-layout staging + THE grid verb.
 # `grid_evaluate` dispatches on the scoring: the loss-width families
@@ -145,10 +146,8 @@ export grid_evaluate
 export LossWidthScoring
 export MlesacScoring, MagsacScoring
 export WelschCostScoring, SmoothTLSScoring, GemanScoring
-# `loss_width_scoring(tag[, dg])` builds a `LossWidthScoring` member by its tag
-# of `ALL_SCORING_TAGS`, the scoring families' registry (VisualGeometryToolkitCore's merged
-# with this package's).
-export loss_width_scoring
+# `ALL_SCORING_TAGS`: the scoring families' registry (VisualGeometryToolkitCore's merged with this
+# package's), read by the TOML loaders; a scorer is built by its constructor.
 public ALL_SCORING_TAGS
 
 # A loss-width family at its width selects through VisualGeometryToolkitCore's
