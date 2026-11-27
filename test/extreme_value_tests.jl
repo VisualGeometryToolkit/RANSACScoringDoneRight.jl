@@ -34,7 +34,6 @@
         n = length(z)
         T1, T2 = suffix_sums!(zeros(n + 1), zeros(n + 1), z)
         rules = TailRules(; pot_threshold_quantile = 0.9)
-        @test _tail_fit(ExtremeValueHalfwidth(), z) == _tail_fit(rules, z, 1, T1, T2)
         for lo in (1, 2, 50, 200, 330, n - 30, n - 3)
             got = _tail_fit(rules, z, lo, T1, T2)
             want = naive_tail(z[lo:n], 0.9)
@@ -54,7 +53,8 @@
     @testset "the probability-weighted-moment fit recovers Distributions' GeneralizedPareto" begin
         rng = Xoshiro(2)
         for shape in (-1.0, -0.5, -0.25), scale in (1.0, 40.0)
-            ŝ, ω̂ = _gpd_pwm_fit(rand(rng, GeneralizedPareto(0.0, scale, shape), 200_000))
+            y = sort(rand(rng, GeneralizedPareto(0.0, scale, shape), 200_000))
+            ŝ, ω̂ = _gpd_pwm_fit(length(y), sum(y), sum(j * y[j] for j in eachindex(y)))
             @test ŝ ≈ shape atol = 0.02
             @test ω̂ ≈ scale rtol = 0.02
         end
@@ -157,7 +157,8 @@
         rules = TailRules()
         # a shape at or above the finite-shape limit falls back to the uniform support
         heavy = sort(rand(Xoshiro(21), GeneralizedPareto(0.0, 1.0, 0.3), 2000))
-        f = _tail_fit(rules, heavy)
+        nh = length(heavy)
+        f = _tail_fit(rules, heavy, 1, suffix_sums!(zeros(nh + 1), zeros(nh + 1), heavy)...)
         @test isnan(f.shape) && f.fitted_endpoint == -Inf && f.outlier_halfwidth == heavy[end]
         # tied maxima: the support lies beyond them, so every cost is finite
         z = [collect(0.1:0.1:5.0); 9.0; 9.0]

@@ -1,4 +1,4 @@
-# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
+# R22: contract test — the width axes and native maps of this package's scorers (`to_native`, `native_map`, `width_axis`, `grid_evaluate`)
 # The scorer fact a grid reads — the width axis its grid is native on
 # (VisualGeometryToolkitCore's `width_axis(scoring)`, with this package's methods for
 # its grid families) — the scale multiple → native maps every grid of these

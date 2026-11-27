@@ -1,4 +1,4 @@
-# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
+# R22: contract test — the fixtures of the scoring-contract tests (pool pairs and line problems scored through `scoring_workspace`)
 # Shared test fixtures. ReTestItems discovers `@testsetup` modules in
 # `*_testsetups.jl` files; an item takes one with `setup = [Name]`.
 

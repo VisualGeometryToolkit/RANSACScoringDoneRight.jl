@@ -1,4 +1,4 @@
-# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
+# R22: contract test — the sample-point rule of the scoring contract (`score_residuals!`, `scoring_workspace`, `best_pool_model!`)
 # The minimal-sample rule, one for every scorer: a model's minimal-sample points
 # are fit exactly by construction and carry no information. They enter at ZERO
 # residual (`zero_sample!`, whatever was stored for them) and the model's `m`
@@ -79,7 +79,8 @@
                 @test model_score(sc, pair, D, j, loss_width) - m * q0 ≈ ref rtol = 1e-12 atol = 1e-12
                 @test model_score(sc, pair_j, Dj, j, loss_width) ≈ model_score(sc, pair, D, j, loss_width) rtol = 1e-12
             end
-            @test best_pool_model!(scoring_workspace(with_width(sc, LossWidth(loss_width)), num_points(pair_j), codimension(with_width(sc, LossWidth(loss_width)))), with_width(sc, LossWidth(loss_width)), pair_j, Dj) == best_pool_model!(scoring_workspace(with_width(sc, LossWidth(loss_width)), num_points(pair), codimension(with_width(sc, LossWidth(loss_width)))), with_width(sc, LossWidth(loss_width)), pair, D)
+            scorer = with_width(sc, LossWidth(loss_width))
+            @test best_pool_model!(scoring_workspace(scorer, num_points(pair_j), codimension(scorer)), scorer, pair_j, Dj) == best_pool_model!(scoring_workspace(scorer, num_points(pair), codimension(scorer)), scorer, pair, D)
         end
         sm = StudentTUniformScoring(m, halfwidth; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
         @test best_pool_model!(scoring_workspace(sm, num_points(pair_j), codimension(sm)), sm, pair_j, Dj) == best_pool_model!(scoring_workspace(sm, num_points(pair), codimension(sm)), sm, pair, D)

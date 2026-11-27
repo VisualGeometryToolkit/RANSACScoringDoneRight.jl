@@ -88,6 +88,8 @@ import VisualGeometryToolkitEstimation as VgtkEstimation   # its scorer TOML rea
 using VisualGeometryToolkitCore: TagRegistry
 # The stack's defaults mechanism (config_defaults.jl): configs/default.toml, parsed once.
 using VisualGeometryToolkitCore: parse_defaults, toml_default, ConfigVersions, ConfigMigration
+# The stack's one refusal of a retired keyword (TailRules' `threshold_quantile`).
+using VisualGeometryToolkitCore: RetiredKeyword, refuse_retired_keyword
 # The width axes, their native maps and the native-axis conversions are
 # VisualGeometryToolkitCore's; this package states the axis of its grid families.
 using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth

@@ -1,4 +1,4 @@
-# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
+# R22: contract test — pool selection (`select_on_grid!`, `grid_evaluate`, SIMFIT++ through `solve`)
 # The grid families on VisualGeometryToolkitCore's pool-selection contract
 # (src/selection.jl): every family stages through the one `:rsdr` staging, and
 # `select_on_grid!` is THE grid verb's selection (`grid_evaluate(…;

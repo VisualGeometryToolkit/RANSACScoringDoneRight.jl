@@ -62,13 +62,6 @@ function ScaleMarginal{K}(α₀::Real, β₀::Real; outlier_halfwidth::Real,
     return ScaleMarginal{K}(IGPrior(Float64(α₀), Float64(β₀)), Float64(outlier_halfwidth), t0_centre)
 end
 
-# The prior-centre form of every family: `2·alpha0` pseudo-observations at
-# pseudo-squared-width `beta0/alpha0 = prior_loss_width²`, its scale domain
-# centred at log(prior_loss_width²).
-_centred_marginal(::Type{K}, alpha0::Real, prior_loss_width::Real, outlier_halfwidth::Real) where {K} =
-    ScaleMarginal{K}(alpha0, alpha0 * prior_loss_width^2; outlier_halfwidth,
-                     t0 = log(prior_loss_width^2))
-
 """
     ScaleMarginal{K}(; alpha0=1.0, prior_loss_width, outlier_halfwidth)
 
@@ -86,8 +79,12 @@ centre, `ScaleMarginal{K}(alpha0, beta0; outlier_halfwidth)`.
 The evidence is the trapezoid scale quadrature of
 [`loss_spec`](@ref)`(::ScaleMarginal)`.
 """
+# The prior-centre form of every family: `2·alpha0` pseudo-observations at
+# pseudo-squared-width `beta0/alpha0 = prior_loss_width²`, its scale domain
+# centred at log(prior_loss_width²).
 ScaleMarginal{K}(; alpha0::Real = 1.0, prior_loss_width::Real, outlier_halfwidth::Real) where {K<:AbstractLossShape} =
-    _centred_marginal(K, alpha0, prior_loss_width, outlier_halfwidth)
+    ScaleMarginal{K}(alpha0, alpha0 * prior_loss_width^2; outlier_halfwidth,
+                     t0 = log(prior_loss_width^2))
 
 # (`welsch_sq_scale_mle` — the per-pair Welsch squared-scale MLE, the argmax of
 #  the Hermite-interpolated integrand — is deleted with its `_hermite_peak`: no

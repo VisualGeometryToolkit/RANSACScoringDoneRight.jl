@@ -50,8 +50,8 @@ struct TailRules
     function TailRules(; pot_threshold_quantile::Real = _config_default("tail_rules", "pot_threshold_quantile"),
                        min_excess::Integer = _config_default("tail_rules", "min_excess"),
                        finite_shape_limit::Real = _config_default("tail_rules", "finite_shape_limit"),
-                       threshold_quantile = nothing)   # retired: refused, naming its successor
-        threshold_quantile === nothing || throw(ArgumentError(_RETIRED_TAIL_KEY))
+                       threshold_quantile = RetiredKeyword())   # retired: refused, naming its successor
+        refuse_retired_keyword(threshold_quantile, :threshold_quantile, :pot_threshold_quantile)
         0 < pot_threshold_quantile < 1 ||
             throw(ArgumentError("pot_threshold_quantile (the quantile level of the complement's residuals at which the POT " *
                                 "threshold u is set) must lie in (0, 1), got $pot_threshold_quantile"))
@@ -140,19 +140,12 @@ end
 # plotting positions `(j - 0.35)/n` (Hosking & Wallis 1987; Hosking's `k` is
 # `-shape`). Taking the sums rather than the excesses lets the sweep fit every
 # prefix's tail in O(1) from prefix sums. An internal step of the tail fit
-# (RSDR is its one caller).
+# (the sweep's `_tail_fit` is its one caller).
 function _gpd_pwm_fit(n::Integer, sum_excess::Float64, sum_rank_excess::Float64)
     a0 = sum_excess / n
     a1 = a0 - (sum_rank_excess - 0.35 * sum_excess) / n^2
     d = a0 - 2a1
     return (-(a0 / d - 2), 2a0 * a1 / d)
-end
-
-# `_gpd_pwm_fit(excess) -> (shape, scale)`: the same fit from the excesses
-# themselves (any order).
-function _gpd_pwm_fit(excess::AbstractVector{<:Real})
-    y = sort(Float64.(excess))
-    return _gpd_pwm_fit(length(y), sum(y), sum(j * y[j] for j in eachindex(y)))
 end
 
 # The no-fit result: the uniform support of the largest value.
@@ -193,23 +186,6 @@ end
     (shape < rules.finite_shape_limit && scale > 0) || return _no_tail_fit(zmax)
     endpoint = u - scale / shape
     return (; outlier_halfwidth = max(endpoint, zmax), fitted_endpoint = endpoint, shape)
-end
-
-_rules(m::Union{ExtremeValueHalfwidth, GeneralizedParetoOutliers}) = m.rules
-_rules(r::TailRules) = r
-
-# `_tail_fit(rules, z) -> (; outlier_halfwidth, fitted_endpoint, shape)`: the
-# peaks-over-threshold fit of `rules` (a `TailRules` or an extreme-value
-# outlier model) to the whole of the sorted values `z`: `outlier_halfwidth` is
-# the uniform half-width (the fitted endpoint, raised to the largest value);
-# `fitted_endpoint` is `-Inf` and `shape` `NaN` wherever the rules fall back
-# (too few excesses, or no finite-endpoint fit). The sweep fits every prefix's
-# complement the same way (the five-argument method), in O(log n) each, from
-# suffix sums it builds once. An internal step (RSDR is its one caller).
-function _tail_fit(rules, z::AbstractVector{Float64})
-    n = length(z)
-    T1, T2 = suffix_sums!(Vector{Float64}(undef, n + 1), Vector{Float64}(undef, n + 1), z)
-    return _tail_fit(_rules(rules), z, 1, T1, T2)
 end
 
 """

@@ -1,4 +1,4 @@
-# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
+# R22: contract test — MAGSAC++ under the scoring contract (`scoring_workspace`, `best_pool_model!`, Core's exact selection)
 # The exact per-pair MAGSAC++ selection, `best_pool_model!(ws, MagsacScoring(1; threshold
 # = loss_width), pair, D)` — the sum of `residual_quality` — and the device selections (Core's exact, this package's LogBinned) of
 # that quality, all pinned against MAGSAC++'s loss ρ written out below from the
@@ -61,7 +61,8 @@
         pair = identity_pool(D)                           # no minimal-sample points
         picks = Int[]
         for loss_width in 10.0 .^ range(-1.0, 0.7; length = 15)
-            j = best_pool_model!(scoring_workspace(with_width(MagsacScoring(), LossWidth(loss_width)), num_points(pair), codimension(with_width(MagsacScoring(), LossWidth(loss_width)))), with_width(MagsacScoring(), LossWidth(loss_width)), pair, D)
+            scorer = with_width(MagsacScoring(), LossWidth(loss_width))
+            j = best_pool_model!(scoring_workspace(scorer, num_points(pair), codimension(scorer)), scorer, pair, D)
             @test j == _magsac_reference(D, loss_width)
             push!(picks, j)
         end

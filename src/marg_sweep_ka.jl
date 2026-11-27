@@ -133,11 +133,12 @@ end
 # domain, not the prior),
 # each grid point's window offset, and its prior base and trapezoid weights as
 # column t of (NG × T) tables. Grid point t is `m`'s family and prior shape
-# `alpha0`, centred at `prior_loss_width_grid[t]` (`_centred_marginal`, the
-# keyword constructors' one form), with `m`'s Z̃ domain.
+# `alpha0`, centred at `prior_loss_width_grid[t]` (the prior-centre keyword
+# constructor `ScaleMarginal{K}(; alpha0, prior_loss_width, outlier_halfwidth)`),
+# with `m`'s Z̃ domain.
 function _marg_quad_tables(m::ScaleMarginal{K}, prior_loss_width_grid, NG::Int) where {K}
     T = length(prior_loss_width_grid)
-    margs = [_centred_marginal(K, m.prior.alpha0, Float64(w), m.outlier_halfwidth)
+    margs = [ScaleMarginal{K}(; alpha0 = m.prior.alpha0, prior_loss_width = Float64(w), m.outlier_halfwidth)
              for w in prior_loss_width_grid]
     specs = [loss_spec(m; NG) for m in margs]
     i0 = [_marg_lattice_start(m.t0, NG) for m in margs]

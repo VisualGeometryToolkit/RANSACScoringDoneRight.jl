@@ -24,7 +24,8 @@ grid families, `grid_evaluate` and the staging functions are unchanged. No expec
 - **`tail_fit` and `gpd_pwm_fit` are internal steps** (`_tail_fit`, `_gpd_pwm_fit`; no longer `public`). They are the
   generalized Pareto tail fit of the extreme-value outlier models, and this package is their one caller, so under the
   stack's naming rules (no public `fit_`-style verb outside `solve`) they become `_`-prefixed steps rather than
-  algorithm types. Same arithmetic.
+  algorithm types, and only the forms the sweep calls remain (the tail fit from suffix sums, the moment fit from two
+  sums). Same arithmetic.
 - **`gpd_support` and `gpd_outlier_cost` are internal steps** (`_gpd_support`, `_gpd_outlier_cost`; no longer
   `public`): they read the tail fit's internal record, whose one consumer is this package's outlier-model sweep.
   Same arithmetic.
@@ -38,7 +39,8 @@ grid families, `grid_evaluate` and the staging functions are unchanged. No expec
   through the new converter `RSDR_CONFIG_VERSIONS` (`public`). Version 1 is every earlier file; its one step renames
   `[tail_rules] threshold_quantile` to `pot_threshold_quantile`, so a stored version-1 file that spells the old key is
   migrated, not refused (it was refused before). A current file that spells it is refused, naming the new key. The
-  keyword `threshold_quantile` stays refused, naming `pot_threshold_quantile` (the owner's ruling). Same defaults.
+  keyword `threshold_quantile` stays refused, naming `pot_threshold_quantile` (the owner's ruling), through Core's
+  `RetiredKeyword()`/`refuse_retired_keyword`, the stack's one refusal of a retired keyword. Same defaults.
 - **`WelschMarginal` and `SmoothTLSMarginal` are deleted; the spec is the spelled `ScaleMarginal{K}`** (now exported),
   as the stack's naming rule R20 asks (no `const` names one instantiation of a type): `WelschMarginal(; alpha0,
   prior_loss_width, outlier_halfwidth)` → `ScaleMarginal{WelschShape}(; …)`, `SmoothTLSMarginal(; …)` →

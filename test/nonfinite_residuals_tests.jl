@@ -1,4 +1,4 @@
-# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
+# R22: contract test — the scoring contract on non-finite residuals (`scoring_workspace`, `best_pool_model!`, `grid_evaluate`, `select_on_grid!`)
 # A NaN or ±Inf residual is an OUTLIER on every scoring path.
 #
 # The exact host scorers (the per-pair `score_magsac`/`score_gau`/`score_msac`,

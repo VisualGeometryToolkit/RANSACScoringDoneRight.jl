@@ -1,4 +1,4 @@
-# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
+# R22: contract test — the scoring workspace's accessors (`scoring_workspace`, `resize!`, `consensus_order`, `inlier_count`)
 # Accessors for the structs downstream code used to read by field name, and
 # `resize!(::ScoringWorkspace, n)`, which replaced VisualGeometryToolkitEstimation's
 # `_set_n!` reaching into seven workspace fields.

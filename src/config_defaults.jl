@@ -22,17 +22,17 @@ which the peaks-over-threshold threshold u is set. A current file that spells th
 one. Read a stored file at the current version with
 `VisualGeometryToolkitCore.migrate_config(TOML.parsefile(path), RSDR_CONFIG_VERSIONS)`.
 """
+# The package's tables, the same at every version: the 1 → 2 step renames a key, not a table.
+const _RSDR_CONFIG_TABLES = ["tail_rules", "scale_marginal", "inlier_potentials"]
 const RSDR_CONFIG_VERSIONS = ConfigVersions("RANSACScoringDoneRight",
-    ConfigMigration(; tables = ["tail_rules", "scale_marginal", "inlier_potentials"],
+    ConfigMigration(; tables = _RSDR_CONFIG_TABLES,
         renames = ["tail_rules.threshold_quantile" => "tail_rules.pot_threshold_quantile"]);
-    tables = ["tail_rules", "scale_marginal", "inlier_potentials"])
+    tables = _RSDR_CONFIG_TABLES)
 
 const _DEFAULTS_OF_RECORD = parse_defaults(DEFAULTS_PATH; versions = RSDR_CONFIG_VERSIONS)
 
-# The retired keyword (owner's ruling): TailRules' `threshold_quantile` is refused, naming its successor. Its TOML key
-# is not refused but migrated, by the converter above.
-const _RETIRED_TAIL_KEY = "`threshold_quantile` is retired: it is `pot_threshold_quantile` (the quantile level of the " *
-                          "complement's residuals at which the POT threshold u is set; Coles 2001, §4.3)"
+# The retired keyword (owner's ruling): TailRules' `threshold_quantile` is refused by Core's
+# `refuse_retired_keyword`, naming its successor. Its TOML key is not refused but migrated, by the converter above.
 
 """
     _config_default(table, key)
