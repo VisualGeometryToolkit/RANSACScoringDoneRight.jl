@@ -12,6 +12,9 @@
 "The defaults of record (configs/default.toml)."
 const DEFAULTS_PATH = normpath(joinpath(@__DIR__, "..", "configs", "default.toml"))
 
+# The package's tables, the same at every version: the 1 → 2 step renames a key, not a table.
+const _RSDR_CONFIG_TABLES = ["tail_rules", "scale_marginal", "inlier_potentials"]
+
 """
     RSDR_CONFIG_VERSIONS
 
@@ -22,8 +25,6 @@ which the peaks-over-threshold threshold u is set. A current file that spells th
 one. Read a stored file at the current version with
 `VisualGeometryToolkitCore.migrate_config(TOML.parsefile(path), RSDR_CONFIG_VERSIONS)`.
 """
-# The package's tables, the same at every version: the 1 → 2 step renames a key, not a table.
-const _RSDR_CONFIG_TABLES = ["tail_rules", "scale_marginal", "inlier_potentials"]
 const RSDR_CONFIG_VERSIONS = ConfigVersions("RANSACScoringDoneRight",
     ConfigMigration(; tables = _RSDR_CONFIG_TABLES,
         renames = ["tail_rules.threshold_quantile" => "tail_rules.pot_threshold_quantile"]);

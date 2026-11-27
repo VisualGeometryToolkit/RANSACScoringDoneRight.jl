@@ -78,10 +78,8 @@ centre, `ScaleMarginal{K}(alpha0, beta0; outlier_halfwidth)`.
 
 The evidence is the trapezoid scale quadrature of
 [`loss_spec`](@ref)`(::ScaleMarginal)`.
+Its scale domain is centred at log(prior_loss_width²).
 """
-# The prior-centre form of every family: `2·alpha0` pseudo-observations at
-# pseudo-squared-width `beta0/alpha0 = prior_loss_width²`, its scale domain
-# centred at log(prior_loss_width²).
 ScaleMarginal{K}(; alpha0::Real = 1.0, prior_loss_width::Real, outlier_halfwidth::Real) where {K<:AbstractLossShape} =
     ScaleMarginal{K}(alpha0, alpha0 * prior_loss_width^2; outlier_halfwidth,
                      t0 = log(prior_loss_width^2))

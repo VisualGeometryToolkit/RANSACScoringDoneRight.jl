@@ -47,7 +47,7 @@ grid families, `grid_evaluate` and the staging functions are unchanged. No expec
   `ScaleMarginal{SmoothTLSShape}(; …)` (the shapes are VisualGeometryToolkitCore's). One keyword constructor for every
   shape; the same specs.
 - The unused accessor `fit_per(::GeneralizedParetoOutliers)` is deleted (dead code, and a `fit_` name outside
-  `solve`); the constructor keyword `fit_per` is unchanged.
+  `solve`); the constructor keyword keeps its name `fit_per` (its values are the types above).
 
 ### Changed
 
