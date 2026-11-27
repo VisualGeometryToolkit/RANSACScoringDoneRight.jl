@@ -105,8 +105,7 @@ using VisualGeometryToolkitCore: IGPrior,
 # The Student-t + uniform marginal scorer and its partition sweep (Core's): this package's grids,
 # outlier models and paper baselines use and extend them.
 using VisualGeometryToolkitCore: StudentTUniformScoring, AbstractLabelPrior, FlatLabelPrior,
-    AbstractOutlierModel, FixedHalfwidth, ig_sweep_kernel!, log_gamma_table,
-    suffix_sums!
+    AbstractOutlierModel, FixedHalfwidth, ig_sweep_kernel!, log_gamma_table
 import VisualGeometryToolkitCore: loss_shape, codimension, score_bound,
     decision_boundary, has_decision_boundary,
     scale_prior, outlier_halfwidth, width_axis, minimal_sample_size,
