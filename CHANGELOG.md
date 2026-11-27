@@ -6,6 +6,8 @@ The breaking minor on VisualGeometryToolkitCore 0.14 and VisualGeometryToolkitEs
 `"0.13"`), the stack's SciML-style estimation interface. The scorers are values, as before, and score the same; the
 grid families, `grid_evaluate` and the staging functions are unchanged. No expected value of the suite changes.
 
+- The naming gate leaves out the pinned paper project `neurips2026/`, which keeps its release's vocabulary until its re-run (LocalOptimizationDoneRight's `accv2026` rule).
+
 ### Breaking
 
 - **On VisualGeometryToolkitCore 0.14's breaking set** (C15, R22, the Phase 1C American identifiers): the per-pair

@@ -5,9 +5,13 @@
 
 @testitem "quality_naming" begin
     using Test
-    using VisualGeometryToolkitCore: test_naming
+    import VisualGeometryToolkitCore as VgtkCore
     using RANSACScoringDoneRight
-    test_naming(RANSACScoringDoneRight)
+    # The paper project neurips2026/ is out of this gate: it reproduces with its own pinned environment and keeps that
+    # release's vocabulary; its migration is the planned paper re-run (LocalOptimizationDoneRight's accv2026 rule).
+    found = filter(v -> !startswith(v.file, "neurips2026/"), VgtkCore.check_naming(RANSACScoringDoneRight))
+    isempty(found) || foreach(v -> println(stderr, v), found)
+    @test isempty(found)
 end
 
 @testitem "quality: no duplication" begin
