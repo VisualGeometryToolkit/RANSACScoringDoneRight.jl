@@ -72,7 +72,7 @@ correspondences and models in `NormalizedImageFrame`, the maps its `source_map`/
 `destination_map`, the two sides of `pool_normalization(pair)` (VGC also builds the
 pool frame of two image sizes there). The residual matrix is NOT in the record:
 every pool scorer here takes the record AND its `num_points × num_models`
-Float32 matrix `R` in the same unit — VGC's `best_pool_model(scoring, pair, R)`
+Float32 matrix `R` in the same unit — VGC's `best_pool_model!(ws, scoring, pair, R)`
 (a scorer at its width), `precompute_pair(pair, R)`,
 `stage_ig_shared_from_pairs(pairs, residuals)` — and never opens a file. Every
 scorer width on pool data (the outlier half-width, the loss width, every
