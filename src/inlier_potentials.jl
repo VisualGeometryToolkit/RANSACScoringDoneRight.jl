@@ -71,4 +71,4 @@ const _DEPTH_SMOOTH_TLS    = _config_default("inlier_potentials.depth", "smooth_
 #  VGC's `weight`.)
 
 # log Z̃(sq_loss_width; Δ) — the loss's normaliser on [−r_max, r_max] — is
-# VisualGeometryToolkitCore's `truncated_log_normaliser`.
+# VisualGeometryToolkitCore's `truncated_log_normalizer`.

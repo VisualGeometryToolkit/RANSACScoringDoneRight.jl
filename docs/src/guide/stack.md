@@ -33,7 +33,7 @@ The pool-selection contract lives in VisualGeometryToolkitCore's
 implements `select_on_grid!` over its device kernels. The families are the
 marginal, the width-free loss-width families, [`LossSpec`](@ref),
 `ScaleMarginal` and VisualGeometryToolkitEstimation's `SimFitPP`. VisualGeometryToolkitCore's
-`best_pool_model(scoring, pair, R)` serves any scorer at its width; this
+`best_pool_model!(ws, scoring, pair, R)` serves any scorer at its width; this
 package's loss-width families take it at a loss width,
 `with_width(F(dg), LossWidth(w))`, through their `score!`.
 
@@ -122,7 +122,7 @@ frame; SIMFIT++'s grid uses it for its initial guess only.
 This package holds the vocabulary and the per-pair machinery. That is the
 scoring families' tag registry ([`ALL_SCORING_TAGS`](@ref)), the `score!` of its
 loss-width families at a loss width (which VisualGeometryToolkitCore's
-`best_pool_model` and VisualGeometryToolkitEval's sample-budget engine select
+`best_pool_model!` and VisualGeometryToolkitEval's sample-budget engine select
 with), [`precompute_pair`](@ref) and the KernelAbstractions grids above. A
 scoring at its width is its own pool-selection handle.
 
@@ -137,7 +137,7 @@ The layer is problem-agnostic. The concrete problem types
 (`HomographyProblem`, `FundMatProblem`, `EssentialProblem`) stay in the
 consumer. A scorer that needs one takes it as a leading `problem_type`
 argument, as in
-`best_pool_model(StudentTUniformScoring(problem_type, outlier_halfwidth; scale_prior, label_prior), pair, R)`.
+`best_pool_model!(ws, StudentTUniformScoring(problem_type, outlier_halfwidth; scale_prior, label_prior), pair, R)`.
 
 ## Names of quantities
 

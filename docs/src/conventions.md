@@ -18,7 +18,7 @@ by HALF the image diagonal, so the image corners lie at unit radius. The
 record's residual matrix is not part of it: a pool's residuals are a separate
 `num_points × num_models` Float32 matrix in the same unit, and every pool
 scorer here takes the record AND its matrix — VisualGeometryToolkitCore's
-`best_pool_model(scoring, pair, R)`, `precompute_pair(pair, R)`,
+`best_pool_model!(ws, scoring, pair, R)`, `precompute_pair(pair, R)`,
 `stage_ig_shared_from_pairs(pairs, residuals)`. No scorer opens a file.
 
 The exception exists because the pool is shared STORAGE, not an estimator's

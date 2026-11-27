@@ -12,7 +12,7 @@ No function here opens a file; pool IO belongs to VisualGeometryToolkitEval.
 ## Per-pair model selection
 
 One pair's selection is VisualGeometryToolkitCore's
-[`best_pool_model`](@extref VisualGeometryToolkitCore.best_pool_model)`(scoring, pair, R)`
+`best_pool_model!(ws, scoring, pair, R)`
 for a scorer at its width: the Student-t marginal, or a loss-width family at a
 loss width, `with_width(F(dg), LossWidth(w))`. The loss-width families are
 VisualGeometryToolkitCore `AbstractThresholdScoring`s, as RANSAC and MSAC are,
@@ -77,7 +77,7 @@ loss_scale_bounds
 The empirical-Bayes variants of the paper fit VisualGeometryToolkitCore's `IGPrior`
 from per-pair noise-variance estimates on a validation set: IG-MLE by type-II
 maximum likelihood, IG-Robust with `α₀ = 1` and a median-anchored `β₀`. The
-fits (the algorithm `PriorSpec` on `EstimationProblem(IGPrior, σ²s)`, `ALL_PRIOR_SPECS`) are VisualGeometryToolkitEval's
+fits (the algorithm `PriorSpec(family, fitting)` on `EstimationProblem(IGPrior, σ²s)`) are VisualGeometryToolkitEval's
 `Tuning`; a fitted prior enters a scorer as `StudentTUniformScoring(P, a; scale_prior, label_prior)`.
 
 ## SIMFIT++ loss-width estimation

@@ -10,8 +10,8 @@ follow in closed form. That toolkit — the scale estimators (`IGPrior`,
 `ScaleMAP` on `EstimationProblem(SquaredScale, …)`, `consensus_s2`), the Student-t + uniform mixture
 (`StudentTMixture`, the scoring contract's `inlier_probabilities!`), the
 posterior-weight state and its expectation–conditional-maximization (ECM)
-updates (`PosteriorWeightState`, `update_scale!`, `update_nu!`,
-`update_inlier_prior!`, `mixture_ecm!`) and their update policies
+updates (`PosteriorWeightState`, `square_distances!`, `update_weights!`, `update_scale!`, `update_nu!`,
+`update_inlier_prior!`) and their update policies
 (`Estimated`, `FixedS2`, `FixedPrior`, `FixedNu`, `ConsensusDof`) — is
 VisualGeometryToolkitCore's, documented there.
 

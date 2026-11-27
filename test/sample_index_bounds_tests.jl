@@ -1,6 +1,6 @@
 # The sample-index writes are bounds-checked: an invalid index throws instead of
 # writing outside the buffer. Under `@inbounds`, a pool whose `sample_indices`
-# held 0 made every `score_residuals!` (hence the marginal `best_pool_model`)
+# held 0 made every `score_residuals!` (hence the marginal `best_pool_model!`)
 # write `q[0]`, corrupting the heap into later hangs and crashes far from the
 # cause.
 

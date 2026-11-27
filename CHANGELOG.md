@@ -8,6 +8,14 @@ grid families, `grid_evaluate` and the staging functions are unchanged. No expec
 
 ### Breaking
 
+- **On VisualGeometryToolkitCore 0.14's breaking set** (C15, R22, the Phase 1C American identifiers): the per-pair
+  selection is Core's `best_pool_model!(ws, scoring, pair, R; scores)`, the scorer workspace the mutated argument (the
+  retired `best_pool_model(scoring, pair, R; ws, scores)`), and the Student-t + uniform normalizer is Core's
+  `truncated_log_normalizer` (was `…_normaliser`). The tests that drive the scoring contract and pool selection
+  (`scoring_workspace`, `score!`, `select_on_grid!`) are contract tests (`# R22: contract test — …`); the README and
+  landing-page example, which scores one hypothesis through the scoring contract, is a contract guide. The docs name
+  Eval's `PriorSpec(family, fitting)` values and Core's ECM updates in place of the retired `JeffreysPriorSpec`,
+  `IGRobustSpec`, `ALL_PRIOR_SPECS` and `mixture_ecm!`. Same scores and selections.
 - **`tail_fit` and `gpd_pwm_fit` are internal steps** (`_tail_fit`, `_gpd_pwm_fit`; no longer `public`). They are the
   generalized Pareto tail fit of the extreme-value outlier models, and this package is their one caller, so under the
   stack's naming rules (no public `fit_`-style verb outside `solve`) they become `_`-prefixed steps rather than

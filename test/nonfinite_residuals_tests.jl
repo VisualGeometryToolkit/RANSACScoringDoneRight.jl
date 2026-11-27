@@ -1,7 +1,8 @@
+# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
 # A NaN or ±Inf residual is an OUTLIER on every scoring path.
 #
 # The exact host scorers (the per-pair `score_magsac`/`score_gau`/`score_msac`,
-# now `best_pool_model(scoring, pair, D)` at a loss width; `_fill_grid_exact!`), the host
+# now `best_pool_model!(ws, scoring, pair, D)` at a loss width; `_fill_grid_exact!`), the host
 # histogram (`bin_residuals_stereo`) and the RANSAC/MSAC device kernels always
 # treated it so. Two paths did not:
 #   * the MAGSAC++ lookup-table scorer (since deleted) SKIPPED it — zero loss,
@@ -15,8 +16,9 @@
     using KernelAbstractions
     using RANSACScoringDoneRight
     using RANSACScoringDoneRight: MagsacScoring, MlesacScoring, WelschCostScoring, SmoothTLSScoring, GemanScoring, RansacScoring, MsacScoring, stage_ig_shared_from_pairs, LogBinned, histogram_pm_score_kernel!, _build_score_weight_matrix
-    using VisualGeometryToolkitCore: best_pool_model, with_width, LossWidth, exact_pm_score_kernel!, support_sq_loss_width,
+    using VisualGeometryToolkitCore: best_pool_model!, scoring_workspace, codimension, with_width, LossWidth, exact_pm_score_kernel!, support_sq_loss_width,
         select_on_grid!, stage_selection
+    using VisualGeometryToolkitCore.Pools: num_points
 
     # One pair whose M models share their residuals except that model j has
     # 3(j−1) of its INLIERS replaced by `bad(j)`. Model 1 keeps every inlier, so it
@@ -45,7 +47,8 @@
                                       MagsacScoring(), WelschCostScoring(),
                                       SmoothTLSScoring(), GemanScoring())
                 at = with_width(sc, LossWidth(loss_width))
-                @test best_pool_model(at, pair_nf...) == best_pool_model(at, pair_far...) == 1
+                @test best_pool_model!(scoring_workspace(at, num_points(pair_nf[1]), codimension(at)), at, pair_nf...) ==
+                      best_pool_model!(scoring_workspace(at, num_points(pair_far[1]), codimension(at)), at, pair_far...) == 1
             end
         end
 

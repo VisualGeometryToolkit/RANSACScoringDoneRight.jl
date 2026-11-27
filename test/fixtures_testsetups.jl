@@ -1,3 +1,4 @@
+# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
 # Shared test fixtures. ReTestItems discovers `@testsetup` modules in
 # `*_testsetups.jl` files; an item takes one with `setup = [Name]`.
 
@@ -18,7 +19,7 @@
     The score of pool model `j` under a width-free loss-width family at
     `loss_width`: the scoring contract's `score!` of `with_width(scoring,
     LossWidth(loss_width))` on the model's residual column, its minimal sample
-    entering at zero residual — what `best_pool_model` maximises.
+    entering at zero residual — what `best_pool_model!` maximises.
     """
     function model_score(scoring, pair::PoolPair, D::AbstractMatrix, j::Integer, loss_width::Real)
         sc = VGC.with_width(scoring, VGC.LossWidth(loss_width))

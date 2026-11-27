@@ -1,3 +1,4 @@
+# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
 # The scorer fact a grid reads — the width axis its grid is native on
 # (VisualGeometryToolkitCore's `width_axis(scoring)`, with this package's methods for
 # its grid families) — the scale multiple → native maps every grid of these
@@ -12,7 +13,8 @@
     using KernelAbstractions
     using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth, EfficiencyConstant, to_native, native_map, decision_width,
         WelschShape, GauInlier, decision_boundary, IGPrior, RansacScoring, MsacScoring, width_axis,
-        best_pool_model
+        best_pool_model!, scoring_workspace, codimension
+    using VisualGeometryToolkitCore.Pools: num_points
     using RANSACScoringDoneRight
     using VisualGeometryToolkitEstimation: SimFitPP   # SIMFIT++ is Estimation's; its grid family is this package's
     import VisualGeometryToolkitCore
@@ -58,7 +60,7 @@
         @test !isdefined(RANSACScoringDoneRight, Symbol("native", "_axis"))   # in fragments: a retired name
     end
 
-    @testset "grid_evaluate(::StudentTUniformScoring) selects what best_pool_model selects" begin
+    @testset "grid_evaluate(::StudentTUniformScoring) selects what best_pool_model! selects" begin
         rng = MersenneTwister(3)
         pool = map(1:6) do _
             n, M = 90, 7
@@ -71,7 +73,7 @@
         for prior in (IGPrior(), IGPrior(2.0, 0.05)), dg in (1, 2)
             sc = StudentTUniformScoring(5, 1.0; scale_prior = prior, codimension = dg, label_prior = FlatLabelPrior())
             errs, idxs = grid_evaluate(sc, sh, hw; return_idxs = true)
-            ref = [best_pool_model(StudentTUniformScoring(5, h; scale_prior = prior, codimension = dg, label_prior = FlatLabelPrior()), p, D) for (p, D) in pool, h in hw]
+            ref = [best_pool_model!(scoring_workspace(StudentTUniformScoring(5, h; scale_prior = prior, codimension = dg, label_prior = FlatLabelPrior()), num_points(p), codimension(StudentTUniformScoring(5, h; scale_prior = prior, codimension = dg, label_prior = FlatLabelPrior()))), StudentTUniformScoring(5, h; scale_prior = prior, codimension = dg, label_prior = FlatLabelPrior()), p, D) for (p, D) in pool, h in hw]
             @test idxs == ref
             @test all(!iszero, ref)
             @test errs == [pool[i][1].errors_r[ref[i, t]] for i in eachindex(pool), t in eachindex(hw)]

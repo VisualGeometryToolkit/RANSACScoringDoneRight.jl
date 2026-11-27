@@ -1,3 +1,4 @@
+# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
 # The loss-width families' exact selection (VisualGeometryToolkitCore's
 # `exact_pm_score_kernel!`, under its `select_on_grid!` on the `:pool` staging)
 # and this package's LogBinned(200 per decade) grid are two ALGORITHMS over ONE

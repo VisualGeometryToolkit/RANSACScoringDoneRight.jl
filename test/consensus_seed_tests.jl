@@ -1,3 +1,4 @@
+# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
 # The Student-t + uniform scorer's consensus set as a seed: `score!` sweeps,
 # `consensus_order`'s first `inlier_count` entries ARE the swept partition, and
 # VisualGeometryToolkitCore's toolkit seeds from it — `PosteriorWeightState(…; order,

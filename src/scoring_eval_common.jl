@@ -58,10 +58,10 @@
 # the whole range.
 const _SOFTPLUS_HALF = log1pexp(0.5)      # MLESAC's quality normaliser (loss_width_sweep_ka.jl)
 
-# (`pool_model_score` and the 4-argument `best_pool_model(scoring, pair, R,
+# (`pool_model_score` and the per-pair selection's loss-width form `(scoring, pair, R,
 #  loss_width)` — a width-free family evaluated at a loss width — are deleted:
 #  a family AT its loss width has `score!` (above), so VisualGeometryToolkitCore's
-#  `best_pool_model(with_width(scoring, LossWidth(w)), pair, R)` is the one pool
+#  `best_pool_model!(ws, with_width(scoring, LossWidth(w)), pair, R)` is the one pool
 #  selection, through the same arithmetic. The local pool argmax `_best_model`
 #  and shape check `_check_residuals` are VisualGeometryToolkitCore's
 #  `Pools.best_model_index` and `Pools.check_residual_matrix`.)

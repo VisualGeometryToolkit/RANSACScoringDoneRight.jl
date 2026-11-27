@@ -113,7 +113,7 @@ LogBinned() = LogBinned(200)
             # an outlier at quality 0 (MAGSAC++ and smooth-TLS exactly, beyond
             # loss_width; MLESAC and Welsch/Geman in the limit), so skipping it adds
             # exactly that — as Core's exact kernel and the per-pair
-            # `best_pool_model` do (and the deleted host histogram,
+            # `best_pool_model!` do (and the deleted host histogram,
             # `bin_residuals_stereo`, did). It used to fall through: NaN
             # failed `d2 > 0` and took bin 1, the PERFECT-inlier weight, and +Inf
             # reached `floor(Int, Inf)` (an InexactError on the CPU backend).
@@ -176,7 +176,7 @@ end
 # the grid family a loss width is swept over, and AT A LOSS WIDTH
 # (`F(dg; threshold = w)`, `T = Float64`, or `with_width(F(dg), LossWidth(w))`),
 # a scorer of the scoring contract's `score!` — the form VisualGeometryToolkitCore's
-# `best_pool_model` and VisualGeometryToolkitEval's sample-budget engine select with.
+# `best_pool_model!` and VisualGeometryToolkitEval's sample-budget engine select with.
 
 """
     MlesacScoring{DG, T}

@@ -1,3 +1,4 @@
+# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
 # The minimal-sample rule, one for every scorer: a model's minimal-sample points
 # are fit exactly by construction and carry no information. They enter at ZERO
 # residual (`zero_sample!`, whatever was stored for them) and the model's `m`
@@ -8,7 +9,7 @@
 #     the n − m remaining points at model_dof = 0 — ν = dg·(k − m) and the
 #     outlier count n − k agree term by term;
 #   * a loss-width family's pool score at a loss width (its `score!`, hence
-#     `best_pool_model`, and Core's exact grid selection) is Σ over the remaining points plus
+#     `best_pool_model!`, and Core's exact grid selection) is Σ over the remaining points plus
 #     the model-independent constant m·q(0), so the sample points never change a
 #     ranking;
 #   * in every scorer the stored values at the sample indices are ignored.
@@ -19,7 +20,8 @@
     import VisualGeometryToolkitCore as VGC
     using RANSACScoringDoneRight
     using VisualGeometryToolkitCore: AbstractConstraintProblem, JeffreysPrior, IGPrior, RansacScoring, MsacScoring,
-        residual_quality, best_pool_model, with_width, LossWidth
+        residual_quality, best_pool_model!, scoring_workspace, codimension, with_width, LossWidth
+    using VisualGeometryToolkitCore.Pools: num_points
 
     # A scalar-constraint problem: rᵢ = xᵢ − 0.6θ₁ − 0.8θ₂ (LineProblems).
 
@@ -77,9 +79,9 @@
                 @test model_score(sc, pair, D, j, loss_width) - m * q0 ≈ ref rtol = 1e-12 atol = 1e-12
                 @test model_score(sc, pair_j, Dj, j, loss_width) ≈ model_score(sc, pair, D, j, loss_width) rtol = 1e-12
             end
-            @test best_pool_model(with_width(sc, LossWidth(loss_width)), pair_j, Dj) == best_pool_model(with_width(sc, LossWidth(loss_width)), pair, D)
+            @test best_pool_model!(scoring_workspace(with_width(sc, LossWidth(loss_width)), num_points(pair_j), codimension(with_width(sc, LossWidth(loss_width)))), with_width(sc, LossWidth(loss_width)), pair_j, Dj) == best_pool_model!(scoring_workspace(with_width(sc, LossWidth(loss_width)), num_points(pair), codimension(with_width(sc, LossWidth(loss_width)))), with_width(sc, LossWidth(loss_width)), pair, D)
         end
         sm = StudentTUniformScoring(m, halfwidth; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
-        @test best_pool_model(sm, pair_j, Dj) == best_pool_model(sm, pair, D)
+        @test best_pool_model!(scoring_workspace(sm, num_points(pair_j), codimension(sm)), sm, pair_j, Dj) == best_pool_model!(scoring_workspace(sm, num_points(pair), codimension(sm)), sm, pair, D)
     end
 end

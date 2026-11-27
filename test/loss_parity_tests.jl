@@ -8,7 +8,7 @@
 #
 # (w the loss width) and CALL VGC for it, on every path: the scale quadrature's
 # data term (shared by the Track-B evidence device kernel and the full-data
-# marginal device kernel) and the Z̃ quadrature (VGC's `truncated_log_normaliser`,
+# marginal device kernel) and the Z̃ quadrature (VGC's `truncated_log_normalizer`,
 # tested there) — each the ONE
 # evaluation of its quantity (the host copies are deleted). The restated copies
 # (`_rho`, `_mix_rho_ka`, and the Welsch / smooth-TLS sufficient-statistic ψ

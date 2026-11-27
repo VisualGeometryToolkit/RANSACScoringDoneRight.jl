@@ -29,6 +29,8 @@ pkg> add RANSACScoringDoneRight VisualGeometryToolkitCore
 
 ## Example
 
+<!-- R22: contract guide -->
+
 Score one hypothesis from its residuals: the sweep sorts them, scores every
 candidate inlier partition with the scale marginalized out, and returns the
 best score with its inlier count, whose scale estimate follows in closed form.

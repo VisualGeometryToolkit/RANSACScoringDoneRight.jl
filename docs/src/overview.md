@@ -36,7 +36,7 @@ two granularities:
   [`score_sq_residuals!`](@extref VisualGeometryToolkitCore :std:doc:`api/student_t_scoring`) (from a problem and a model) returns the score
   and the inlier count of the best partition;
 - **a pool of hypotheses**: VisualGeometryToolkitCore's
-  [`best_pool_model`](@extref VisualGeometryToolkitCore.best_pool_model) selects the best stored
+  VisualGeometryToolkitCore's `best_pool_model!` selects the best stored
   model of one benchmark pair, and [`grid_evaluate`](@ref) does so for every
   pair of a staged pool at every width of a grid, which is what tuning and the
   paper's evaluation consume.
@@ -65,7 +65,7 @@ own types.
   (`selection_staging`, `stage_selection`: [`stage_ig_shared_from_pairs`](@ref)
   shared by all of them) and implements `select_on_grid!` with its device
   kernels. VisualGeometryToolkitCore's generic `select_on_grid!` and
-  `best_pool_model` serve any scorer at its width.
+  `best_pool_model!` serve any scorer at its width.
 
 ## What the weights mean
 
@@ -139,9 +139,9 @@ estimates on a validation set (VisualGeometryToolkitEval's `Tuning.PriorSpec`, t
 
 | variant | prior | fit |
 |:---|:---|:---|
-| Jeffreys | `IGPrior(0, 0)` | none (`JeffreysPriorSpec`) |
+| Jeffreys | `IGPrior(0, 0)` | none (`PriorSpec(Jeffreys(), Unfitted())`) |
 | IG-MLE | `IG(α₀, β₀)` | type-II maximum likelihood: a Gamma fit to `1/σ̂²` |
-| IG-Robust | `IG(1, median(σ̂²))` | fixed `α₀ = 1`, median-anchored `β₀` (`IGRobustSpec`) |
+| IG-Robust | `IG(1, median(σ̂²))` | fixed `α₀ = 1`, median-anchored `β₀` (`PriorSpec(InverseGamma(), RobustFit(1.0))`) |
 
 IG-Robust trades the dispersion information of IG-MLE for robustness to the
 heavy σ̂² tails of pairs with few inliers, the regime where the prior matters.

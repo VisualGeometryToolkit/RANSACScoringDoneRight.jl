@@ -33,7 +33,7 @@ features:
     link: /api/scoring/
   - icon: 🗂️
     title: Select from a hypothesis pool
-    details: "`best_pool_model` picks the best stored model of a benchmark pair under the marginal score or any loss-width baseline (RANSAC, MSAC, GaU, MAGSAC++), on the pair's residual matrix."
+    details: "`best_pool_model!` picks the best stored model of a benchmark pair under the marginal score or any loss-width baseline (RANSAC, MSAC, GaU, MAGSAC++), on the pair's residual matrix."
     link: /api/pools/
   - icon: ⚡
     title: Evaluate a width grid on CPU or GPU
@@ -154,6 +154,8 @@ git clone https://github.com/VisualGeometryToolkit/RANSACScoringDoneRight.jl.git
 Score one hypothesis from its residuals: the sweep sorts them, scores every
 candidate inlier partition with the scale marginalized out, and returns the
 best score with its inlier count, whose scale estimate follows in closed form.
+
+<!-- R22: contract guide -->
 
 ```julia
 using RANSACScoringDoneRight

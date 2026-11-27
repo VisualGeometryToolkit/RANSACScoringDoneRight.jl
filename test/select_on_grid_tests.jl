@@ -1,3 +1,4 @@
+# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
 # The grid families on VisualGeometryToolkitCore's pool-selection contract
 # (src/selection.jl): every family stages through the one `:rsdr` staging, and
 # `select_on_grid!` is THE grid verb's selection (`grid_evaluate(…;
@@ -6,7 +7,7 @@
 # pairs' pixel residuals with the caller's per-(pair, column) generator. And
 # VisualGeometryToolkitCore's generic method on its `:pool` staging (the exact
 # selection kernels for a loss-width family) selects exactly what the per-pair
-# `best_pool_model` at each width selects, for the scorer at a threshold and for
+# `best_pool_model!` at each width selects, for the scorer at a threshold and for
 # the width-free family alike — the path of VisualGeometryToolkitCore's threshold
 # scorers (MSAC/RANSAC at a threshold are no grid family).
 
@@ -19,8 +20,8 @@
     using RANSACScoringDoneRight: stage_ig_shared_from_pairs, loss_spec, LossSpec, pair_chunk_budget
     using VisualGeometryToolkitEstimation: SimFitPP, PoolSelection   # SIMFIT++ is Estimation's
     using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, IGPrior, WelschShape, EstimationProblem, solve,
-        FundMat, sampson_distance, select_on_grid!, selection_staging, stage_selection, best_pool_model
-    using VisualGeometryToolkitCore.Pools: PoolPair, pixel_residuals, pool_pixel_scale
+        FundMat, sampson_distance, select_on_grid!, selection_staging, stage_selection, best_pool_model!, scoring_workspace, codimension
+    using VisualGeometryToolkitCore.Pools: PoolPair, num_points, pixel_residuals, pool_pixel_scale
     import VisualGeometryToolkitCore as VGC
 
     struct _SGProblem <: AbstractConstraintProblem end
@@ -134,7 +135,7 @@
         @test _select(cfg, grid, spairs, sRs; rng_of) == got
     end
 
-    @testset "VisualGeometryToolkitCore's generic method: the exact selection ≡ the per-pair best_pool_model" begin
+    @testset "VisualGeometryToolkitCore's generic method: the exact selection ≡ the per-pair best_pool_model!" begin
         # The generic method on the `:pool` staging: the threshold scorers'
         # own path; the marginal's through `invoke` (it is a grid family).
         generic!(idxs, sc, grid, st) =
@@ -145,7 +146,7 @@
         for dg in (1, 2), (sc, wf) in ((MsacScoring(dg; threshold = 1.0), MsacScoring(dg)),
                                        (RansacScoring(dg; threshold = 1.0), RansacScoring(dg)))
             idxs = fill(Int32(-1), length(pairs), length(lw))
-            want = [Int32(best_pool_model(VGC.with_width(wf, VGC.LossWidth(w)), p, R)) for (p, R) in zip(pairs, Rs), w in lw]
+            want = [Int32(best_pool_model!(scoring_workspace(VGC.with_width(wf, VGC.LossWidth(w)), num_points(p), codimension(VGC.with_width(wf, VGC.LossWidth(w)))), VGC.with_width(wf, VGC.LossWidth(w)), p, R)) for (p, R) in zip(pairs, Rs), w in lw]
             @test _select(sc, lw, pairs, Rs) == want
             generic!(idxs, sc, lw, st)
             @test idxs == want

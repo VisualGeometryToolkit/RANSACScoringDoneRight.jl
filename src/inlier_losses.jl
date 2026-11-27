@@ -85,7 +85,7 @@ function _quad_tables(shape::AbstractLossShape, Δ::Float64, tnodes::Vector{Floa
     NG = length(tnodes)
     Δt = tnodes[2] - tnodes[1]
     sq_loss_width_nodes = exp.(tnodes)
-    logZnodes = [truncated_log_normaliser(shape, sq_loss_width, Δ, r_max) for sq_loss_width in sq_loss_width_nodes]
+    logZnodes = [truncated_log_normalizer(shape, sq_loss_width, Δ, r_max) for sq_loss_width in sq_loss_width_nodes]
     base = [prior.alpha0 * tnodes[j] + prior.beta0 / sq_loss_width_nodes[j] for j in 1:NG]
     ltw = Vector{Float64}(undef, NG)
     logΔt = log(Δt)

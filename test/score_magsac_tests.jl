@@ -1,4 +1,5 @@
-# The exact per-pair MAGSAC++ selection, `best_pool_model(MagsacScoring(1; threshold
+# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
+# The exact per-pair MAGSAC++ selection, `best_pool_model!(ws, MagsacScoring(1; threshold
 # = loss_width), pair, D)` — the sum of `residual_quality` — and the device selections (Core's exact, this package's LogBinned) of
 # that quality, all pinned against MAGSAC++'s loss ρ written out below from the
 # paper (§2.2), independently of the package's expression. The constants are not
@@ -11,7 +12,8 @@
     using SpecialFunctions: gamma, gamma_inc
     using RANSACScoringDoneRight
     using RANSACScoringDoneRight: MagsacScoring, _MAGSAC_DOF, _MAGSAC_SCALE_MULTIPLE
-    using VisualGeometryToolkitCore: best_pool_model, with_width, LossWidth
+    using VisualGeometryToolkitCore: best_pool_model!, scoring_workspace, codimension, with_width, LossWidth
+    using VisualGeometryToolkitCore.Pools: num_points
 
     # MAGSAC++'s quality of a residual r at loss_width: ρ(κ·σ_max) − ρ(r), with
     # κ = _MAGSAC_SCALE_MULTIPLE, σ_max = loss_width/κ, R = r²/(2σ_max²), n = dof = 4, and C(n) = (2^{n/2}·Γ(n/2)·0.99)⁻¹
@@ -45,7 +47,7 @@
         return best_j
     end
 
-    @testset "best_pool_model(with_width(MagsacScoring(), LossWidth(loss_width)), pair, D) == the paper's summed quality" begin
+    @testset "best_pool_model!(ws, with_width(MagsacScoring(), LossWidth(loss_width)), pair, D) == the paper's summed quality" begin
         rng = MersenneTwister(11)
         n, K = 80, 12
         D = Matrix{Float32}(undef, n, K)
@@ -59,7 +61,7 @@
         pair = identity_pool(D)                           # no minimal-sample points
         picks = Int[]
         for loss_width in 10.0 .^ range(-1.0, 0.7; length = 15)
-            j = best_pool_model(with_width(MagsacScoring(), LossWidth(loss_width)), pair, D)
+            j = best_pool_model!(scoring_workspace(with_width(MagsacScoring(), LossWidth(loss_width)), num_points(pair), codimension(with_width(MagsacScoring(), LossWidth(loss_width)))), with_width(MagsacScoring(), LossWidth(loss_width)), pair, D)
             @test j == _magsac_reference(D, loss_width)
             push!(picks, j)
         end

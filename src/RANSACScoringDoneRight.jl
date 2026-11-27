@@ -97,7 +97,7 @@ using VisualGeometryToolkitCore: LossWidth, OutlierHalfwidth
 # its own scorers and adds its grid algorithms and paper baselines; it
 # re-exports nothing VGC owns.
 using VisualGeometryToolkitCore: IGPrior,
-    truncated_log_normaliser,
+    truncated_log_normalizer,
     RansacScoring, MsacScoring, AbstractThresholdScoring, @threshold_scoring_constructors,
     argmax_models_kernel!, sorted_squared_residuals   # the grids' model argmax and staging (Core's)
 # The Student-t + uniform marginal scorer and its partition sweep (Core's): this package's grids,
@@ -113,7 +113,7 @@ import VisualGeometryToolkitCore: loss_shape, codimension, score_bound,
     outlier_context!, outlier_cost, scored_outlier_halfwidth,
     # the pool-selection contract (VisualGeometryToolkitCore robust/pool_selection.jl):
     # the staged grid selection (a scorer at its width selects through
-    # VisualGeometryToolkitCore's `best_pool_model`, by `score!`)
+    # VisualGeometryToolkitCore's `best_pool_model!`, by `score!`)
     selection_staging, stage_selection, select_on_grid!
 
 # -----------------------------------------------------------------------------
@@ -151,7 +151,7 @@ export WelschCostScoring, SmoothTLSScoring, GemanScoring
 public ALL_SCORING_TAGS
 
 # A loss-width family at its width selects through VisualGeometryToolkitCore's
-# `best_pool_model` (its `score!`, scoring_eval_common.jl); the staged grid
+# `best_pool_model!` (its `score!`, scoring_eval_common.jl); the staged grid
 # selection of every grid family is selection.jl's (VisualGeometryToolkitCore's
 # `select_on_grid!`).
 export ScaleMarginal   # the scale-marginal spec of a loss shape: ScaleMarginal{WelschShape}, ScaleMarginal{SmoothTLSShape}

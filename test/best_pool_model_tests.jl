@@ -1,4 +1,5 @@
-# `best_pool_model` is the per-pair model selection over the quantity the grids
+# R22: contract test — the scoring contract (`scoring_workspace`, `score!`) and pool selection (`select_on_grid!`) of this package's scorers
+# `best_pool_model!` is the per-pair model selection over the quantity the grids
 # evaluate: VisualGeometryToolkitCore's one method, over `score!` of a scorer AT its
 # width. For a loss-width family at a loss width (`with_width(F, LossWidth(w))`)
 # a model's score is Core's exact kernel's per-model score on one pair (the sum of
@@ -6,15 +7,16 @@
 # its sweep. The sentinel for "no model" is 0, never a valid index. (The typed
 # pool-scorer handles, and the 4-argument width-free form, are retired.)
 
-@testitem "best_pool_model" setup = [PoolFixtures] begin
+@testitem "best_pool_model!" setup = [PoolFixtures] begin
     using VisualGeometryToolkitCore: StudentTUniformScoring, FlatLabelPrior, label_prior, JeffreysPrior   # the Student-t scorer (Core's)
     using Test, Random
     using KernelAbstractions
     using RANSACScoringDoneRight
     using RANSACScoringDoneRight: stage_ig_shared_from_pairs
     using VisualGeometryToolkitCore: exact_pm_score_kernel!, support_sq_loss_width
-    using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, best_pool_model,
+    using VisualGeometryToolkitCore: AbstractConstraintProblem, RansacScoring, MsacScoring, best_pool_model!, scoring_workspace, codimension,
         with_width, LossWidth, select_on_grid!, stage_selection
+    using VisualGeometryToolkitCore.Pools: num_points
     import VisualGeometryToolkitCore as VGC
     _at(sc, w) = with_width(sc, LossWidth(w))
 
@@ -36,7 +38,7 @@
     VGC.codimension(::Type{_BPProblem}) = 1
     VGC.minimal_sample_size(::Type{_BPProblem}) = 5
 
-    @testset "best_pool_model: one loop, the grids' quantity" begin
+    @testset "best_pool_model!: one loop, the grids' quantity" begin
         rng = MersenneTwister(23)
         loss_widths = [0.3, 1.0, 3.0, 8.0]
         be = KernelAbstractions.CPU()
@@ -69,7 +71,7 @@
             st = stage_selection(:pool, first.(pool), last.(pool); backend = be)
             for sc in _BP_FAMILIES
                 jx = select_on_grid!(fill(Int32(-1), length(pool), length(loss_widths)), _BPProblem, sc, loss_widths, st)
-                @test [best_pool_model(_at(sc, loss_width), p, D) for (p, D) in pool, loss_width in loss_widths] == jx
+                @test [best_pool_model!(scoring_workspace(_at(sc, loss_width), num_points(p), codimension(_at(sc, loss_width))), _at(sc, loss_width), p, D) for (p, D) in pool, loss_width in loss_widths] == jx
             end
         end
 
@@ -77,15 +79,15 @@
             empty, De = _bp_pair(rng; M = 0)
             nanpair, _ = _bp_pair(rng; M = 3)
             for sc in _BP_FAMILIES
-                @test best_pool_model(_at(sc, 1.0), empty, De) == 0
+                @test best_pool_model!(scoring_workspace(_at(sc, 1.0), num_points(empty), codimension(_at(sc, 1.0))), _at(sc, 1.0), empty, De) == 0
             end
-            @test best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), empty, De) == 0
-            @test best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), nanpair, fill(NaN32, 120, 3)) == 0
+            @test best_pool_model!(scoring_workspace(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), num_points(empty), codimension(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))), StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), empty, De) == 0
+            @test best_pool_model!(scoring_workspace(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), num_points(nanpair), codimension(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))), StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), nanpair, fill(NaN32, 120, 3)) == 0
             student_t = StudentTUniformScoring(_BPProblem, 0.1; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
             msac = MsacScoring(1; threshold = 1.0)
             ransac = RansacScoring(1; threshold = 1.0)
             for sc in (msac, ransac, student_t)
-                @test best_pool_model(sc, empty, De) == 0
+                @test best_pool_model!(scoring_workspace(sc, num_points(empty), codimension(sc)), sc, empty, De) == 0
             end
         end
 
@@ -102,7 +104,7 @@
                         sc = F(dg; threshold = loss_width)
                         @test _at(F(dg), loss_width) === sc
                         s = [model_score(F(dg), pair, D, j, loss_width) for j in 1:size(D, 2)]
-                        @test best_pool_model(sc, pair, D) === findfirst(==(maximum(s)), s)
+                        @test best_pool_model!(scoring_workspace(sc, num_points(pair), codimension(sc)), sc, pair, D) === findfirst(==(maximum(s)), s)
                     end
                 end
             end
@@ -117,22 +119,22 @@
             for halfwidth in (0.05, 0.5, 5.0)
                 sc = StudentTUniformScoring(_BPProblem, halfwidth; scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior())
                 ws = VGC.scoring_workspace(sc, VGC.Pools.num_points(pair), 1)
-                @test best_pool_model(sc, pair, D) ==
-                      best_pool_model(sc, pair, D; ws, scores = Vector{Float64}(undef, VGC.Pools.num_points(pair)))
+                @test best_pool_model!(scoring_workspace(sc, num_points(pair), codimension(sc)), sc, pair, D) ==
+                      best_pool_model!(ws, sc, pair, D; scores = Vector{Float64}(undef, VGC.Pools.num_points(pair)))
             end
         end
 
         @testset "an invalid sample index throws" begin
             bad, Db = _bp_pair(rng; sample = :zero)
-            @test_throws BoundsError best_pool_model(MsacScoring(1; threshold = 1.0), bad, Db)
-            @test_throws BoundsError best_pool_model(MagsacScoring(1; threshold = 1.0), bad, Db)
-            @test_throws BoundsError best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), bad, Db)
+            @test_throws BoundsError best_pool_model!(scoring_workspace(MsacScoring(1; threshold = 1.0), num_points(bad), codimension(MsacScoring(1; threshold = 1.0))), MsacScoring(1; threshold = 1.0), bad, Db)
+            @test_throws BoundsError best_pool_model!(scoring_workspace(MagsacScoring(1; threshold = 1.0), num_points(bad), codimension(MagsacScoring(1; threshold = 1.0))), MagsacScoring(1; threshold = 1.0), bad, Db)
+            @test_throws BoundsError best_pool_model!(scoring_workspace(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), num_points(bad), codimension(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))), StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), bad, Db)
         end
 
         @testset "a residual matrix of another pair is refused" begin
             pair, D = _bp_pair(rng)
-            @test_throws DimensionMismatch best_pool_model(MlesacScoring(1; threshold = 1.0), pair, D[1:end-1, :])
-            @test_throws DimensionMismatch best_pool_model(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), pair, D[:, 1:end-1])
+            @test_throws DimensionMismatch best_pool_model!(scoring_workspace(MlesacScoring(1; threshold = 1.0), num_points(pair), codimension(MlesacScoring(1; threshold = 1.0))), MlesacScoring(1; threshold = 1.0), pair, D[1:end-1, :])
+            @test_throws DimensionMismatch best_pool_model!(scoring_workspace(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), num_points(pair), codimension(StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()))), StudentTUniformScoring(5, 0.1; codimension = 1, scale_prior = JeffreysPrior(), label_prior = FlatLabelPrior()), pair, D[:, 1:end-1])
             @test_throws DimensionMismatch stage_ig_shared_from_pairs([pair], [D[:, 1:end-1]])
             @test_throws DimensionMismatch stage_ig_shared_from_pairs([pair], [D, D])
         end
