@@ -43,7 +43,7 @@ two granularities:
 
 The scale-free marginal score also *selects an inlier partition*: the sweep
 returns the inlier count `k` it maximized over, and the scale of that partition
-(VisualGeometryToolkitCore's `consensus_s2`) follows in closed form. That partition and scale
+(VisualGeometryToolkitCore's `ConsensusScale`) follows in closed form. That partition and scale
 seed local optimization through the scoring contract (`consensus_order`,
 `inlier_count`, `decision_boundary`) and VisualGeometryToolkitCore's posterior-weighting
 layer (`PosteriorWeightState`).

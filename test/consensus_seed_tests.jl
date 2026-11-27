@@ -2,7 +2,7 @@
 # The Student-t + uniform scorer's consensus set as a seed: `score!` sweeps,
 # `consensus_order`'s first `inlier_count` entries ARE the swept partition, and
 # VisualGeometryToolkitCore's toolkit seeds from it — `PosteriorWeightState(…; order,
-# prior)`, `consensus_s2` and the scoring contract's `inlier_probabilities!` — under
+# prior)`, `ConsensusScale` and the scoring contract's `inlier_probabilities!` — under
 # the scorer's OWN scale prior (the one the sweep scored the partition under).
 # Every check goes through Core's PUBLIC entries (the partition's Student-t is
 # `ScaleMAP` for ŝ² and the documented ν rule, its mixture `StudentTMixture`);
@@ -13,7 +13,7 @@
     using Test
     using Random: MersenneTwister
     import VisualGeometryToolkitCore as VGC
-    using VisualGeometryToolkitCore: IGPrior, score!, inlier_count, consensus_order, consensus_s2, scale_prior,
+    using VisualGeometryToolkitCore: IGPrior, score!, inlier_count, consensus_order, ConsensusScale, scale_prior,
         partition_rss, PosteriorWeightState, s_hat_sq, student_t_dof, sq_distances,
         inlier_prior, inlier_probabilities!, StudentTMixture, posterior_weight, inlier_posterior,
         EstimationProblem, SquaredScale, ScaleMAP, solve, decision_boundary, ScoreBuffers,
@@ -55,7 +55,8 @@
             @test s_hat_sq(pws) === s2 && student_t_dof(pws) === ν
             @test sq_distances(pws) == r .^ 2
             @test inlier_prior(pws) === 0.5
-            @test consensus_s2(s, r, order, k; model_dof, d_g = 2) === s2
+            @test solve(EstimationProblem(SquaredScale, r, (; order, inlier_count = k, model_dof, codimension = 2)),
+                        ConsensusScale(s)).u === s2
 
             # the seed's first E-step is the partition's Student-t + uniform mixture
             m = StudentTMixture(ν, s2, log(2 * halfwidth), 2)
@@ -76,7 +77,8 @@
         buf.residuals .= r
         score!(W, s, buf.scores, buf.residuals, n)
         k = inlier_count(s, W)
-        s2 = consensus_s2(s, r, consensus_order(s, W), k; model_dof = 5, d_g = 2)
+        s2 = solve(EstimationProblem(SquaredScale, r, (; order = consensus_order(s, W), inlier_count = k, model_dof = 5,
+                                                          codimension = 2)), ConsensusScale(s)).u
         @test decision_boundary(s, buf) === decision_boundary(GauInlier(s2; d_g = 2), halfwidth)
         @test 0 < decision_boundary(s, buf) < 5.0
     end

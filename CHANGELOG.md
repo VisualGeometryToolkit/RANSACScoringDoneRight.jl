@@ -10,6 +10,9 @@ grid families, `grid_evaluate` and the staging functions are unchanged. No expec
 
 ### Breaking
 
+- **Core's `consensus_s2` is retired** (Core 0.14's front-end gaps): the consensus set's scale is the estimator
+  `solve(EstimationProblem(SquaredScale, r, (; order, inlier_count, model_dof, codimension)), ConsensusScale(scoring)).u`
+  in the README and landing-page example, the docs and the consensus-seed test. The same ŝ², bit for bit.
 - **On VisualGeometryToolkitCore 0.14's breaking set** (C15, R22, the Phase 1C American identifiers): the per-pair
   selection is Core's `best_pool_model!(ws, scoring, pair, R; scores)`, the scorer workspace the mutated argument (the
   retired `best_pool_model(scoring, pair, R; ws, scores)`), and the Student-t + uniform normalizer is Core's

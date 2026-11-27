@@ -41,7 +41,7 @@ features:
     link: /api/pools/
   - icon: ⚖️
     title: Weight points for refinement
-    details: "`consensus_s2` and `PosteriorWeightState` (VisualGeometryToolkitCore's toolkit) turn the selected partition into a scale estimate and Student-t posterior weights for local optimization."
+    details: "`ConsensusScale` and `PosteriorWeightState` (VisualGeometryToolkitCore's toolkit) turn the selected partition into a scale estimate and Student-t posterior weights for local optimization."
     link: /api/posterior/
 ---
 ```
@@ -160,7 +160,7 @@ best score with its inlier count, whose scale estimate follows in closed form.
 ```julia
 using RANSACScoringDoneRight
 using VisualGeometryToolkitCore: StudentTUniformScoring, JeffreysPrior, FlatLabelPrior,
-    scoring_workspace, score!, inlier_count, consensus_order, consensus_s2
+    scoring_workspace, score!, inlier_count, consensus_order, ConsensusScale, EstimationProblem, SquaredScale, solve
 using Random
 
 # The residuals of one line hypothesis (codimension 1): 80 inliers with noise
@@ -175,7 +175,8 @@ W = scoring_workspace(scoring, n, 1)      # sweep buffers, reusable across hypot
 q = Vector{Float64}(undef, n)
 S = score!(W, scoring, q, r, n)           # the score, with the scale integrated out
 k = inlier_count(scoring, W)              # the selected inlier count: about 80
-s2 = consensus_s2(scoring, r, consensus_order(scoring, W), k; model_dof = 2, d_g = 1)
+s2 = solve(EstimationProblem(SquaredScale, r, (; order = consensus_order(scoring, W), inlier_count = k,
+                                              model_dof = 2, codimension = 1)), ConsensusScale(scoring)).u
 sqrt(s2)                                  # the partition's scale ŝ: about 0.01
 ```
 

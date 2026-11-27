@@ -24,7 +24,7 @@ sort-and-sweep of Algorithm 1), `inlier_count`, `consensus_order`,
 `decision_boundary` is the MAP crossover of the consensus set's ŝ² against the
 uniform outlier box. `StudentTUniformScoring{Predictive}` also implements
 `is_predictive` and `scored_model`. VisualGeometryToolkitCore derives the
-consensus scale (`consensus_s2`), the soft inlier weights and the Student-t
+consensus scale (`ConsensusScale`), the soft inlier weights and the Student-t
 posterior toolkit from these methods.
 
 The pool-selection contract lives in VisualGeometryToolkitCore's
