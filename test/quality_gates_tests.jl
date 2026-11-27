@@ -65,13 +65,6 @@
     # prefix kernel, and leaves its pool GRID (`selection_staging`,
     # `select_on_grid!` over the device staging, `grid_evaluate`) to this
     # package, as for RANSAC and MSAC.
-    #
-    # K+ (2026-10): two qualified accesses into VisualGeometryToolkitCore came with the
-    # toolkit's move there — `VisualGeometryToolkitCore.cov` (VGC's method of
-    # Statistics' `cov`, read off an `Uncertain` model in the predictive
-    # `score!`) and `VisualGeometryToolkitCore._no_solver_covariance` (the one
-    # missing-provider message, which `_check_provider` throws at construction).
-    # Both are to be retired from src; listed here until then.
     # jet_bound 7 → 8 (2026-10-09): `select_on_grid!` takes the pairs' problem
     # type positionally (VisualGeometryToolkitCore's calling convention: no type
     # keyword), so the mixture marginal's method reads `minimal_sample_size` of
